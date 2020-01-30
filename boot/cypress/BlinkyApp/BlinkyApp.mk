@@ -190,7 +190,7 @@ OUT_CFG := $(OUT_TARGET)/$(BUILDCFG)
 # Set build directory for BOOT and UPGRADE images
 ifeq ($(IMG_TYPE), UPGRADE)
 	SIGN_ARGS += --pad
-	#UPGRADE_SUFFIX :=_upgrade
+	UPGRADE_SUFFIX :=_upgrade
 	OUT_CFG := $(OUT_CFG)/upgrade
 else
 	OUT_CFG := $(OUT_CFG)/boot
@@ -212,6 +212,5 @@ else
 endif
 else
 	mv -f $(OUT_CFG)/$(APP_NAME).hex $(OUT_CFG)/$(APP_NAME)_unsigned.hex
-	$(PYTHON_PATH) $(IMGTOOL_PATH) $(SIGN_ARGS) $(OUT_CFG)/$(APP_NAME)_unsigned.hex $(OUT_CFG)/$(APP_NAME).hex
-	#$(UPGRADE_SUFFIX).hex
+	$(PYTHON_PATH) $(IMGTOOL_PATH) $(SIGN_ARGS) $(OUT_CFG)/$(APP_NAME)_unsigned.hex $(OUT_CFG)/$(APP_NAME)$(UPGRADE_SUFFIX).hex
 endif

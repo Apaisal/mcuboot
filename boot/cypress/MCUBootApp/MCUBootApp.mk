@@ -36,7 +36,7 @@ endif
 
 CUR_APP_PATH = $(CURDIR)/$(APP_NAME)
 
-include $(CUR_APP_PATH)/targets.mk
+include $(CUR_APP_PATH)/platforms.mk
 include $(CUR_APP_PATH)/libs.mk
 include $(CUR_APP_PATH)/toolchains.mk
 
@@ -44,9 +44,6 @@ include $(CUR_APP_PATH)/toolchains.mk
 DEFINES_APP := -DMBEDTLS_CONFIG_FILE="\"mcuboot_crypto_config.h\""
 DEFINES_APP += -DECC256_KEY_FILE="\"keys/$(SIGN_KEY_FILE).pub\""
 DEFINES_APP += -DCORE=$(CORE)
-# BSP does not define this macro for CM0p so define it here
-DEFINES_APP += -DCY_USING_HAL
-
 DEFINES_APP += -DMCUBOOT_IMAGE_NUMBER=$(MCUBOOT_IMAGE_NUMBER)
 
 ifeq ($(USE_CRYPTO_HW), 1)
@@ -91,7 +88,7 @@ ASM_FILES_APP :=
 # Output folder
 OUT := $(APP_NAME)/out
 # Output folder to contain build artifacts
-OUT_TARGET := $(OUT)/$(TARGET)
+OUT_TARGET := $(OUT)/$(PLATFORM)
 
 OUT_CFG := $(OUT_TARGET)/$(BUILDCFG)
 
