@@ -184,7 +184,7 @@ static void do_boot(struct boot_rsp *rsp)
      * reset vector
      */
     application_start = (rsp->br_image_off + rsp->br_hdr->ih_hdr_size);
-    BOOT_LOG_INF("Application at: 0x%08x", application_start);
+    BOOT_LOG_INF("Application at: 0x%p", (void*)application_start);
 
     if((cy_bl_bnu_policy.bnu_img_policy[0].multi_image == 1) &&
         (cy_bl_bnu_policy.bnu_img_policy[1].multi_image == 2))

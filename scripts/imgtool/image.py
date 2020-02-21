@@ -1,6 +1,6 @@
 # Copyright 2018 Nordic Semiconductor ASA
 # Copyright 2017 Linaro Limited
-# Copyright 2019 Arm Limited
+# Copyright 2019-2020 Arm Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ TLV_VALUES = {
         'ENCKW128': 0x31,
         'ENCEC256': 0x32,
         'DEPENDENCY': 0x40,
+		'SEC_CNT': 0x50,
         'IMAGEID': 0x81,
         'ROLLBACKCOUNTER': 0x82,
 }
@@ -121,7 +122,7 @@ class Image():
                  pad_header=False, pad=False, align=1, slot_size=0,
                  max_sectors=DEFAULT_MAX_SECTORS, overwrite_only=False,
                  endian="little", load_addr=0, erased_val=None,
-                 save_enctlv=False):
+                 save_enctlv=False, security_counter=None):
         self.version = version or versmod.decode_version("0")
         self.header_size = header_size
         self.pad_header = pad_header
@@ -139,12 +140,23 @@ class Image():
         self.save_enctlv = save_enctlv
         self.enctlv_len = 0
 
+        if security_counter is None:
+            # Security counter has not been explicitly provided,
+            # generate it from the version number
+            self.security_counter = ((self.version.major << 24)
+                                     + (self.version.minor << 16)
+                                     + self.version.revision)
+        else:
+            self.security_counter = security_counter
+
     def __repr__(self):
-        return "<Image version={}, header_size={}, base_addr={}, load_addr={}, \
-                align={}, slot_size={}, max_sectors={}, overwrite_only={}, \
-                endian={} format={}, payloadlen=0x{:x}>".format(
+        return "<Image version={}, header_size={}, security_counter={}, \
+                base_addr={}, load_addr={}, align={}, slot_size={}, \
+                max_sectors={}, overwrite_only={}, endian={} format={}, \
+                payloadlen=0x{:x}>".format(
                     self.version,
                     self.header_size,
+                    self.security_counter,
                     self.base_addr if self.base_addr is not None else "N/A",
                     self.load_addr,
                     self.align,
@@ -248,18 +260,24 @@ class Image():
     def create(self, key, enckey, dependencies=None, custom_protected_tlv=None):
         self.enckey = enckey
 
-        dependencies_num = 0
-        protected_tlv_size = 0
+        # Mandatory protected TLV area: TLV info header + security counter TLV
+        # Size of the security counter TLV: header ('HH') + payload ('I')
+        #                                   = 4 + 4 = 8 Bytes
+        protected_tlv_size = TLV_INFO_SIZE + TLV_SIZE + 4
 
-        if dependencies:
-            # Size of a Dependency TLV = Header ('BBH') + Payload('IBBHI')
-            # = 16 Bytes
+        if dependencies is None:
+            dependencies_num = 0
+            # protected_tlv_size = 0
+        else:
+            # Size of a Dependency TLV = Header ('HH') + Payload('IBBHI')
+            # = 4 + 12 = 16 Bytes
             dependencies_num = len(dependencies[DEP_IMAGES_KEY])
-            protected_tlv_size = (dependencies_num * 16) + TLV_INFO_SIZE
+            # protected_tlv_size = (dependencies_num * 16) + TLV_INFO_SIZE
+            protected_tlv_size += (dependencies_num * 16)
 
         if custom_protected_tlv:
-            if protected_tlv_size == 0:
-                protected_tlv_size = TLV_INFO_SIZE
+            # if protected_tlv_size == 0:
+            #     protected_tlv_size = TLV_INFO_SIZE
             for tag, value in custom_protected_tlv.items():
                 protected_tlv_size += TLV_SIZE + len(value)
 
@@ -271,25 +289,26 @@ class Image():
 
         # Protected TLVs must be added first, because they are also included
         # in the hash calculation
-        protected_tlv_off = None
-        if protected_tlv_size != 0:
-            for i in range(dependencies_num):
-                e = STRUCT_ENDIAN_DICT[self.endian]
-                payload = struct.pack(
-                                e + 'B3x'+'BBHI',
-                                int(dependencies[DEP_IMAGES_KEY][i]),
-                                dependencies[DEP_VERSIONS_KEY][i].major,
-                                dependencies[DEP_VERSIONS_KEY][i].minor,
-                                dependencies[DEP_VERSIONS_KEY][i].revision,
-                                dependencies[DEP_VERSIONS_KEY][i].build
-                                )
-                prot_tlv.add('DEPENDENCY', payload)
+        e = STRUCT_ENDIAN_DICT[self.endian]
+        payload = struct.pack(e + 'I', self.security_counter)
+        prot_tlv.add('SEC_CNT', payload)
 
-            for tag, value in custom_protected_tlv.items():
-                prot_tlv.add(tag, value)
+        for i in range(dependencies_num):
+            payload = struct.pack(
+                            e + 'B3x'+'BBHI',
+                            int(dependencies[DEP_IMAGES_KEY][i]),
+                            dependencies[DEP_VERSIONS_KEY][i].major,
+                            dependencies[DEP_VERSIONS_KEY][i].minor,
+                            dependencies[DEP_VERSIONS_KEY][i].revision,
+                            dependencies[DEP_VERSIONS_KEY][i].build
+                            )
+            prot_tlv.add('DEPENDENCY', payload)
 
-            protected_tlv_off = len(self.payload)
-            self.payload += prot_tlv.get()
+        for tag, value in custom_protected_tlv.items():
+            prot_tlv.add(tag, value)
+
+        protected_tlv_off = len(self.payload)
+        self.payload += prot_tlv.get()
 
         tlv = TLV(self.endian)
 
