@@ -359,7 +359,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
 
     uint8_t image_id = 0u;
 
-    BOOT_LOG_INF("> Validate image, index = %d", (int)image_index);
+    BOOT_LOG_DBG("> Validate image, index = %d", (int)image_index);
 
     rc = bootutil_img_hash(enc_state, image_index, hdr, fap, tmp_buf,
             tmp_buf_sz, hash, seed, seed_len);
@@ -409,7 +409,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                     return -1;
                 }
 
-                BOOT_LOG_INF("* Check image ID, index = %d, ID = %d", (int)image_index, (int)image_id);
+                BOOT_LOG_DBG("* Check image ID, index = %d, ID = %d", (int)image_index, (int)image_id);
 
                 valid_image_id = 1;
 
@@ -538,7 +538,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     }
 #endif
 
-    BOOT_LOG_INF("* Image validated successfully, ID = %d, index = %d", (int)image_id, (int)image_index);
+    BOOT_LOG_DBG("< Image validated successfully, ID = %d, index = %d", (int)image_id, (int)image_index);
 
     return 0;
 }
