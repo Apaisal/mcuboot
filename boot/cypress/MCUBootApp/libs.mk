@@ -33,17 +33,11 @@ CUR_LIBS_PATH = $(CURDIR)/libs
 # Collect source files for PDL
 SOURCES_PDL := $(wildcard $(CUR_LIBS_PATH)/pdl/psoc6pdl/drivers/source/*.c)
 
-# Collect source files for Retarget-io
-SOURCES_RETARGET_IO := $(wildcard $(CUR_LIBS_PATH)/retarget-io/*.c)
-
 # PDL related include directories
 INCLUDE_DIRS_PDL := $(CUR_LIBS_PATH)/pdl/psoc6pdl/drivers/include
 INCLUDE_DIRS_PDL += $(CUR_LIBS_PATH)/pdl/psoc6pdl/devices/include/ip
 INCLUDE_DIRS_PDL += $(CUR_LIBS_PATH)/pdl/psoc6pdl/devices/include
 INCLUDE_DIRS_PDL += $(CUR_LIBS_PATH)/pdl/psoc6pdl/cmsis/include
-
-# Retarget-io related include directories
-INCLUDE_DIRS_RETARGET_IO := $(CUR_LIBS_PATH)/retarget-io
 
 # core-libs related include directories
 INCLUDE_DIRS_CORE_LIB := $(CUR_LIBS_PATH)/core-lib/include

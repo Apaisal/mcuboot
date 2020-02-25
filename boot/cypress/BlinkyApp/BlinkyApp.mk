@@ -176,8 +176,10 @@ ASM_FILES_APP :=
 IMGTOOL_PATH ?=	../../scripts/imgtool.py
 
 SIGN_ARGS := sign --header-size 1024 --pad-header --align 8 -v "2.0" -S $(SLOT_SIZE) -M 512 --overwrite-only -k keys/$(SIGN_KEY_FILE).pem
-ifeq ($(HEADER_OFFSET), 1)
-# SIGN_ARGS += -R 0 
+ifeq ($(SMIF_UPGRADE), 0)
+	SIGN_ARGS += -R 0
+else
+	SIGN_ARGS += -R 0xFF
 endif
 
 # Output folder
