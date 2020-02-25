@@ -152,14 +152,9 @@ OUT_CFG := $(OUT_PLATFORM)/$(BUILDCFG)
 
 # Post build action to execute after main build job
 post_build: $(OUT_CFG)/$(APP_NAME).hex
-#	$(info [POST_BUILD] - Calculating CRC of TOC3 for $(APP_NAME))
-#	$(PYTHON_PATH) $(APP_NAME)/scripts/toc3_crc.py $(OUT_CFG)/$(APP_NAME).elf $(OUT_CFG)/$(APP_NAME)_CM0p.hex
 ifeq ($(POST_BUILD), 1)
-	$(info [POST_BUILD] - Creating image certificate for $(APP_NAME))
-# OLD:	$(PYTHON_PATH) $(APP_NAME)/scripts/$(IMAGE_CERT).py -i $(OUT_CFG)/$(APP_NAME)_CM0p.hex -k $(KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt
-	
+	$(info [POST_BUILD] - Creating image certificate for $(APP_NAME))	
 	cysecuretools -t $(CY_SEC_TOOLS_TARGET) image-certificate -i $(OUT_CFG)/$(APP_NAME).hex -k $(KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt
-	cp $(OUT_CFG)/$(APP_NAME).hex $(OUT_CFG)/$(APP_NAME)_CM0p.hex
-	
+	cp $(OUT_CFG)/$(APP_NAME).hex $(OUT_CFG)/$(APP_NAME)_CM0p.hex	
 endif
 ASM_FILES_APP :=
