@@ -43,6 +43,9 @@ SMIF_UPGRADE ?= 0
 # CypressBootloader Image ID to use for signing, defualt is ID for multi image
 CYB_IMG_ID ?= 16
 
+# Default secure counter value
+SEC_CNT ?= 0
+
 ifneq ($(COMPILER), GCC_ARM)
 $(error Only GCC ARM is supported at this moment)
 endif
@@ -177,8 +180,13 @@ IMGTOOL_PATH ?=	../../scripts/imgtool.py
 
 SIGN_ARGS := sign --header-size 1024 --pad-header --align 8 -v "2.0" -S $(SLOT_SIZE) -M 512 --overwrite-only -k keys/$(SIGN_KEY_FILE).pem
 ifeq ($(HEADER_OFFSET), 1)
-# SIGN_ARGS += -R 0 
+# SIGN_ARGS += -R 0
 endif
+
+# Add a TFM secure counter to the protected image area
+SIGN_ARGS += -s $(SEC_CNT)
+# Add a Cypress custom TLV tags to the protected image area
+IMG_CONTEXT := --imageid 'B' $(CYB_IMG_ID) --rollbackcounter 'B' $(SEC_CNT)
 
 # Output folder
 OUT := $(APP_NAME)/out
@@ -190,7 +198,7 @@ OUT_CFG := $(OUT_TARGET)/$(BUILDCFG)
 # Set build directory for BOOT and UPGRADE images
 ifeq ($(IMG_TYPE), UPGRADE)
 	SIGN_ARGS += --pad
-	#UPGRADE_SUFFIX :=_upgrade
+#UPGRADE_SUFFIX :=_upgrade
 	OUT_CFG := $(OUT_CFG)/upgrade
 else
 	OUT_CFG := $(OUT_CFG)/boot
@@ -212,6 +220,6 @@ else
 endif
 else
 	mv -f $(OUT_CFG)/$(APP_NAME).hex $(OUT_CFG)/$(APP_NAME)_unsigned.hex
-	$(PYTHON_PATH) $(IMGTOOL_PATH) $(SIGN_ARGS) $(OUT_CFG)/$(APP_NAME)_unsigned.hex $(OUT_CFG)/$(APP_NAME).hex
-	#$(UPGRADE_SUFFIX).hex
+	$(PYTHON_PATH) $(IMGTOOL_PATH) $(SIGN_ARGS) $(OUT_CFG)/$(APP_NAME)_unsigned.hex $(OUT_CFG)/$(APP_NAME).hex $(IMG_CONTEXT)
+#$(UPGRADE_SUFFIX).hex
 endif
