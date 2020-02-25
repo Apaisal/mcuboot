@@ -35,7 +35,7 @@ CUR_APP_PATH = $(CURDIR)/$(APP_NAME)
 
 # Set path to cypress key for certificate generation
 # Choose script name base for certificate generation
-KEY ?= $(APP_NAME)/scripts/cy_state_internal.json
+KEY ?= $(APP_NAME)/keys/cy_state_internal.json
 IMAGE_CERT := image_cert
 CY_BOOTLOADER_LOG_LEVEL ?= MCUBOOT_LOG_LEVEL_INFO
 
