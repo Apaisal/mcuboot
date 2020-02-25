@@ -106,23 +106,23 @@
 
 /* TOC3 Table */
 /* valid TOC3, section name cy_toc_part2 used for CRC calculation */
-__attribute__((used, section(".cy_toc_part2") )) static const int cyToc[512 / 4 ] =
-{
-    0x200-4,                /* Object Size, bytes */
-    0x01211221,             /* TOC Part 3, ID */
-    0x00000000,             /* Reserved */
-    0x00000000,             /* Reserved */
-    CY_BOOTLOADER_START,    /* Bootloader image start address */
-    0x00011E00,             /* Bootloader image length */
-    CY_BOOTLOADER_VERSION,  /* Bootloader version Major.Minor.Rev */
-    CY_BOOTLOADER_BUILD,    /* Bootloader build number */
-    1,                      /* Number of the next objects to add to SECURE_HASH */
-    0x100FDA00,             /* TODO: it is obsoleted. Provisioning JWT string starting with length  */
-    0,
-    [(512 / sizeof(int)) - 2] =
-    (TOC_LISTEN_WINDOW_20MS_IDX << 2) |
-    (TOC_FREQ_50MHZ_IDX << 0),
-};
+//__attribute__((used, section(".cy_toc_part2") )) static const int cyToc[512 / 4 ] =
+//{
+//    0x200-4,                /* Object Size, bytes */
+//    0x01211221,             /* TOC Part 3, ID */
+//    0x00000000,             /* Reserved */
+//    0x00000000,             /* Reserved */
+//    CY_BOOTLOADER_START,    /* Bootloader image start address */
+//    0x00011E00,             /* Bootloader image length */
+//    CY_BOOTLOADER_VERSION,  /* Bootloader version Major.Minor.Rev */
+//    CY_BOOTLOADER_BUILD,    /* Bootloader build number */
+//    1,                      /* Number of the next objects to add to SECURE_HASH */
+//    0x100FDA00,             /* TODO: it is obsoleted. Provisioning JWT string starting with length  */
+//    0,
+//    [(512 / sizeof(int)) - 2] =
+//    (TOC_LISTEN_WINDOW_20MS_IDX << 2) |
+//    (TOC_FREQ_50MHZ_IDX << 0),
+//};
 
 /** SecureBoot policies*/
 /** Boot & Upgrade policy structure */
@@ -184,7 +184,7 @@ static void do_boot(struct boot_rsp *rsp)
      * reset vector
      */
     application_start = (rsp->br_image_off + rsp->br_hdr->ih_hdr_size);
-    BOOT_LOG_INF("Application at: 0x%08x", application_start);
+    BOOT_LOG_INF("Application at: 0x%08lx", application_start);
 
     if((cy_bl_bnu_policy.bnu_img_policy[0].multi_image == 1) &&
         (cy_bl_bnu_policy.bnu_img_policy[1].multi_image == 2))
@@ -356,6 +356,7 @@ int main(void)
     rc = Cy_JWT_GetProvisioningDetails(FB_POLICY_JWT, &jwt, &jwtLen);
     if(0 == rc)
     {
+        /* BOOT_LOG_INF("Provisioning packet : %s", jwt); */
         rc = Cy_JWT_ParseProvisioningPacket(jwt, &cy_bl_bnu_policy, &debug_policy,
                 CY_BOOTLOADER_MASTER_IMG_ID);
     }
@@ -408,7 +409,8 @@ int main(void)
         bootloader.fa_id = FLASH_AREA_BOOTLOADER;
         bootloader.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
         bootloader.fa_off = CY_BOOTLOADER_START;
-        bootloader.fa_size = 0x10000;
+//        bootloader.fa_size = 0x10000;
+        bootloader.fa_size = 0x11E00; // TODO:FWSECURITY-1138
             /* initialize scratch */
         scratch.fa_id = FLASH_AREA_IMAGE_SCRATCH;
         scratch.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;

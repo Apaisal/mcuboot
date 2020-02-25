@@ -54,19 +54,25 @@ DEFINES_APP += -DCORE=$(CORE)
 # equal to all available flash for BOOT slot. it is assumed that UPGRADE
 # slot in this case is located in External Memory
 ifeq ($(PLATFORM), PSOC_064_2M)
-CY_BOOTLOADER_APP_START ?= 0x101CE000
+# CY_BOOTLOADER_APP_START ?= 0x101D0000
+CY_BOOTLOADER_APP_START ?= 0x101CE000  # FWSECURITY-1138
 # 0x1D0000 max slot size
 DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=3712
+CY_SEC_TOOLS_TARGET := cy8ckit-064b0s2-4343w
 else ifeq ($(PLATFORM), PSOC_064_1M)
-CY_BOOTLOADER_APP_START ?= 0x100D0000
+# CY_BOOTLOADER_APP_START ?= 0x100D0000
+CY_BOOTLOADER_APP_START ?= 0x100CF000 # FWSECURITY-1138
 # 0xD0000 max slot size
 DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=1664
+CY_SEC_TOOLS_TARGET := cy8cproto-064b0s1-ble
 else ifeq ($(PLATFORM), PSOC_064_512K)
-CY_BOOTLOADER_APP_START ?= 0x10030000
+# CY_BOOTLOADER_APP_START ?= 0x10030000
+CY_BOOTLOADER_APP_START ?= 0x1002F000  # FWSECURITY-1138
 # 0x30000 slot size
 DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=384
 # Use specific certificate script for 512K
-IMAGE_CERT := image_cert_512k
+# TODO: IMAGE_CERT := image_cert_512k
+CY_SEC_TOOLS_TARGET := cyb06445lqi-s3d42
 else
 $(error "Not suppoted target name $(PLATFORM)")
 endif
@@ -146,10 +152,14 @@ OUT_CFG := $(OUT_PLATFORM)/$(BUILDCFG)
 
 # Post build action to execute after main build job
 post_build: $(OUT_CFG)/$(APP_NAME).hex
-	$(info [POST_BUILD] - Calculating CRC of TOC3 for $(APP_NAME))
-	$(PYTHON_PATH) $(APP_NAME)/scripts/toc3_crc.py $(OUT_CFG)/$(APP_NAME).elf $(OUT_CFG)/$(APP_NAME)_CM0p.hex
+#	$(info [POST_BUILD] - Calculating CRC of TOC3 for $(APP_NAME))
+#	$(PYTHON_PATH) $(APP_NAME)/scripts/toc3_crc.py $(OUT_CFG)/$(APP_NAME).elf $(OUT_CFG)/$(APP_NAME)_CM0p.hex
 ifeq ($(POST_BUILD), 1)
 	$(info [POST_BUILD] - Creating image certificate for $(APP_NAME))
-	$(PYTHON_PATH) $(APP_NAME)/scripts/$(IMAGE_CERT).py -i $(OUT_CFG)/$(APP_NAME)_CM0p.hex -k $(KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt
+# OLD:	$(PYTHON_PATH) $(APP_NAME)/scripts/$(IMAGE_CERT).py -i $(OUT_CFG)/$(APP_NAME)_CM0p.hex -k $(KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt
+	
+	cysecuretools -t $(CY_SEC_TOOLS_TARGET) image-certificate -i $(OUT_CFG)/$(APP_NAME).hex -k $(KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt
+	cp $(OUT_CFG)/$(APP_NAME).hex $(OUT_CFG)/$(APP_NAME)_CM0p.hex
+	
 endif
 ASM_FILES_APP :=
