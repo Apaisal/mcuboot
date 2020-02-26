@@ -148,16 +148,14 @@ OUT_PLATFORM := $(OUT)/$(PLATFORM)
 
 OUT_CFG := $(OUT_PLATFORM)/$(BUILDCFG)
 
-APP_NAME_TMP := $(APP_NAME)
-override APP_NAME := $(addsuffix _CM0p, $(APP_NAME))
-
 # Set path to cypress key for certificate generation
-KEY ?= $(APP_NAME_TMP)/keys/cy_state_internal.json
+KEY ?= $(APP_NAME)/keys/cy_state_internal.json
 
 # Post build action to execute after main build job
 post_build: $(OUT_CFG)/$(APP_NAME).hex
 ifeq ($(POST_BUILD), 1)
 	$(info [POST_BUILD] - Creating image certificate for $(APP_NAME_TMP))
-	cysecuretools -t $(CY_SEC_TOOLS_TARGET) image-certificate -i $(OUT_CFG)/$(APP_NAME).hex -k $(KEY) -o $(OUT_CFG)/$(APP_NAME).jwt
+	cp $(OUT_CFG)/$(APP_NAME).hex $(OUT_CFG)/$(APP_NAME)_CM0p.hex
+	cysecuretools -t $(CY_SEC_TOOLS_TARGET) image-certificate -i $(OUT_CFG)/$(APP_NAME)_CM0p.hex -k $(KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt
 endif
 ASM_FILES_APP :=
