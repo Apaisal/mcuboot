@@ -46,6 +46,7 @@ SOURCES_SECBOOT_UTILS += $(wildcard $(CUR_LIBS_PATH)/cy_secureboot_utils/cy_base
 SOURCES_SECBOOT_UTILS += $(wildcard $(CUR_LIBS_PATH)/cy_secureboot_utils/cy_cjson/cJSON/*.c)
 SOURCES_SECBOOT_UTILS += $(wildcard $(CUR_LIBS_PATH)/cy_secureboot_utils/flashboot_psacrypto/*.c)
 SOURCES_SECBOOT_UTILS += $(wildcard $(CUR_LIBS_PATH)/cy_secureboot_utils/protections/*.c)
+SOURCES_SECBOOT_UTILS += $(wildcard $(CUR_LIBS_PATH)/cy_secureboot_utils/memory_val/*.c)
 
 # PDL related include directories
 INCLUDE_DIRS_PDL := $(CUR_LIBS_PATH)/pdl/psoc6pdl/drivers/include
@@ -76,6 +77,7 @@ INCLUDE_DIRS_SECBOOT_UTILS += $(CUR_LIBS_PATH)/cy_secureboot_utils/fb_mbedcrypto
 INCLUDE_DIRS_SECBOOT_UTILS += $(CUR_LIBS_PATH)/cy_secureboot_utils/flashboot_psacrypto
 INCLUDE_DIRS_SECBOOT_UTILS += $(CUR_LIBS_PATH)/cy_secureboot_utils/protections
 INCLUDE_DIRS_SECBOOT_UTILS += $(CUR_LIBS_PATH)/cy_secureboot_utils/protections/protections_config
+INCLUDE_DIRS_SECBOOT_UTILS += $(CUR_LIBS_PATH)/cy_secureboot_utils/memory_val
 
 # Collected source files for libraries
 SOURCES_LIBS := $(SOURCES_PDL)

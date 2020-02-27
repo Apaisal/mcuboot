@@ -412,3 +412,9 @@ uint32_t qspi_get_erase_size(void)
     cy_stc_smif_mem_config_t **memCfg = smifBlockConfig_sfdp.memConfig;
     return (*memCfg)->deviceCfg->eraseSize;
 }
+
+uint32_t qspi_get_mem_size(void)
+{
+    cy_stc_smif_mem_config_t **memCfg = smifBlockConfig_sfdp.memConfig;
+    return (*memCfg)->deviceCfg->memSize;
+}
