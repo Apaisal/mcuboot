@@ -55,6 +55,7 @@ cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config);
 cy_en_smif_status_t qspi_init_hardware(void);
 uint32_t qspi_get_prog_size(void);
 uint32_t qspi_get_erase_size(void);
+uint32_t qspi_get_mem_size(void);
 
 SMIF_Type *qspi_get_device(void);
 cy_stc_smif_context_t *qspi_get_context(void);
