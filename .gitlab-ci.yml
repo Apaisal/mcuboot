@@ -28,14 +28,14 @@ cache: &global_cache
     - boot/cypress/libs/core-lib
     - boot/cypress/libs/psoc6hal
     - boot/cypress/libs/cy_secureboot_utils
-    
+
 
 .check_submodules: &check_submodules
     - if [ -z "$(ls -A boot/cypress/libs/cy-mbedtls-acceleration)" ]; then git submodule deinit --all -f; git submodule update --init --recursive; fi
 
 .check_submodules_win: &check_submodules_win
     - if (-not(Test-Path boot/cypress/libs/cy-mbedtls-acceleration/mbedtls_MXCRYPTO)) { git submodule deinit --all -f; git submodule update --init --recursive}
-    
+
 .cleanup_build_params: &cleanup_build_params
     - unset APP_NAME
     - unset APP_SUFX
@@ -50,6 +50,38 @@ cache: &global_cache
     - unset POST_BUILD
     - unset HEADER_OFFSET
     - unset DEFINES_USER
+
+.make_mcuboot_app: &make_mcuboot_app
+    # Collect CypressBootloader for ${PLATFORM}
+    - echo '================================================================================================='
+    - echo '=== Build CypressBootloader application'
+    - echo '=== PLATFORM = $PLATFORM, BUILDCFG = $BUILDCFG, MAKEINFO = $MAKEINFO'
+    - echo '================================================================================================='
+    - export APP_NAME=MCUBootApp
+    - export HEX_NAME=MCUBootApp
+    #- export DEFINES_USER='-DCY_BOOTLOADER_MAJOR=${CY_BOOTLOADER_MAJOR} -DCY_BOOTLOADER_MINOR=${CY_BOOTLOADER_MINOR} -DCY_BOOTLOADER_REV=${CY_BOOTLOADER_REV} -DCY_BOOTLOADER_BUILD=${CY_BOOTLOADER_BUILD}'
+    - export SLOT=''
+    # - *make_signed_app
+    - cd boot/cypress
+    - make clean APP_NAME=$APP_NAME
+    - make app APP_NAME=$APP_NAME PLATFORM=$PLATFORM BUILDCFG=$BUILDCFG MAKEINFO=$MAKEINFO POST_BUILD=0
+    - cd ../..
+    - mkdir -p ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG
+    - mkdir -p ./develop/$PLATFORM/$APP_NAME/$BUILDCFG
+    #
+    # - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
+    # - sh cysign_bootloader -f ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/$HEX_NAME.hex -n PSOC6A_2M
+    #- sh cysign_bootloader -f boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex -n $PLATFORM -v ${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}
+
+    # Collect CypressBootloader for ${PLATFORM} develop
+    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.hex ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
+    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.lst ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
+    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.elf ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
+    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.map ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
+
+    # Collect Signed application for ${PLATFORM} deploy
+    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
+
 
 .make_cybootloader_app: &make_cybootloader_app
     # Collect CypressBootloader for ${PLATFORM}
@@ -117,7 +149,7 @@ cache: &global_cache
     - Copy-Item -Path ./signed/*.jwt -Destination ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/ -Recurse
     - Copy-Item -Path ./signed/*.jwt -Destination ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/ -Recurse
 
-    
+  
 .make_boot_app: &make_boot_app
 
     # Build boot application
@@ -173,7 +205,7 @@ cache: &global_cache
     - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/*.lst -Destination ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/ -Recurse
     - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/*.elf -Destination ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/ -Recurse
     - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/*.map -Destination ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/ -Recurse
- 
+
     # Collect App for deploy
     - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/${HEX_NAME}_unsigned.hex  -Destination ./deploy/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/${HEX_NAME}_unsigned.hex -Recurse
 
@@ -181,11 +213,12 @@ stages:
   - create_cache
   - build_512K
   - build_2M
+  - build_mcubootapps
   - cppcheck
   - tests
   - sim
   - deploy
-  
+
 
 fetch_submodules_mac:
   stage: create_cache
@@ -219,9 +252,95 @@ fetch_submodules_win:
     - *check_submodules_win
 
 
+#######################################################################################################################################################
+##################--------------------------------------------- BUILDS 2M MCUBOOTAPPS ------------------------------------#############################
+#######################################################################################################################################################
 
- 
- 
+mac_build_2M_MCUBootApp:
+    stage: build_mcubootapps
+    tags:
+      - MBED_TEST_MAC1014
+  
+    variables:
+      TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
+  
+    before_script:
+      - python3 --version
+      - export https_proxy=http://proxy.ua.cypress.com:8080
+  
+    script:
+      - pwd
+      - git submodule deinit --all -f
+      - git submodule update --init --recursive
+      
+      - *cleanup_build_params
+      
+      - export PLATFORM=PSOC_062_2M
+      - export BUILDCFG=Debug
+      - export MAKEINFO=1
+      - *make_mcuboot_app
+  
+      - cd boot/cypress
+      - make clean APP_NAME=MCUBootApp
+      - cd ../..
+  
+    artifacts:
+      expire_in: 1 weeks
+      paths:
+        - deploy
+        - develop
+  
+mac_build_062_2M_BlinkyApp:
+    stage: build_mcubootapps
+    tags:
+      - MBED_TEST_MAC1014
+  
+    variables:
+      TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
+  
+    before_script:
+      - python3 --version
+      - export https_proxy=http://proxy.ua.cypress.com:8080
+  
+    script:
+      - pwd
+      - git submodule deinit --all -f
+      - git submodule update --init --recursive
+  
+      ########################### BlinkyApp BOOT ##############################
+      # Build BlinkyApp BOOT for PSOC_062_2M
+      - *cleanup_build_params
+  
+      - export APP_NAME=BlinkyApp
+      - export PLATFORM=PSOC_062_2M
+      - export IMG_TYPE=BOOT
+      - export MULTI_IMAGE=0
+      - export MAKEINFO=0
+  
+      - export BUILDCFG=Debug
+      - *make_boot_app
+  
+      - export BUILDCFG=Release
+      - *make_boot_app
+  
+      ########################### BlinkyApp UPGRADE ##############################
+      # Build BlinkyApp UPGRADE for PSOC_062_2M
+  
+      - export HEADER_OFFSET='0x10000'
+      - export IMG_TYPE=UPGRADE
+  
+      - export BUILDCFG=Debug
+      - *make_boot_app
+  
+      - export BUILDCFG=Release
+      - *make_boot_app
+  
+    artifacts:
+      expire_in: 1 weeks
+      paths:
+        - deploy
+        - develop
+
 #######################################################################################################################################################
 ##################------------------------------------------------ BUILDS 512K -------------------------------------------#############################
 #######################################################################################################################################################
@@ -239,7 +358,7 @@ win_512K_bootloader:
     # install cysecuretools for post build actions
     - python -m pip install pyserial
     - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
     
     - *check_submodules_win   
@@ -248,12 +367,12 @@ win_512K_bootloader:
     - $BUILDCFG='Debug'
     - $MAKEINFO=1
     - *make_cybootloader_app_win
-
+  
     - $PLATFORM='PSOC_064_512K'
     - $BUILDCFG='Release'
     - $MAKEINFO=0
     - *make_cybootloader_app_win
- 
+  
     - cd boot/cypress
     - make clean APP_NAME=CypressBootloader
     - cd ../..
@@ -278,7 +397,7 @@ win_512K_Multi_BlinkyApp:
     # install cysecuretools for post build actions
     - python -m pip install pyserial
     - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules_win   
@@ -319,7 +438,7 @@ win_512K_Multi_BlinkyApp:
     paths:
       - deploy
       - develop
-      
+
 win_512K_SecureBlinkyApp:
   stage: build_512K
   tags:
@@ -333,7 +452,7 @@ win_512K_SecureBlinkyApp:
     # install cysecuretools for post build actions
     - python -m pip install pyserial
     - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules_win
@@ -388,7 +507,7 @@ win_512K_BlinkyApp:
     # install cysecuretools for post build actions
     - python -m pip install pyserial
     - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules_win
@@ -446,7 +565,7 @@ mac_512K_bootloader:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules
@@ -473,8 +592,8 @@ mac_512K_bootloader:
     paths:
       - deploy
       - develop
-      
-      
+    
+    
 mac_512K_Multi_BlinkyApp:
   stage: build_512K
   tags:
@@ -493,7 +612,7 @@ mac_512K_Multi_BlinkyApp:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules
@@ -536,8 +655,8 @@ mac_512K_Multi_BlinkyApp:
     paths:
       - deploy
       - develop
-      
-      
+    
+    
 mac_512K_SecureBlinkyApp:
   stage: build_512K
   tags:
@@ -556,7 +675,7 @@ mac_512K_SecureBlinkyApp:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules
@@ -617,7 +736,7 @@ mac_512K_BlinkyApp:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules
@@ -674,7 +793,7 @@ lin_512K_bootloader:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules
@@ -701,8 +820,8 @@ lin_512K_bootloader:
     paths:
       - deploy
       - develop
-      
-      
+    
+    
 lin_512K_Multi_BlinkyApp:
   stage: build_512K
   tags:
@@ -721,7 +840,7 @@ lin_512K_Multi_BlinkyApp:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules
@@ -764,8 +883,8 @@ lin_512K_Multi_BlinkyApp:
     paths:
       - deploy
       - develop
-      
-      
+    
+    
 lin_512K_SecureBlinkyApp:
   stage: build_512K
   tags:
@@ -784,7 +903,7 @@ lin_512K_SecureBlinkyApp:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules
@@ -845,7 +964,7 @@ lin_512K_BlinkyApp:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules
@@ -901,7 +1020,7 @@ win_2M_bootloader:
     # install cysecuretools for post build actions
     - python -m pip install pyserial
     - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
     
     - *check_submodules_win   
@@ -915,7 +1034,7 @@ win_2M_bootloader:
     - $BUILDCFG='Release'
     - $MAKEINFO=0
     - *make_cybootloader_app_win
- 
+
     - cd boot/cypress
     - make clean APP_NAME=CypressBootloader
     - cd ../..
@@ -940,7 +1059,7 @@ win_2M_Multi_BlinkyApp:
     # install cysecuretools for post build actions
     - python -m pip install pyserial
     - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules_win   
@@ -981,7 +1100,7 @@ win_2M_Multi_BlinkyApp:
     paths:
       - deploy
       - develop
-      
+    
 win_2M_SecureBlinkyApp:
   stage: build_2M
   tags:
@@ -995,7 +1114,7 @@ win_2M_SecureBlinkyApp:
     # install cysecuretools for post build actions
     - python -m pip install pyserial
     - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules_win
@@ -1050,7 +1169,7 @@ win_2M_BlinkyApp:
     # install cysecuretools for post build actions
     - python -m pip install pyserial
     - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
 
     - *check_submodules_win
@@ -1106,7 +1225,7 @@ mac_2M_bootloader:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
 
     - *check_submodules
@@ -1133,8 +1252,8 @@ mac_2M_bootloader:
     paths:
       - deploy
       - develop
-      
-      
+    
+    
 mac_2M_Multi_BlinkyApp:
   stage: build_2M
   tags:
@@ -1153,7 +1272,7 @@ mac_2M_Multi_BlinkyApp:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
 
     - *check_submodules
@@ -1196,8 +1315,8 @@ mac_2M_Multi_BlinkyApp:
     paths:
       - deploy
       - develop
-      
-      
+    
+    
 mac_2M_SecureBlinkyApp:
   stage: build_2M
   tags:
@@ -1334,7 +1453,7 @@ lin_2M_bootloader:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
 
     - *check_submodules
@@ -1361,8 +1480,8 @@ lin_2M_bootloader:
     paths:
       - deploy
       - develop
-      
-      
+    
+    
 lin_2M_Multi_BlinkyApp:
   stage: build_2M
   tags:
@@ -1381,7 +1500,7 @@ lin_2M_Multi_BlinkyApp:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
 
     - *check_submodules
@@ -1424,8 +1543,8 @@ lin_2M_Multi_BlinkyApp:
     paths:
       - deploy
       - develop
-      
-      
+    
+    
 lin_2M_SecureBlinkyApp:
   stage: build_2M
   tags:
@@ -1444,7 +1563,7 @@ lin_2M_SecureBlinkyApp:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
 
     - *check_submodules
@@ -1505,7 +1624,7 @@ lin_2M_BlinkyApp:
     # install cysecuretools for post build actions
     - python3 -m pip install pyserial
     - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
 
     - *check_submodules
@@ -1566,7 +1685,7 @@ mac_test_512K:
     - virtualenv venv
     - source venv/bin/activate
     - python3 -m pip install pyserial
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
     - pwd
     - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_Release
@@ -1627,7 +1746,7 @@ mac_test_2M:
     - virtualenv venv
     - source venv/bin/activate
     - python3 -m pip install pyserial
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-ww2009.3
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
     - pwd
     - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_Release
@@ -1683,7 +1802,7 @@ win_cpp_check:
     - make run_cppcheck
     - cd ../../
   when: always
-  
+
 
 .MCUboot_simulator:
   stage: sim

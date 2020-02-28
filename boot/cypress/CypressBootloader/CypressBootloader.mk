@@ -33,7 +33,9 @@ endif
 
 CUR_APP_PATH = $(CURDIR)/$(APP_NAME)
 
+# Set path to cypress key for certificate generation
 # Choose script name base for certificate generation
+KEY ?= $(APP_NAME)/scripts/cy_state_internal.json
 IMAGE_CERT := image_cert
 CY_BOOTLOADER_LOG_LEVEL ?= MCUBOOT_LOG_LEVEL_INFO
 
@@ -87,6 +89,7 @@ DEFINES_APP += -D__NO_SYSTEM_INIT
 DEFINES_APP += -DCY_BOOTLOADER_DIAGNOSTIC_GPIO
 DEFINES_APP += $(DEFINES_USER)
 DEFINES_APP += -D$(BUILDCFG)
+DEFINES_APP += -D$(APP_NAME)
 
 ifeq ($(BUILDCFG), Debug)
 DEFINES_APP += -DMCUBOOT_LOG_LEVEL=$(CY_BOOTLOADER_LOG_LEVEL)
@@ -148,14 +151,12 @@ OUT_PLATFORM := $(OUT)/$(PLATFORM)
 
 OUT_CFG := $(OUT_PLATFORM)/$(BUILDCFG)
 
-# Set path to cypress key for certificate generation
-KEY ?= $(APP_NAME)/keys/cy_state_internal.json
-
 # Post build action to execute after main build job
 post_build: $(OUT_CFG)/$(APP_NAME).hex
+	$(info [POST_BUILD] - Calculating CRC of TOC3 for $(APP_NAME))
+	$(PYTHON_PATH) $(APP_NAME)/scripts/toc3_crc.py $(OUT_CFG)/$(APP_NAME).elf $(OUT_CFG)/$(APP_NAME)_CM0p.hex
 ifeq ($(POST_BUILD), 1)
-	$(info [POST_BUILD] - Creating image certificate for $(APP_NAME_TMP))
-	cp $(OUT_CFG)/$(APP_NAME).hex $(OUT_CFG)/$(APP_NAME)_CM0p.hex
-	cysecuretools -t $(CY_SEC_TOOLS_TARGET) image-certificate -i $(OUT_CFG)/$(APP_NAME)_CM0p.hex -k $(KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt
+	$(info [POST_BUILD] - Creating image certificate for $(APP_NAME))
+	$(PYTHON_PATH) $(APP_NAME)/scripts/$(IMAGE_CERT).py -i $(OUT_CFG)/$(APP_NAME)_CM0p.hex -k $(KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt
 endif
 ASM_FILES_APP :=
