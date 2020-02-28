@@ -35,6 +35,7 @@ cache: &global_cache
 
 .check_submodules_win: &check_submodules_win
     - if (-not(Test-Path boot/cypress/libs/cy-mbedtls-acceleration/mbedtls_MXCRYPTO)) { git submodule deinit --all -f; git submodule update --init --recursive}
+
 .cleanup_build_params: &cleanup_build_params
     - unset APP_NAME
     - unset APP_SUFX
