@@ -18,7 +18,7 @@
  */
 
 /*
- * Modifications are Copyright (c) 2019 Arm Limited.
+ * Modifications are Copyright (c) 2019-2020 Arm Limited.
  */
 
 /**
@@ -38,6 +38,7 @@
 #include "bootutil_priv.h"
 #include "swap_priv.h"
 #include "bootutil/bootutil_log.h"
+#include "bootutil/security_cnt.h"
 
 #ifdef MCUBOOT_ENC_IMAGES
 #include "bootutil/enc_key.h"
@@ -378,7 +379,7 @@ done:
 }
 
 /*
- * Validate image hash/signature in a slot.
+ * Validate image hash/signature and security counter in a slot.
  */
 static int
 boot_image_check(struct boot_loader_state *state, struct image_header *hdr,
@@ -654,6 +655,49 @@ boot_validated_swap_type(struct boot_loader_state *state,
 }
 
 /**
+ * Updates the stored security counter value with the image's security counter
+ * value which resides in the given slot, only if it's greater than the stored
+ * value.
+ *
+ * @param image_index   Index of the image to determine which security
+ *                      counter to update.
+ * @param slot          Slot number of the image.
+ * @param hdr           Pointer to the image header structure of the image
+ *                      that is currently stored in the given slot.
+ *
+ * @return              0 on success; nonzero on failure.
+ */
+static int
+boot_update_security_counter(uint8_t image_index, int slot,
+                             struct image_header *hdr)
+{
+    const struct flash_area *fap = NULL;
+    uint32_t img_security_cnt;
+    int rc;
+
+    rc = flash_area_open(flash_area_id_from_multi_image_slot(image_index, slot),
+                         &fap);
+    if (rc != 0) {
+        rc = BOOT_EFLASH;
+        goto done;
+    }
+
+    rc = bootutil_get_img_security_cnt(hdr, fap, &img_security_cnt);
+    if (rc != 0) {
+        goto done;
+    }
+
+    rc = boot_nv_security_counter_update(image_index, img_security_cnt);
+    if (rc != 0) {
+        goto done;
+    }
+
+done:
+    flash_area_close(fap);
+    return rc;
+}
+
+/**
  * Erases a region of flash.
  *
  * @param flash_area           The flash_area containing the region to erase.
@@ -867,6 +911,18 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
     BOOT_LOG_INF("Copying the secondary slot to the primary slot: 0x%x bytes",
                  size);
     rc = boot_copy_region(state, fap_secondary_slot, fap_primary_slot, 0, 0, size);
+
+    /* Update the stored security counter with the new image's security counter
+     * value. Both slots hold the new image at this point, but the secondary
+     * slot's image header must be passed since the image headers in the
+     * boot_data structure have not been updated yet.
+     */
+    rc = boot_update_security_counter(BOOT_CURR_IMG(state), BOOT_PRIMARY_SLOT,
+                                boot_img_hdr(state, BOOT_SECONDARY_SLOT));
+    if (rc != 0) {
+        BOOT_LOG_ERR("Security counter update failed after image upgrade.");
+        return rc;
+    }
 
     /*
      * Erases header and trailer. The trailer is erased because when a new
@@ -1237,6 +1293,27 @@ boot_perform_update(struct boot_loader_state *state, struct boot_status *bs)
         rc = swap_set_image_ok(BOOT_CURR_IMG(state));
         if (rc != 0) {
             BOOT_SWAP_TYPE(state) = swap_type = BOOT_SWAP_TYPE_PANIC;
+        }
+    }
+
+    if (swap_type == BOOT_SWAP_TYPE_PERM) {
+        /* Update the stored security counter with the new image's security
+         * counter value. The primary slot holds the new image at this point,
+         * but the secondary slot's image header must be passed since image
+         * headers in the boot_data structure have not been updated yet.
+         *
+         * In case of a permanent image swap mcuboot will never attempt to
+         * revert the images on the next reboot. Therefore, the security
+         * counter must be increased right after the image upgrade.
+         */
+        rc = boot_update_security_counter(
+                                    BOOT_CURR_IMG(state),
+                                    BOOT_PRIMARY_SLOT,
+                                    boot_img_hdr(state, BOOT_SECONDARY_SLOT));
+        if (rc != 0) {
+            BOOT_LOG_ERR("Security counter update failed after "
+                         "image upgrade.");
+            BOOT_SWAP_TYPE(state) = BOOT_SWAP_TYPE_PANIC;
         }
     }
 
@@ -1711,7 +1788,29 @@ context_boot_go(struct boot_loader_state *state, struct boot_rsp *rsp)
             rc = BOOT_EBADIMAGE;
             goto out;
         }
-#endif
+#endif /* MCUBOOT_VALIDATE_PRIMARY_SLOT */
+
+        /* Update the stored security counter with the active image's security
+         * counter value. It will only be updated if the new security counter is
+         * greater than the stored value.
+         *
+         * In case of a successful image swapping when the swap type is TEST the
+         * security counter can be increased only after a reset, when the swap
+         * type is NONE and the image has marked itself "OK" (the image_ok flag
+         * has been set). This way a "revert" can be performed when it's
+         * necessary.
+         */
+        if (BOOT_SWAP_TYPE(state) == BOOT_SWAP_TYPE_NONE) {
+            rc = boot_update_security_counter(
+                                    BOOT_CURR_IMG(state),
+                                    BOOT_PRIMARY_SLOT,
+                                    boot_img_hdr(state, BOOT_PRIMARY_SLOT));
+            if (rc != 0) {
+                BOOT_LOG_ERR("Security counter update failed after image "
+                             "validation.");
+                goto out;
+            }
+        }
     }
 
     // TODO: run-time multi-image

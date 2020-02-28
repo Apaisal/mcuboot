@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 #
 # Copyright 2017 Linaro Limited
-# Copyright 2019 Arm Limited
+# Copyright 2019-2020 Arm Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -234,6 +234,8 @@ class BasedIntParamType(click.ParamType):
 @click.option('-d', '--dependencies', callback=get_dependencies,
               required=False, help='''Add dependence on another image, format:
               "(<image_ID>,<image_version>), ... "''')
+@click.option('-s', '--security-counter', type=BasedIntParamType(),
+              help='Specify the security counter value')
 @click.option('-v', '--version', callback=validate_version,  required=True)
 @click.option('--align', type=click.Choice(['1', '2', '4', '8']),
               required=True)
@@ -245,13 +247,15 @@ class BasedIntParamType(click.ParamType):
 @click.pass_context
 def sign(ctx, key, align, version, header_size, pad_header, slot_size, pad,
          max_sectors, overwrite_only, endian, encrypt, infile, outfile,
-         dependencies, load_addr, hex_addr, erased_val, save_enctlv):
+         dependencies, load_addr, hex_addr, erased_val, save_enctlv,
+         security_counter):
     img = image.Image(version=decode_version(version), header_size=header_size,
                       pad_header=pad_header, pad=pad, align=int(align),
                       slot_size=slot_size, max_sectors=max_sectors,
                       overwrite_only=overwrite_only, endian=endian,
                       load_addr=load_addr, erased_val=erased_val,
-                      save_enctlv=save_enctlv)
+                      save_enctlv=save_enctlv,
+                      security_counter=security_counter)
     img.load(infile)
     key = load_key(key) if key else None
     enckey = load_key(encrypt) if encrypt else None

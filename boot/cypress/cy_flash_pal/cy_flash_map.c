@@ -80,6 +80,10 @@
 
 #include "cy_pdl.h"
 
+#ifdef CypressBootloader
+#include "cy_memory_val.h"
+#endif
+
 /*
  * For now, we only support one flash device.
  *
@@ -270,6 +274,10 @@ int flash_area_read(const struct flash_area *fa, uint32_t off, void *dst,
     /* convert to absolute address inside a device*/
     addr = fa->fa_off + off;
 
+#ifdef CypressBootloader
+    assert(!(Cy_MemoryValidateRange(fa, addr, len)));
+#endif
+
     if (fa->fa_device_id == FLASH_DEVICE_INTERNAL_FLASH)
     {
         /* flash read by simple memory copying */
@@ -313,6 +321,9 @@ int flash_area_write(const struct flash_area *fa, uint32_t off,
     write_start_addr = fa->fa_off + off;
     write_end_addr = fa->fa_off + off + len;
 
+#ifdef CypressBootloader
+    assert(!(Cy_MemoryValidateRange(fa, write_start_addr, len)));
+#endif
     if (fa->fa_device_id == FLASH_DEVICE_INTERNAL_FLASH)
     {
         assert(!(len % CY_FLASH_SIZEOF_ROW));
@@ -368,6 +379,10 @@ int flash_area_erase(const struct flash_area *fa, uint32_t off, uint32_t len)
     /* convert to absolute address inside a device*/
     erase_start_addr = fa->fa_off + off;
     erase_end_addr = fa->fa_off + off + len;
+
+#ifdef CypressBootloader
+    assert(!(Cy_MemoryValidateRange(fa, erase_start_addr, len)));
+#endif
 
     if (fa->fa_device_id == FLASH_DEVICE_INTERNAL_FLASH)
     {

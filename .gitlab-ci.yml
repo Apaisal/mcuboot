@@ -29,6 +29,7 @@ cache: &global_cache
     - boot/cypress/libs/psoc6hal
     - boot/cypress/libs/cy_secureboot_utils
 
+
 .check_submodules: &check_submodules
     - if [ -z "$(ls -A boot/cypress/libs/cy-mbedtls-acceleration)" ]; then git submodule deinit --all -f; git submodule update --init --recursive; fi
 

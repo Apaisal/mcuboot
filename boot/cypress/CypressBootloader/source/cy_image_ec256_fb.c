@@ -158,8 +158,8 @@ static int Cy_SignatureDER2ASN1(uint8 *signIn, uint8 *signOut)
      * 0x21 - Length of s value (0x20 or 0x21)
      * 7a98...ed - s value, Big Endian
      * */
-    int32_t r_len, s_len;
-    int32_t r_offset, s_offset;
+    int32_t r_len=0, s_len=0;
+    int32_t r_offset=0, s_offset=0;
 
     /* check prefix */
     if(CY_SIG_DER_PREFIX != signIn[0])
@@ -248,6 +248,10 @@ bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, size_t slen,
     uint8_t signature[PSACRYPTO_SIGN_RS_SIZE * 2];
     psa_status_t psa_res;
     fb_psa_key_handle_t key_handle;
+
+    /* Suppress unused variable warnings */
+    (void)hlen;
+    (void)slen;
 
     psa_res = Cy_SignatureDER2ASN1(sig, signature);
 

@@ -19,7 +19,7 @@
  /***************************************************************************//**
 * \copyright
 *
-* (c) 2018-2019, Cypress Semiconductor Corporation
+* (c) 2018-2020, Cypress Semiconductor Corporation
 * or a subsidiary of Cypress Semiconductor Corporation. All rights
 * reserved.
 *
@@ -78,6 +78,7 @@
 #include "mcuboot_config/mcuboot_config.h"
 
 #include "bootutil/bootutil_log.h"
+#include "bootutil/security_cnt.h"
 
 #ifdef MCUBOOT_ENC_IMAGES
 #include "bootutil/enc_key.h"
@@ -92,9 +93,7 @@
 
 #include "bootutil_priv.h"
 
-#include "cy_jwt_policy.h"
-
-extern bnu_policy_t cy_bl_bnu_policy;
+#include "cy_image_utils.h"
 
 /* Additional TLV tags */
 #define IMAGE_TLV_CYSB_IMAGE_ID            0x81   /* Image ID */
@@ -238,171 +237,97 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
 #    define SIG_BUF_SIZE 32 /* no signing, sha256 digest only */
 #endif
 
-#ifdef EXPECTED_SIG_TLV
-int
-bootutil_find_key(uint8_t *keyhash, uint8_t keyhash_len)
+/**
+ * Reads the value of an image's selected TLV tag
+ *
+ * @param hdr           Pointer to the image header structure.
+ * @param fap           Pointer to a description structure of the image's
+ *                      flash area.
+ * @param security_cnt  Pointer to store the resultvalue.
+ *
+ * @return              0 on success; nonzero on failure.
+ */
+static int
+bootutil_get_tag_value(struct image_header *hdr,
+                              const struct flash_area *fap,
+                              uint16_t tag_id,
+                              void *tag_value, uint16_t tag_len)
 {
-	psa_status_t psa_ret = -1;
-    bootutil_sha256_context sha256_ctx;
-    int i = 0;
-    const struct bootutil_key *key;
-    uint8_t hash[PSA_HASH_SIZE(PSA_ALG_SHA_256)];
+    struct image_tlv_iter it;
+    uint32_t off;
+    uint16_t len;
+    uint32_t found = 0;
+    int32_t rc;
 
-    assert(keyhash_len <= PSA_HASH_SIZE(PSA_ALG_SHA_256));
-
-    if(bootutil_keys[0].key == NULL)
-    {
-        /* skip [0] if go through PSA key storage */
-    	i = 1;
+    if ((hdr == NULL) ||
+        (fap == NULL) ||
+        (tag_value == NULL)) {
+        /* Invalid parameter. */
+        return BOOT_EBADARGS;
     }
 
-    for (; i < bootutil_key_cnt; i++) {
-        key = &bootutil_keys[i];
+    /* The security counter TLV is in the protected part of the TLV area. */
+    if (hdr->ih_protect_tlv_size == 0) {
+        return BOOT_EBADIMAGE;
+    }
 
-        if (NULL != key->key)
-        {
-            psa_ret = bootutil_sha256_init(&sha256_ctx);
-            if(0 == psa_ret)
-            {
-                psa_ret = bootutil_sha256_update(&sha256_ctx, key->key, *key->len);
-            }
-            if(0 == psa_ret)
-            {
-                psa_ret = bootutil_sha256_finish(&sha256_ctx, hash);
-            }
-            if(0 == psa_ret)
-            {
-                if (!memcmp(hash, keyhash, keyhash_len)) {
-                    return i;
-                }
-                else
-                {
-                    psa_ret = -1;
-                }
-            }
-            else
-            {
-                psa_ret = -1;
-            }
+    rc = bootutil_tlv_iter_begin(&it, hdr, fap, tag_id, true);
+    if (rc) {
+        return rc;
+    }
+
+    /* Traverse through the protected TLV area to find
+     * the security counter TLV.
+     */
+    while (true) {
+        rc = bootutil_tlv_iter_next(&it, &off, &len, NULL);
+        if (rc < 0) {
+            return -1;
+        } else if (rc > 0) {
+            break;
         }
-    }
-    return psa_ret;
-}
 
-#endif
-
-static int cy_bootutil_get_multi_idx(const struct flash_area *fap)
-{
-    int multi_idx = -1;
-
-    /* find out if it is some of multi-image */
-    if((fap->fa_id == FLASH_AREA_IMAGE_PRIMARY(0)) ||
-        (fap->fa_id == FLASH_AREA_IMAGE_SECONDARY(0)))
-    {
-        multi_idx = 0;
-    }
-    else
-    if((fap->fa_id == FLASH_AREA_IMAGE_PRIMARY(1)) ||
-        (fap->fa_id == FLASH_AREA_IMAGE_SECONDARY(1)))
-    {
-        multi_idx = 1;
-    }
-
-    return multi_idx;
-}
-
-static int cy_bootutil_get_slot_id(const struct flash_area *fap)
-{
-    int slot_id = -1;
-
-    /* find out if it is slot_0 or slot_1*/
-    if((fap->fa_id == FLASH_AREA_IMAGE_PRIMARY(0)) ||
-        (fap->fa_id == FLASH_AREA_IMAGE_PRIMARY(1)))
-    {
-        slot_id = 0;
-    }
-    else
-    if((fap->fa_id == FLASH_AREA_IMAGE_SECONDARY(0)) ||
-        (fap->fa_id == FLASH_AREA_IMAGE_SECONDARY(1)))
-    {
-        slot_id = 1;
-    }
-
-    return slot_id;
-}
-
-static int cy_bootutil_find_key(const struct flash_area *fap)
-{
-    int key = 0;
-    int multi_idx = -1;
-    int slot_id = -1;
-
-    /* find out if it is some of multi-image */
-    multi_idx = cy_bootutil_get_multi_idx(fap);
-
-    if (multi_idx >= 0)
-    {
-        /* find out if it is slot_0 or slot_1*/
-        slot_id = cy_bootutil_get_slot_id(fap);
-
-        if (slot_id >= 0)
-        {
-            if (slot_id > 0)
-            {
-                key = cy_bl_bnu_policy.bnu_img_policy[multi_idx].upgrade_auth[0];
-            }
-            else
-            {
-                key = cy_bl_bnu_policy.bnu_img_policy[multi_idx].boot_auth[0];
-            }
+        if (len != tag_len) {
+            /* Value size is not valid. */
+            return BOOT_EBADIMAGE;
         }
+
+        rc = flash_area_read(fap, off, tag_value, len);
+        if (rc != 0) {
+            return BOOT_EFLASH;
+        }
+
+        /* Security counter has been found. */
+        found = 1;
+        break;
     }
 
-    return key;
+    if (found) {
+        return 0;
+    }
+
+    return -1;
 }
 
-static int cy_bootutil_check_image_id(const struct flash_area *fap, uint8_t image_id)
+/**
+ * Reads the value of an image's security counter.
+ *
+ * @param hdr           Pointer to the image header structure.
+ * @param fap           Pointer to a description structure of the image's
+ *                      flash area.
+ * @param security_cnt  Pointer to store the security counter value.
+ *
+ * @return              0 on success; nonzero on failure.
+ */
+int32_t
+bootutil_get_img_security_cnt(struct image_header *hdr,
+                              const struct flash_area *fap,
+                              uint32_t *img_security_cnt)
 {
-    int rc = 1;
-    int img_idx;
+    /* clear the destination variable */
+    *img_security_cnt = 0;
 
-    img_idx = cy_bootutil_get_multi_idx(fap);
-
-    if (img_idx >= 0)
-    {
-        rc = (int)(image_id != cy_bl_bnu_policy.bnu_img_policy[img_idx].id);
-    }
-
-    return rc;
-}
-
-static int cy_bootutil_check_upgrade(const struct flash_area *fap)
-{
-    int rc = 1;
-    int img_idx, slot_id;
-
-    slot_id = cy_bootutil_get_slot_id(fap);
-
-    if (slot_id >= 0)
-    {
-        if (slot_id > 0)
-        {
-            /* This is an UPGRADE slot */
-            img_idx = cy_bootutil_get_multi_idx(fap);
-
-            if (img_idx >= 0)
-            {
-                rc = (int)(!cy_bl_bnu_policy.bnu_img_policy[img_idx].upgrade);
-            }
-        }
-        else
-        {
-            /* This is a BOOT slot, no upgrade policy checking */
-            rc = 0;
-        }
-    }
-
-    return rc;
+    return bootutil_get_tag_value(hdr, fap, IMAGE_TLV_CYSB_ROLLBACK_CNT, (void *)img_security_cnt, sizeof(uint8_t));
 }
 
 /*
@@ -427,9 +352,14 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     struct image_tlv_iter it;
     uint8_t buf[SIG_BUF_SIZE];
     uint8_t hash[32];
+    uint32_t security_cnt = UINT32_MAX;
+    uint8_t  img_security_cnt = 0;        // currently rollbackcounter value in the image is uint8_t type
+    int security_counter_valid = 0;
     int rc;
 
     uint8_t image_id = 0u;
+
+    BOOT_LOG_DBG("> Validate image, index = %d", (int)image_index);
 
     rc = bootutil_img_hash(enc_state, image_index, hdr, fap, tmp_buf,
             tmp_buf_sz, hash, seed, seed_len);
@@ -478,6 +408,8 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                 if (rc) {
                     return -1;
                 }
+
+                BOOT_LOG_DBG("* Check image ID, index = %d, ID = %d", (int)image_index, (int)image_id);
 
                 valid_image_id = 1;
 
@@ -546,27 +478,67 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                 }
                 break;
         #endif /* EXPECTED_SIG_TLV */
+            // case IMAGE_TLV_SEC_CNT:
+            case IMAGE_TLV_CYSB_ROLLBACK_CNT:
+                {
+                    /*
+                     * Verify the image's security counter.
+                     * This must always be present.
+                     */
+                    if (len != sizeof(img_security_cnt)) {
+                        /* Security counter is not valid. */
+                        BOOT_LOG_ERR("Invalid security counter TLV size, image ID = %d", (int)image_id);
+                        return -1;
+                    }
+
+                    rc = flash_area_read(fap, off, &img_security_cnt, len);
+                    if (rc) {
+                        return rc;
+                    }
+
+                    rc = boot_nv_security_counter_get(image_index, &security_cnt);
+                    if (rc) {
+                        return rc;
+                    }
+
+                    /* Compare the new image's security counter value against the
+                     * stored security counter value.
+                     */
+                    if ((uint32_t)img_security_cnt >= (uint32_t)security_cnt) {
+                        /* The image's security counter has been successfully verified. */
+                        security_counter_valid = 1;
+                    }
+                }
+                break;
             default:
                 break;
         }
     }
 
     if (!valid_sha256) {
-        BOOT_LOG_INF("Invalid SHA256 digest of bootable image") ;
+        BOOT_LOG_ERR("Invalid SHA256 digest of bootable image, ID = %d", (int)image_id);
         return -1;
     }
 
     if (!valid_image_id) {
-        BOOT_LOG_INF("Invalid image ID of bootable image") ;
+        BOOT_LOG_ERR("Invalid image ID of bootable image, ID = %d", (int)image_id);
+        return -1;
+    }
+
+    if (!security_counter_valid) {
+        /* The image's security counter is not accepted. */
+        BOOT_LOG_ERR("Invalid secure counter of bootable image, ID = %d, image cnt(%d) < stored cnt(%d)", (int)image_id, (int)img_security_cnt, (int)security_cnt);
         return -1;
     }
 
 #ifdef EXPECTED_SIG_TLV
     if (!valid_signature) {
-        BOOT_LOG_INF("Invalid signature of bootable image") ;
+        BOOT_LOG_ERR("Invalid signature of bootable image, ID = %d", (int)image_id);
         return -1;
     }
 #endif
+
+    BOOT_LOG_DBG("< Image validated successfully, ID = %d, index = %d", (int)image_id, (int)image_index);
 
     return 0;
 }
