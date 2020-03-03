@@ -1,382 +1,40 @@
-variables:
-    GIT_STRATEGY: clone
-    GIT_CLEAN_FLAGS: -ffdx -e boot/cypress/libs -e venv
+stages:
+  - Build_512K
+  - Build_2M
+  - cppcheck
+  - tests
+  - deploy
 
-    MAJOR_VERSION: "1"
-    MINOR_VERSION: "1"
-    PATCH_VERSION: "0"
-    BUILD_NUMBER: $CI_PIPELINE_IID
+variables:
+    GIT_CLEAN_FLAGS: -ffdx -e boot/cypress/libs -e venv
+    GIT_SUBMODULE_STRATEGY: recursive
 
     CY_BOOTLOADER_MAJOR: 1
     CY_BOOTLOADER_MINOR: 1
     CY_BOOTLOADER_REV: 0
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
-
-cache: &global_cache
-  key: ${CI_COMMIT_SHORT_SHA}
-  paths:
-    - ext/mbedtls
-    - boot/cypress/libs/pdl/psoc6pdl
-    - boot/cypress/libs/mbedtls
-    - boot/cypress/libs/bsp/TARGET_CY8CPROTO-062-4343W
-    - boot/cypress/libs/retarget-io
-    - boot/cypress/libs/bsp/TARGET_CY8CKIT-064S2-4343W
-    - boot/cypress/libs/bsp/TARGET_CY8CKIT-064S2-4343W-M0
-    - boot/cypress/libs/bsp/TARGET_CY8CKIT-064B0S2-4343W
-    - boot/cypress/libs/cy-mbedtls-acceleration
-    - boot/cypress/libs/bsp/TARGET_CY8CPROTO-064B0S3
-    - boot/cypress/libs/core-lib
-    - boot/cypress/libs/psoc6hal
-    - boot/cypress/libs/cy_secureboot_utils
-
-
-.check_submodules: &check_submodules
-    - if [ -z "$(ls -A boot/cypress/libs/cy-mbedtls-acceleration)" ]; then git submodule deinit --all -f; git submodule update --init --recursive; fi
-
-.check_submodules_win: &check_submodules_win
-    - if (-not(Test-Path boot/cypress/libs/cy-mbedtls-acceleration/mbedtls_MXCRYPTO)) { git submodule deinit --all -f; git submodule update --init --recursive}
-
-.cleanup_build_params: &cleanup_build_params
-    - unset APP_NAME
-    - unset APP_SUFX
-    - unset HEX_NAME
-    - unset SLOT
-    - unset TARGET
-    - unset PLATFORM
-    - unset BUILDCFG
-    - unset IMG_TYPE
-    - unset MULTI_IMAGE
-    - unset MAKEINFO
-    - unset POST_BUILD
-    - unset HEADER_OFFSET
-    - unset DEFINES_USER
-
-.make_mcuboot_app: &make_mcuboot_app
-    # Collect CypressBootloader for ${PLATFORM}
-    - echo '================================================================================================='
-    - echo '=== Build CypressBootloader application'
-    - echo '=== PLATFORM = $PLATFORM, BUILDCFG = $BUILDCFG, MAKEINFO = $MAKEINFO'
-    - echo '================================================================================================='
-    - export APP_NAME=MCUBootApp
-    - export HEX_NAME=MCUBootApp
-    #- export DEFINES_USER='-DCY_BOOTLOADER_MAJOR=${CY_BOOTLOADER_MAJOR} -DCY_BOOTLOADER_MINOR=${CY_BOOTLOADER_MINOR} -DCY_BOOTLOADER_REV=${CY_BOOTLOADER_REV} -DCY_BOOTLOADER_BUILD=${CY_BOOTLOADER_BUILD}'
-    - export SLOT=''
-    # - *make_signed_app
-    - cd boot/cypress
-    - make clean APP_NAME=$APP_NAME
-    - make app APP_NAME=$APP_NAME PLATFORM=$PLATFORM BUILDCFG=$BUILDCFG MAKEINFO=$MAKEINFO POST_BUILD=0
-    - cd ../..
-    - mkdir -p ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG
-    - mkdir -p ./develop/$PLATFORM/$APP_NAME/$BUILDCFG
-    #
-    # - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
-    # - sh cysign_bootloader -f ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/$HEX_NAME.hex -n PSOC6A_2M
-    #- sh cysign_bootloader -f boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex -n $PLATFORM -v ${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}
-
-    # Collect CypressBootloader for ${PLATFORM} develop
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.hex ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.lst ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.elf ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.map ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
-
-    # Collect Signed application for ${PLATFORM} deploy
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
-
-
-.make_cybootloader_app: &make_cybootloader_app
-    # Collect CypressBootloader for ${PLATFORM}
-    - echo '================================================================================================='
-    - echo '=== Build CypressBootloader application'
-    - echo '=== PLATFORM = $PLATFORM, BUILDCFG = $BUILDCFG, MAKEINFO = $MAKEINFO'
-    - echo '================================================================================================='
-    - export APP_NAME=CypressBootloader
-    - export HEX_NAME=CypressBootloader_CM0p
-    - export DEFINES_USER='-DCY_BOOTLOADER_MAJOR=${CY_BOOTLOADER_MAJOR} -DCY_BOOTLOADER_MINOR=${CY_BOOTLOADER_MINOR} -DCY_BOOTLOADER_REV=${CY_BOOTLOADER_REV} -DCY_BOOTLOADER_BUILD=${CY_BOOTLOADER_BUILD}'
-    - export SLOT=''
-    # - *make_signed_app
-    - cd boot/cypress
-    - make clean APP_NAME=$APP_NAME
-    - make app APP_NAME=$APP_NAME PLATFORM=$PLATFORM BUILDCFG=$BUILDCFG MAKEINFO=$MAKEINFO POST_BUILD=0
-    - cd ../..
-    - mkdir -p ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG
-    - mkdir -p ./develop/$PLATFORM/$APP_NAME/$BUILDCFG
-    #
-    # - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
-    # - sh cysign_bootloader -f ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/$HEX_NAME.hex -n PSOC6A_2M
-    - cysign_bootloader -f boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex -n $PLATFORM -v ${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}
-
-    # Collect CypressBootloader for ${PLATFORM} develop
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.hex ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.lst ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.elf ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.map ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
-
-    # Collect Signed application for ${PLATFORM} deploy
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
-    - cp -r ./signed/*.jwt ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
-    - cp -r ./signed/*.jwt ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/
-
-.make_cybootloader_app_win: &make_cybootloader_app_win
-    # Collect CypressBootloader for ${PLATFORM}
-    - echo '================================================================================================='
-    - echo '=== Build CypressBootloader application'
-    - echo '=== PLATFORM = $PLATFORM, BUILDCFG = $BUILDCFG, MAKEINFO = $MAKEINFO'
-    - echo '================================================================================================='
-    - $APP_NAME='CypressBootloader'
-    - $HEX_NAME='CypressBootloader_CM0p'
-    - $DEFINES_USER='-DCY_BOOTLOADER_MAJOR=${CY_BOOTLOADER_MAJOR} -DCY_BOOTLOADER_MINOR=${CY_BOOTLOADER_MINOR} -DCY_BOOTLOADER_REV=${CY_BOOTLOADER_REV} -DCY_BOOTLOADER_BUILD=${CY_BOOTLOADER_BUILD}'
-    - $SLOT=''
-    # - *make_signed_app
-    - cd boot/cypress
-    - make clean APP_NAME=$APP_NAME
-    - make app APP_NAME=$APP_NAME PLATFORM=$PLATFORM BUILDCFG=$BUILDCFG MAKEINFO=$MAKEINFO POST_BUILD=0
-    - cd ../..
-    - New-Item -ItemType Directory -Path ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG
-    - New-Item -ItemType Directory -Path ./develop/$PLATFORM/$APP_NAME/$BUILDCFG
-    #
-    # - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
-    # - sh cysign_bootloader -f ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/$HEX_NAME.hex -n PSOC6A_2M
-    - sh cysign_bootloader -f boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex -n $PLATFORM -v ${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}
-
-    # Collect CypressBootloader for ${PLATFORM} develop
-    - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.hex -Destination ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/ -Recurse
-    - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.lst -Destination ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/ -Recurse
-    - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.elf -Destination ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/ -Recurse
-    - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.map -Destination ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/ -Recurse
-
-    # Collect Signed application for ${PLATFORM} deploy
-    - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex -Destination ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/ -Recurse
-    - Copy-Item -Path ./signed/*.jwt -Destination ./deploy/$PLATFORM/$APP_NAME/$BUILDCFG/ -Recurse
-    - Copy-Item -Path ./signed/*.jwt -Destination ./develop/$PLATFORM/$APP_NAME/$BUILDCFG/ -Recurse
-
-  
-.make_boot_app: &make_boot_app
-
-    # Build boot application
-    - export APP_BUILD_OPTIONS=''
-    - echo '================================================================================================='
-    - echo '=== Build ${APP_NAME} application'
-    - echo '=== Platform = ${PLATFORM}, BUILDCFG = ${BUILDCFG}, IMG_TYPE=${IMG_TYPE}, MAKEINFO = ${MAKEINFO}, POST_BUILD=${POST_BUILD}'
-    - echo '================================================================================================='
-    - export SLOT=`echo $IMG_TYPE | awk '{print tolower($0)}'`
-    - if [ $SLOT == 'upgrade' ]; then export SUFX=_$SLOT; else export SUFX=''; fi
-    - if [ ! -z $MULTI_IMAGE ]; then if [ $MULTI_IMAGE -eq 0 ]; then export APP_SUFX=''; export APP_BUILD_OPTIONS+='MULTI_IMAGE=0 '; fi; fi
-    - if [ ! -z $HEADER_OFFSET ]; then export APP_BUILD_OPTIONS+=HEADER_OFFSET=$HEADER_OFFSET; fi
-    - if [ -z $HEX_NAME ]; then export HEX_NAME=$APP_NAME; fi
-    - export APP_BUILD_OPTIONS+=$BUILD_OPTIONS
-    - mkdir -p  ./deploy/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT
-    - mkdir -p  ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT
-    - cd boot/cypress
-    - make clean APP_NAME=$APP_NAME
-    - make app APP_NAME=$APP_NAME PLATFORM=$PLATFORM BUILDCFG=$BUILDCFG MAKEINFO=$MAKEINFO IMG_TYPE=$IMG_TYPE $APP_BUILD_OPTIONS POST_BUILD=$POST_BUILD
-    - cd ../..
-
-    # Collect App for develop
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/*.hex  ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/*.lst  ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/*.elf  ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/*.map  ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/
-
-    # Collect App for deploy
-    - cp -r boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/${HEX_NAME}_unsigned.hex ./deploy/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/${HEX_NAME}_unsigned.hex
+    CY_BOOTLOADER_TESTS_CONFIG: Debug
     
-.make_boot_app_win: &make_boot_app_win
-    # Build boot application
-    - $APP_BUILD_OPTIONS=''
-    - echo '================================================================================================='
-    - echo '=== Build ${APP_NAME} application'
-    - echo '=== Platform = ${PLATFORM}, BUILDCFG = ${BUILDCFG}, IMG_TYPE=${IMG_TYPE}, MAKEINFO = ${MAKEINFO}, POST_BUILD=${POST_BUILD}'
-    - echo '================================================================================================='
-    - $SLOT=$IMG_TYPE.ToLower()
-    - if ($SLOT -eq 'upgrade') {$SUFX='_' + $SLOT} else {$SUFX=''}
-    - if ($MULTI_IMAGE -eq 0) {$APP_SUFX=''; $APP_BUILD_OPTIONS+='MULTI_IMAGE=0 '; $MULTI_IMG=0} else {$MULTI_IMG=1}
-    - $HEX_NAME=$APP_NAME
-    - $APP_BUILD_OPTIONS+=$BUILD_OPTIONS
-    - New-Item -ItemType Directory -Path ./deploy/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT
-    - New-Item -ItemType Directory -Path ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT
-    - cd boot/cypress
-    - make clean APP_NAME=$APP_NAME
-    - echo APP_NAME=$APP_NAME PLATFORM=$PLATFORM BUILDCFG=$BUILDCFG MAKEINFO=$MAKEINFO IMG_TYPE=$IMG_TYPE $APP_BUILD_OPTIONS POST_BUILD=$POST_BUILD
-    - make app APP_NAME=$APP_NAME PLATFORM=$PLATFORM BUILDCFG=$BUILDCFG MAKEINFO=$MAKEINFO IMG_TYPE=$IMG_TYPE MULTI_IMAGE=$MULTI_IMG POST_BUILD=$POST_BUILD
-    - cd ../..
-
-    # Collect App for develop
-    - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/*.hex -Destination ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/ -Recurse
-    - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/*.lst -Destination ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/ -Recurse
-    - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/*.elf -Destination ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/ -Recurse
-    - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/*.map -Destination ./develop/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/ -Recurse
-
-    # Collect App for deploy
-    - Copy-Item -Path boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$SLOT/${HEX_NAME}_unsigned.hex  -Destination ./deploy/$PLATFORM/$APP_NAME$APP_SUFX/$BUILDCFG/$SLOT/${HEX_NAME}_unsigned.hex -Recurse
-
-stages:
-  - create_cache
-  - build_512K
-  - build_2M
-  - build_mcubootapps
-  - cppcheck
-  - tests
-  - sim
-  - deploy
-
-
-fetch_submodules_mac:
-  stage: create_cache
-  tags:
-    - MBED_TEST_MAC1014
-  cache:
-    <<: *global_cache
-  before_script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080  
-  script:
-    - *check_submodules
-
-fetch_submodules_lin:
-  stage: create_cache
-  tags:
-    - FW_SECURITY_TEST_UBUNTU1804
-  cache:
-    <<: *global_cache
-  before_script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080  
-  script:
-    - *check_submodules
-
-fetch_submodules_win:
-  stage: create_cache
-  tags:
-    - MBED_TEST
-  cache:
-    <<: *global_cache
-  script:
-    - *check_submodules_win
-
-
-#######################################################################################################################################################
-##################--------------------------------------------- BUILDS 2M MCUBOOTAPPS ------------------------------------#############################
-#######################################################################################################################################################
-
-mac_build_2M_MCUBootApp:
-    stage: build_mcubootapps
-    tags:
-      - MBED_TEST_MAC1014
-  
-    variables:
-      TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
-  
-    before_script:
-      - python3 --version
-      - export https_proxy=http://proxy.ua.cypress.com:8080
-  
-    script:
-      - pwd
-      - git submodule deinit --all -f
-      - git submodule update --init --recursive
-      
-      - *cleanup_build_params
-      
-      - export PLATFORM=PSOC_062_2M
-      - export BUILDCFG=Debug
-      - export MAKEINFO=1
-      - *make_mcuboot_app
-  
-      - cd boot/cypress
-      - make clean APP_NAME=MCUBootApp
-      - cd ../..
-  
-    artifacts:
-      expire_in: 1 weeks
-      paths:
-        - deploy
-        - develop
-  
-mac_build_062_2M_BlinkyApp:
-    stage: build_mcubootapps
-    tags:
-      - MBED_TEST_MAC1014
-  
-    variables:
-      TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
-  
-    before_script:
-      - python3 --version
-      - export https_proxy=http://proxy.ua.cypress.com:8080
-  
-    script:
-      - pwd
-      - git submodule deinit --all -f
-      - git submodule update --init --recursive
-  
-      ########################### BlinkyApp BOOT ##############################
-      # Build BlinkyApp BOOT for PSOC_062_2M
-      - *cleanup_build_params
-  
-      - export APP_NAME=BlinkyApp
-      - export PLATFORM=PSOC_062_2M
-      - export IMG_TYPE=BOOT
-      - export MULTI_IMAGE=0
-      - export MAKEINFO=0
-  
-      - export BUILDCFG=Debug
-      - *make_boot_app
-  
-      - export BUILDCFG=Release
-      - *make_boot_app
-  
-      ########################### BlinkyApp UPGRADE ##############################
-      # Build BlinkyApp UPGRADE for PSOC_062_2M
-  
-      - export HEADER_OFFSET='0x10000'
-      - export IMG_TYPE=UPGRADE
-  
-      - export BUILDCFG=Debug
-      - *make_boot_app
-  
-      - export BUILDCFG=Release
-      - *make_boot_app
-  
-    artifacts:
-      expire_in: 1 weeks
-      paths:
-        - deploy
-        - develop
-
-#######################################################################################################################################################
-##################------------------------------------------------ BUILDS 512K -------------------------------------------#############################
-#######################################################################################################################################################
-
-win_512K_bootloader:
-  stage: build_512K
-  tags:
-    - MBED_TEST
-  variables:
-    TOOLCHAIN_PATH: C:/Users/cydesigner/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  script:
-    # install cysecuretools for post build actions
-    - python -m pip install pyserial
-    - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
+    CY_SECURETOOLS_BRANCH: v1.4.0-internal-release-ww09
+    PYOCD_BRANCH: ww05-sync-0.24.1
     
-    - *check_submodules_win   
-    
-    - $PLATFORM='PSOC_064_512K'
-    - $BUILDCFG='Debug'
-    - $MAKEINFO=1
-    - *make_cybootloader_app_win
-  
-    - $PLATFORM='PSOC_064_512K'
-    - $BUILDCFG='Release'
-    - $MAKEINFO=0
-    - *make_cybootloader_app_win
-  
-    - cd boot/cypress
-    - make clean APP_NAME=CypressBootloader
-    - cd ../..
-    
+##############################################################################
+# Build 
+#
+
+
+.build_512K:
+  stage: Build_512K
+  dependencies: []
+  artifacts:
+    expire_in: 4 weeks
+    paths:
+      - deploy
+      - develop
+
+.build_2M:
+  stage: Build_2M
+  dependencies: []
   artifacts:
     expire_in: 4 weeks
     paths:
@@ -384,1284 +42,890 @@ win_512K_bootloader:
       - develop
 
 
-win_512K_Multi_BlinkyApp:
-  stage: build_512K
+mac_512K_Bootloader:
+  extends: .build_512K
   tags:
-    - MBED_TEST
-  variables:
-    TOOLCHAIN_PATH: C:/Users/cydesigner/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
+    - FWS_MAC_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python -m pip install pyserial
-    - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-
-    - *check_submodules_win   
-    
-
-    ########################### BlinkyApp BOOT MULTI-IMAGE ##############################
-    - $APP_SUFX='Multi'
-
-    - $APP_NAME='BlinkyApp'
-    - $PLATFORM='PSOC_064_512K'
-    - $IMG_TYPE='BOOT'
-    - $MULTI_IMAGE=1
-    - $MAKEINFO=0
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-    ########################### BlinkyApp UPGRADE MULTI-IMAGE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_512K
-
-    - $IMG_TYPE='UPGRADE'
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-    - cd boot/cypress
-    - make clean APP_NAME=BlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-
-win_512K_SecureBlinkyApp:
-  stage: build_512K
-  tags:
-    - MBED_TEST
-  variables:
-    TOOLCHAIN_PATH: C:/Users/cydesigner/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  script:
-    # install cysecuretools for post build actions
-    - python -m pip install pyserial
-    - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-
-    - *check_submodules_win
-
-    ########################### SecureBlinkyApp BOOT ##############################
-    # Build SecureBlinkyApp BOOT for PSOC_064_512K
-    - $APP_NAME='SecureBlinkyApp'
-    - $PLATFORM='PSOC_064_512K'
-    - $IMG_TYPE='BOOT'
-    - $MAKEINFO=0
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-
-    ########################### SecureBlinkyApp UPGRADE ##############################
-    # Build SecureBlinkyApp UPGRADE for PSOC_064_512K
-
-    - $IMG_TYPE='UPGRADE'
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-    - cd boot/cypress
-    - make clean APP_NAME=SecureBlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-
-
-win_512K_BlinkyApp:
-  stage: build_512K
-  tags:
-    - MBED_TEST
-
-  variables:
-    TOOLCHAIN_PATH: C:/Users/cydesigner/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  script:
-    # install cysecuretools for post build actions
-    - python -m pip install pyserial
-    - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-
-    - *check_submodules_win
-
-    ########################### BlinkyApp BOOT ##############################
-    # Build BlinkyApp BOOT for PSOC_064_512K
-
-    - $APP_NAME='BlinkyApp'
-    - $PLATFORM='PSOC_064_512K'
-    - $IMG_TYPE='BOOT'
-    - $MULTI_IMAGE=0
-    - $MAKEINFO=0
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-    ########################### BlinkyApp UPGRADE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_512K
-
-    - $IMG_TYPE='UPGRADE'
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-
-
-
-
-
-mac_512K_bootloader:
-  stage: build_512K
-  tags:
-    - MBED_TEST_MAC1014
-  variables:
-    TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
-  script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-
-    - *check_submodules
-    
-    # Build CypressBootloader for PSOC_064_512K family
-    - *cleanup_build_params
-    
-    - export PLATFORM=PSOC_064_512K
-    - export BUILDCFG=Debug
-    - export MAKEINFO=1
-    - *make_cybootloader_app
-
-    - export PLATFORM=PSOC_064_512K
-    - export BUILDCFG=Release
-    - export MAKEINFO=0
-    - *make_cybootloader_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=CypressBootloader
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-    
-    
-mac_512K_Multi_BlinkyApp:
-  stage: build_512K
-  tags:
-    - MBED_TEST_MAC1014
-
-  variables:
-    TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
-  script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-
-    - *check_submodules
-    
-
-    ########################### BlinkyApp BOOT MULTI-IMAGE ##############################
-    # Build BlinkyApp BOOT for PSOC_064_512K
-    - *cleanup_build_params
-    - export APP_SUFX='Multi'
-
-    - export APP_NAME=BlinkyApp
-    - export PLATFORM=PSOC_064_512K
-    - export IMG_TYPE=BOOT
-    - export MULTI_IMAGE=1
-    - export MAKEINFO=0
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    ########################### BlinkyApp UPGRADE MULTI-IMAGE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_512K
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=BlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-    
-    
-mac_512K_SecureBlinkyApp:
-  stage: build_512K
-  tags:
-    - MBED_TEST_MAC1014
-
-  variables:
-    TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
-  script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-
-    - *check_submodules
-
-    ########################### SecureBlinkyApp BOOT ##############################
-    # Build SecureBlinkyApp BOOT for PSOC_064_512K
-    - *cleanup_build_params
-
-    - export APP_NAME=SecureBlinkyApp
-    - export PLATFORM=PSOC_064_512K
-    - export IMG_TYPE=BOOT
-    - export MAKEINFO=0
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-
-    ########################### SecureBlinkyApp UPGRADE ##############################
-    # Build SecureBlinkyApp UPGRADE for PSOC_064_512K
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=SecureBlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
+    # Build Release
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_512K
+      BUILDCFG=Release
+      MAKEINFO=0
+      POST_BUILD=0
+    # Build Debug
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_512K
+      BUILDCFG=Debug
+      MAKEINFO=0
+      POST_BUILD=0
 
 
 mac_512K_BlinkyApp:
-  stage: build_512K
+  extends: .build_512K
   tags:
-    - MBED_TEST_MAC1014
-
-  variables:
-    TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
+    - FWS_MAC_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-
-    - *check_submodules
-
-    ########################### BlinkyApp BOOT ##############################
-    # Build BlinkyApp BOOT for PSOC_064_512K
-    - *cleanup_build_params
-
-    - export APP_NAME=BlinkyApp
-    - export PLATFORM=PSOC_064_512K
-    - export IMG_TYPE=BOOT
-    - export MULTI_IMAGE=0
-    - export MAKEINFO=0
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    ########################### BlinkyApp UPGRADE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_512K
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug        
 
 
-
-lin_512K_bootloader:
-  stage: build_512K
+mac_512K_Multi_BlinkyApp:
+  extends: .build_512K
   tags:
-    - FW_SECURITY_TEST_UBUNTU1804
-  variables:
-    TOOLCHAIN_PATH: /home/fw-security/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
+    - FWS_MAC_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-
-    - *check_submodules
-    
-    # Build CypressBootloader for PSOC_064_512K family
-    - *cleanup_build_params
-    
-    - export PLATFORM=PSOC_064_512K
-    - export BUILDCFG=Debug
-    - export MAKEINFO=1
-    - *make_cybootloader_app
-
-    - export PLATFORM=PSOC_064_512K
-    - export BUILDCFG=Release
-    - export MAKEINFO=0
-    - *make_cybootloader_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=CypressBootloader
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-    
-    
-lin_512K_Multi_BlinkyApp:
-  stage: build_512K
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug       
+      
+      
+mac_512K_SecureBlinkyApp:
+  extends: .build_512K
   tags:
-    - FW_SECURITY_TEST_UBUNTU1804
-
-  variables:
-    TOOLCHAIN_PATH: /home/fw-security/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
+    - FWS_MAC_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug
 
-    - *check_submodules
-    
-
-    ########################### BlinkyApp BOOT MULTI-IMAGE ##############################
-    # Build BlinkyApp BOOT for PSOC_064_512K
-    - *cleanup_build_params
-    - export APP_SUFX='Multi'
-
-    - export APP_NAME=BlinkyApp
-    - export PLATFORM=PSOC_064_512K
-    - export IMG_TYPE=BOOT
-    - export MULTI_IMAGE=1
-    - export MAKEINFO=0
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    ########################### BlinkyApp UPGRADE MULTI-IMAGE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_512K
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=BlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-    
-    
-lin_512K_SecureBlinkyApp:
-  stage: build_512K
+win_512K_Bootloader:
+  extends: .build_512K
   tags:
-    - FW_SECURITY_TEST_UBUNTU1804
-
-  variables:
-    TOOLCHAIN_PATH: /home/fw-security/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
+    - FWS_WIN_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
+    - $env:Path="c:\cygwin64;c:\cygwin64\bin;$env:Path"
+    # Build Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_512K
+      BUILDCFG=Release
+      MAKEINFO=0
+      POST_BUILD=0      
+    # Build Debug
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_512K
+      BUILDCFG=Debug
+      MAKEINFO=0
+      POST_BUILD=0      
 
-    - *check_submodules
+win_512K_BlinkyApp:
+  extends: .build_512K
+  tags:
+    - FWS_WIN_BUILD
+  script:
+    - $env:Path="c:\cygwin64;c:\cygwin64\bin;$env:Path"
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug        
 
-    ########################### SecureBlinkyApp BOOT ##############################
-    # Build SecureBlinkyApp BOOT for PSOC_064_512K
-    - *cleanup_build_params
 
-    - export APP_NAME=SecureBlinkyApp
-    - export PLATFORM=PSOC_064_512K
-    - export IMG_TYPE=BOOT
-    - export MAKEINFO=0
+win_512K_Multi_BlinkyApp:
+  extends: .build_512K
+  tags:
+    - FWS_WIN_BUILD
+  script:
+    - $env:Path="c:\cygwin64;c:\cygwin64\bin;$env:Path"
+    # BOOT
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug       
+      
+      
+win_512K_SecureBlinkyApp:
+  extends: .build_512K
+  tags:
+    - FWS_WIN_BUILD
+  script:
+    - $env:Path="c:\cygwin64;c:\cygwin64\bin;$env:Path"
+    # BOOT
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug      
 
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-
-    ########################### SecureBlinkyApp UPGRADE ##############################
-    # Build SecureBlinkyApp UPGRADE for PSOC_064_512K
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=SecureBlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
+lin_512K_Bootloader:
+  extends: .build_512K
+  tags:
+    - FWS_LIN_BUILD
+  script:
+    # Build Release
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_512K
+      BUILDCFG=Release
+      MAKEINFO=0
+      POST_BUILD=0
+    # Build Debug
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_512K
+      BUILDCFG=Debug
+      MAKEINFO=0
+      POST_BUILD=0
 
 
 lin_512K_BlinkyApp:
-  stage: build_512K
+  extends: .build_512K
   tags:
-    - FW_SECURITY_TEST_UBUNTU1804
-
-  variables:
-    TOOLCHAIN_PATH: /home/fw-security/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
+    - FWS_LIN_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-
-    - *check_submodules
-
-    ########################### BlinkyApp BOOT ##############################
-    # Build BlinkyApp BOOT for PSOC_064_512K
-    - *cleanup_build_params
-
-    - export APP_NAME=BlinkyApp
-    - export PLATFORM=PSOC_064_512K
-    - export IMG_TYPE=BOOT
-    - export MULTI_IMAGE=0
-    - export MAKEINFO=0
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    ########################### BlinkyApp UPGRADE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_512K
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug        
 
 
-#######################################################################################################################################################
-##################------------------------------------------------ BUILDS 2M -------------------------------------------###############################
-#######################################################################################################################################################
-
-win_2M_bootloader:
-  stage: build_2M
+lin_512K_Multi_BlinkyApp:
+  extends: .build_512K
   tags:
-    - MBED_TEST
-  variables:
-    TOOLCHAIN_PATH: C:/Users/cydesigner/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
+    - FWS_LIN_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python -m pip install pyserial
-    - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-    
-    - *check_submodules_win   
-    
-    - $PLATFORM='PSOC_064_2M'
-    - $BUILDCFG='Debug'
-    - $MAKEINFO=1
-    - *make_cybootloader_app_win
-
-    - $PLATFORM='PSOC_064_2M'
-    - $BUILDCFG='Release'
-    - $MAKEINFO=0
-    - *make_cybootloader_app_win
-
-    - cd boot/cypress
-    - make clean APP_NAME=CypressBootloader
-    - cd ../..
-    
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-
-
-win_2M_Multi_BlinkyApp:
-  stage: build_2M
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug       
+      
+      
+lin_512K_SecureBlinkyApp:
+  extends: .build_512K
   tags:
-    - MBED_TEST
-  variables:
-    TOOLCHAIN_PATH: C:/Users/cydesigner/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
+    - FWS_LIN_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python -m pip install pyserial
-    - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug      
 
-    - *check_submodules_win   
-    
 
-    ########################### BlinkyApp BOOT MULTI-IMAGE ##############################
-    - $APP_SUFX='Multi'
-
-    - $APP_NAME='BlinkyApp'
-    - $PLATFORM='PSOC_064_2M'
-    - $IMG_TYPE='BOOT'
-    - $MULTI_IMAGE=1
-    - $MAKEINFO=0
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-    ########################### BlinkyApp UPGRADE MULTI-IMAGE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_2M
-
-    - $IMG_TYPE='UPGRADE'
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-    - cd boot/cypress
-    - make clean APP_NAME=BlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-    
-win_2M_SecureBlinkyApp:
-  stage: build_2M
+mac_2M_Bootloader:
+  extends: .build_2M
   tags:
-    - MBED_TEST
-  variables:
-    TOOLCHAIN_PATH: C:/Users/cydesigner/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
+    - FWS_MAC_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python -m pip install pyserial
-    - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-
-    - *check_submodules_win
-
-    ########################### SecureBlinkyApp BOOT ##############################
-    # Build SecureBlinkyApp BOOT for PSOC_064_2M
-    - $APP_NAME='SecureBlinkyApp'
-    - $PLATFORM='PSOC_064_2M'
-    - $IMG_TYPE='BOOT'
-    - $MAKEINFO=0
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-
-    ########################### SecureBlinkyApp UPGRADE ##############################
-    # Build SecureBlinkyApp UPGRADE for PSOC_064_2M
-
-    - $IMG_TYPE='UPGRADE'
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-    - cd boot/cypress
-    - make clean APP_NAME=SecureBlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-
-
-win_2M_BlinkyApp:
-  stage: build_2M
-  tags:
-    - MBED_TEST
-
-  variables:
-    TOOLCHAIN_PATH: C:/Users/cydesigner/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  script:
-    # install cysecuretools for post build actions
-    - python -m pip install pyserial
-    - python -m pip uninstall cysecuretools -y
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-
-    - *check_submodules_win
-
-    ########################### BlinkyApp BOOT ##############################
-    # Build BlinkyApp BOOT for PSOC_064_2M
-
-    - $APP_NAME='BlinkyApp'
-    - $PLATFORM='PSOC_064_2M'
-    - $IMG_TYPE='BOOT'
-    - $MULTI_IMAGE=0
-    - $MAKEINFO=0
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-    ########################### BlinkyApp UPGRADE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_2M
-
-    - $IMG_TYPE='UPGRADE'
-
-    - $BUILDCFG='Debug'
-    - *make_boot_app_win
-
-    - $BUILDCFG='Release'
-    - *make_boot_app_win
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-
-
-mac_2M_bootloader:
-  stage: build_2M
-  tags:
-    - MBED_TEST_MAC1014
-
-  variables:
-    TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
-  script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
-
-    - *check_submodules
-    
-    # Build CypressBootloader for PSOC_064_2M family
-    - *cleanup_build_params
-    
-    - export PLATFORM=PSOC_064_2M
-    - export BUILDCFG=Debug
-    - export MAKEINFO=1
-    - *make_cybootloader_app
-
-    - export PLATFORM=PSOC_064_2M
-    - export BUILDCFG=Release
-    - export MAKEINFO=0
-    - *make_cybootloader_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=CypressBootloader
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-    
-    
-mac_2M_Multi_BlinkyApp:
-  stage: build_2M
-  tags:
-    - MBED_TEST_MAC1014
-
-  variables:
-    TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
-  script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
-
-    - *check_submodules
-    
-
-    ########################### BlinkyApp BOOT MULTI-IMAGE ##############################
-    # Build BlinkyApp BOOT for PSOC_064_2M
-    - *cleanup_build_params
-    - export APP_SUFX='Multi'
-
-    - export APP_NAME=BlinkyApp
-    - export PLATFORM=PSOC_064_2M
-    - export IMG_TYPE=BOOT
-    - export MULTI_IMAGE=1
-    - export MAKEINFO=0
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    ########################### BlinkyApp UPGRADE MULTI-IMAGE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_2M
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=BlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-    
-    
-mac_2M_SecureBlinkyApp:
-  stage: build_2M
-  tags:
-    - MBED_TEST_MAC1014
-
-  variables:
-    TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
-  script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww08
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
-
-    - *check_submodules
-
-    ########################### SecureBlinkyApp BOOT ##############################
-    # Build SecureBlinkyApp BOOT for PSOC_064_2M
-    - *cleanup_build_params
-
-    - export APP_NAME=SecureBlinkyApp
-    - export PLATFORM=PSOC_064_2M
-    - export IMG_TYPE=BOOT
-    - export MAKEINFO=0
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-
-    ########################### SecureBlinkyApp UPGRADE ##############################
-    # Build SecureBlinkyApp UPGRADE for PSOC_064_2M
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=SecureBlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
+    # Build Release
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_2M
+      BUILDCFG=Release
+      MAKEINFO=0
+      POST_BUILD=0
+    # Build Debug
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_2M
+      BUILDCFG=Debug
+      MAKEINFO=0
+      POST_BUILD=0
 
 
 mac_2M_BlinkyApp:
-  stage: build_2M
+  extends: .build_2M
   tags:
-    - MBED_TEST_MAC1014
-
-  variables:
-    TOOLCHAIN_PATH: /Applications/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
+    - FWS_MAC_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww08
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
-
-    - *check_submodules
-
-    ########################### BlinkyApp BOOT ##############################
-    # Build BlinkyApp BOOT for PSOC_064_2M
-    - *cleanup_build_params
-
-    - export APP_NAME=BlinkyApp
-    - export PLATFORM=PSOC_064_2M
-    - export IMG_TYPE=BOOT
-    - export MULTI_IMAGE=0
-    - export MAKEINFO=0
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    ########################### BlinkyApp UPGRADE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_2M
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug        
 
 
-lin_2M_bootloader:
-  stage: build_2M
+mac_2M_Multi_BlinkyApp:
+  extends: .build_2M
   tags:
-    - FW_SECURITY_TEST_UBUNTU1804
-
-  variables:
-    TOOLCHAIN_PATH: /home/fw-security/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
+    - FWS_MAC_BUILD 
   script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
-
-    - *check_submodules
-    
-    # Build CypressBootloader for PSOC_064_2M family
-    - *cleanup_build_params
-    
-    - export PLATFORM=PSOC_064_2M
-    - export BUILDCFG=Debug
-    - export MAKEINFO=1
-    - *make_cybootloader_app
-
-    - export PLATFORM=PSOC_064_2M
-    - export BUILDCFG=Release
-    - export MAKEINFO=0
-    - *make_cybootloader_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=CypressBootloader
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-    
-    
-lin_2M_Multi_BlinkyApp:
-  stage: build_2M
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug       
+      
+      
+mac_2M_SecureBlinkyApp:
+  extends: .build_2M
   tags:
-    - FW_SECURITY_TEST_UBUNTU1804
-
-  variables:
-    TOOLCHAIN_PATH: /home/fw-security/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
+    - FWS_MAC_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug      
 
-    - *check_submodules
-    
 
-    ########################### BlinkyApp BOOT MULTI-IMAGE ##############################
-    # Build BlinkyApp BOOT for PSOC_064_2M
-    - *cleanup_build_params
-    - export APP_SUFX='Multi'
 
-    - export APP_NAME=BlinkyApp
-    - export PLATFORM=PSOC_064_2M
-    - export IMG_TYPE=BOOT
-    - export MULTI_IMAGE=1
-    - export MAKEINFO=0
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    ########################### BlinkyApp UPGRADE MULTI-IMAGE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_2M
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=BlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-    
-    
-lin_2M_SecureBlinkyApp:
-  stage: build_2M
+win_2M_Bootloader:
+  extends: .build_2M
   tags:
-    - FW_SECURITY_TEST_UBUNTU1804
-
-  variables:
-    TOOLCHAIN_PATH: /home/fw-security/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
+    - FWS_WIN_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
+    - $env:Path="c:\cygwin64;c:\cygwin64\bin;$env:Path"
+    # Build Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_2M
+      BUILDCFG=Release
+      MAKEINFO=0
+      POST_BUILD=0      
+    # Build Debug
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_2M
+      BUILDCFG=Debug
+      MAKEINFO=0
+      POST_BUILD=0      
 
-    - *check_submodules
+win_2M_BlinkyApp:
+  extends: .build_2M
+  tags:
+    - FWS_WIN_BUILD
+  script:
+    - $env:Path="c:\cygwin64;c:\cygwin64\bin;$env:Path"
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug        
 
-    ########################### SecureBlinkyApp BOOT ##############################
-    # Build SecureBlinkyApp BOOT for PSOC_064_2M
-    - *cleanup_build_params
 
-    - export APP_NAME=SecureBlinkyApp
-    - export PLATFORM=PSOC_064_2M
-    - export IMG_TYPE=BOOT
-    - export MAKEINFO=0
+win_2M_Multi_BlinkyApp:
+  extends: .build_2M
+  tags:
+    - FWS_WIN_BUILD
+  script:
+    - $env:Path="c:\cygwin64;c:\cygwin64\bin;$env:Path"
+    # BOOT
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug       
+      
+      
+win_2M_SecureBlinkyApp:
+  extends: .build_2M
+  tags:
+    - FWS_WIN_BUILD
+  script:
+    - $env:Path="c:\cygwin64;c:\cygwin64\bin;$env:Path"
+    # BOOT
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      & "bash" "./ci/build/build.sh"
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug      
 
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-
-    ########################### SecureBlinkyApp UPGRADE ##############################
-    # Build SecureBlinkyApp UPGRADE for PSOC_064_2M
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    - cd boot/cypress
-    - make clean APP_NAME=SecureBlinkyApp
-    - cd ../..
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
+lin_2M_Bootloader:
+  extends: .build_2M
+  tags:
+    - FWS_LIN_BUILD
+  script:
+    # Build Release
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_2M
+      BUILDCFG=Release
+      MAKEINFO=0
+      POST_BUILD=0
+    # Build Debug
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_2M
+      BUILDCFG=Debug
+      MAKEINFO=0
+      POST_BUILD=0
 
 
 lin_2M_BlinkyApp:
-  stage: build_2M
+  extends: .build_2M
   tags:
-    - FW_SECURITY_TEST_UBUNTU1804
-
-  variables:
-    TOOLCHAIN_PATH: /home/fw-security/ModusToolbox/tools_2.0/gcc-7.2.1
-  cache:
-    <<: *global_cache
-    policy: pull
-  before_script:
-    - python3 --version
-    - export https_proxy=http://proxy.ua.cypress.com:8080
-
+    - FWS_LIN_BUILD
   script:
-    # install cysecuretools for post build actions
-    - python3 -m pip install pyserial
-    - python3 -m pip uninstall cysecuretools -y
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug        
 
-    - *check_submodules
 
-    ########################### BlinkyApp BOOT ##############################
-    # Build BlinkyApp BOOT for PSOC_064_2M
-    - *cleanup_build_params
+lin_2M_Multi_BlinkyApp:
+  extends: .build_2M
+  tags:
+    - FWS_LIN_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug       
+      
+      
+lin_2M_SecureBlinkyApp:
+  extends: .build_2M
+  tags:
+    - FWS_LIN_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug      
 
-    - export APP_NAME=BlinkyApp
-    - export PLATFORM=PSOC_064_2M
-    - export IMG_TYPE=BOOT
-    - export MULTI_IMAGE=0
-    - export MAKEINFO=0
 
-    - export BUILDCFG=Debug
-    - *make_boot_app
 
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-    ########################### BlinkyApp UPGRADE ##############################
-    # Build BlinkyApp UPGRADE for PSOC_064_2M
-
-    - export IMG_TYPE=UPGRADE
-
-    - export BUILDCFG=Debug
-    - *make_boot_app
-
-    - export BUILDCFG=Release
-    - *make_boot_app
-
-  artifacts:
-    expire_in: 4 weeks
-    paths:
-      - deploy
-      - develop
-
+##############################################################################
+# Run Test 
+#
 
 
 #######################################################################################################################################################
@@ -1675,7 +939,7 @@ mac_test_512K:
     - MBED_TEST_MAC1014
   cache: {}
   dependencies:
-    - mac_512K_bootloader
+    - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
     - mac_512K_SecureBlinkyApp
     - mac_512K_BlinkyApp
@@ -1685,14 +949,14 @@ mac_test_512K:
     - virtualenv venv
     - source venv/bin/activate
     - python3 -m pip install pyserial
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@${CY_SECURETOOLS_BRANCH}
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
     - pwd
     - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_Release
     - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
     - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.hex
-    - cp -r ./develop/PSOC_064_512K/CypressBootloader/Release/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/
-    - cp -r ./develop/PSOC_064_512K/CypressBootloader/Release/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/
+    - cp -r ./develop/PSOC_064_512K/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/
+    - cp -r ./develop/PSOC_064_512K/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/
 
     - echo "[INFO] Start tests"
 
@@ -1734,9 +998,8 @@ mac_test_2M:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
-  cache: {}
   dependencies:
-    - mac_2M_bootloader
+    - mac_2M_Bootloader
     - mac_2M_Multi_BlinkyApp
     - mac_2M_SecureBlinkyApp
     - mac_2M_BlinkyApp
@@ -1746,14 +1009,14 @@ mac_test_2M:
     - virtualenv venv
     - source venv/bin/activate
     - python3 -m pip install pyserial
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-internal-release-ww09
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@${CY_SECURETOOLS_BRANCH}
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
     - pwd
     - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_Release
     - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
     - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.hex
-    - cp -r ./develop/PSOC_064_2M/CypressBootloader/Release/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_WithLogs/
-    - cp -r ./develop/PSOC_064_2M/CypressBootloader/Release/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_WithLogs/
+    - cp -r ./develop/PSOC_064_2M/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_WithLogs/
+    - cp -r ./develop/PSOC_064_2M/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_WithLogs/
 
     - echo "[INFO] Start tests"
 
@@ -1791,13 +1054,13 @@ mac_test_2M:
 # static code analyzer with Cppcheck tool
 win_cpp_check:
   stage: cppcheck
+  variables:
+    GIT_STRATEGY: none
+    GIT_SUBMODULE_STRATEGY: none
+  dependencies: []
   tags:
     - MBED_TEST
-  cache: {}
   script:
-    - cd boot/cypress/libs/bsp
-    - git clone http://git-ore.aus.cypress.com/repo-staging/TARGET_CY8CPROTO-062-4343W.git
-    - cd ../../../../
     - cd boot/cypress
     - make run_cppcheck
     - cd ../../
@@ -1818,23 +1081,15 @@ win_cpp_check:
     - cd sim
     - cargo test --verbose
 
-
+##############################################################################
 # Upload build artifacts to http://iot-webserver.aus.cypress.com/projects/iot_release/ASSETS/repo/mcuboot/
-deploy_asset:
+.deploy_asset:
   stage: deploy
-  tags:
-    - devops-assets
-  cache: {}
   variables:
     GIT_STRATEGY: none
     GIT_SUBMODULE_STRATEGY: none
-  dependencies:
-    # - mac_512K_bootloader
-    # - mac_512K_Multi_BlinkyApp
-    # - mac_512K_SecureBlinkyApp
-    # - mac_512K_BlinkyApp
-    - mac_test_2M
-    - mac_test_512K
+  tags:
+    - devops-assets
   only:
     - /^develop$/
     - /^cypress$/
@@ -1843,4 +1098,3 @@ deploy_asset:
   script:
     - git clone git@git-ore.aus.cypress.com:devops/devops_scripts.git
     - bash devops_scripts/job_deploy_to_assets.sh
-    
