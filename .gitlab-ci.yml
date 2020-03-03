@@ -1083,7 +1083,7 @@ win_cpp_check:
 
 ##############################################################################
 # Upload build artifacts to http://iot-webserver.aus.cypress.com/projects/iot_release/ASSETS/repo/mcuboot/
-.deploy_asset:
+deploy_asset:
   stage: deploy
   variables:
     GIT_STRATEGY: none
@@ -1094,7 +1094,6 @@ win_cpp_check:
     - /^develop$/
     - /^cypress$/
     - /^integration/cy_bootloader$/
-    - /^feature/kosx-CI-1028$/
   script:
     - git clone git@git-ore.aus.cypress.com:devops/devops_scripts.git
     - bash devops_scripts/job_deploy_to_assets.sh
