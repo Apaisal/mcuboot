@@ -214,12 +214,15 @@ void Cy_Bl_ApplyPolicy(void)
 
     secondary_1.fa_id = FLASH_AREA_IMAGE_SECONDARY(0);
     secondary_1.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
+
+#ifdef CY_BOOT_USE_EXTERNAL_FLASH
         /* check if upgrade slot is requested from external memory */
     if(cy_bl_bnu_policy.bnu_img_policy[0].smif_id != 0)
     {
         secondary_1.fa_device_id = FLASH_DEVICE_EXTERNAL_FLAG;
         BOOT_LOG_INF("Secondary Slot 1 will upgrade from External Memory");
     }
+#endif
     secondary_1.fa_off = cy_bl_bnu_policy.bnu_img_policy[0].upgrade_area.start;
     secondary_1.fa_size = cy_bl_bnu_policy.bnu_img_policy[0].upgrade_area.size;
 
@@ -236,12 +239,15 @@ void Cy_Bl_ApplyPolicy(void)
 
         secondary_2.fa_id = FLASH_AREA_IMAGE_SECONDARY(1);
         secondary_2.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
+
+#ifdef CY_BOOT_USE_EXTERNAL_FLASH
             /* check if upgrade slot is requested from external memory */
         if(cy_bl_bnu_policy.bnu_img_policy[1].smif_id != 0)
         {
             secondary_2.fa_device_id = FLASH_DEVICE_EXTERNAL_FLAG;
             BOOT_LOG_INF("Secondary Slot 2 will upgrade from External Memory");
         }
+#endif
         secondary_2.fa_off = cy_bl_bnu_policy.bnu_img_policy[1].upgrade_area.start;
         secondary_2.fa_size = cy_bl_bnu_policy.bnu_img_policy[1].upgrade_area.size;
 
@@ -389,14 +395,14 @@ int main(void)
         bootloader.fa_id = FLASH_AREA_BOOTLOADER;
         bootloader.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
         bootloader.fa_off = CY_BOOTLOADER_START;
-//        bootloader.fa_size = 0x10000;
-        bootloader.fa_size = 0x11E00; // TODO:FWSECURITY-1138
+        bootloader.fa_size = 0x10000;
             /* initialize scratch */
         scratch.fa_id = FLASH_AREA_IMAGE_SCRATCH;
         scratch.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
         scratch.fa_off = bootloader.fa_off - CY_BOOTLOADER_SCRATCH_SIZE;
         scratch.fa_size = CY_BOOTLOADER_SCRATCH_SIZE;
 
+#ifdef CY_BOOT_USE_EXTERNAL_FLASH
         /* if supported/requested */
         if(Cy_Bl_InitSMIF() != 0)
         {   /* SMIF initialization failed, disallow upgrade */
@@ -410,6 +416,7 @@ int main(void)
                 cy_bl_bnu_policy.bnu_img_policy[1].upgrade = false;
             }
         }
+#endif
         apply_protections();
 #endif
     }
