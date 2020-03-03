@@ -64,7 +64,7 @@ MEMORY
     ram_heap          (rwx)   : ORIGIN = 0x08010000, LENGTH = 0x7000
     ram               (rwx)   : ORIGIN = 0x08017000, LENGTH = 0x15000
     public_ram        (rw)    : ORIGIN = 0x0802C000, LENGTH = 0x800
-    flash             (rx)    : ORIGIN = 0x100C0000, LENGTH = 0x10000
+    flash             (rx)    : ORIGIN = 0x100D0000, LENGTH = 0x10000
 
 
      /* This is a 32K flash region used for EEPROM emulation. This region can also be used as the general purpose flash.

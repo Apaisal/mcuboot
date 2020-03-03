@@ -1,1 +1,1 @@
-Put your image certificate key here.
+Put your image certificate key in this folder.
