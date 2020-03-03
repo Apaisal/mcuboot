@@ -15,7 +15,7 @@ variables:
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
     CY_BOOTLOADER_TESTS_CONFIG: Debug
     
-    CY_SECURETOOLS_BRANCH: v1.4.0-internal-release-ww09
+    CY_SECURETOOLS_BRANCH: v1.4.0-ww2009.3
     PYOCD_BRANCH: ww05-sync-0.24.1
     
 ##############################################################################
