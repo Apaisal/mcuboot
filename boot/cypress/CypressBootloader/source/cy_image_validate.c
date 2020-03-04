@@ -97,7 +97,6 @@
 
 /* Additional TLV tags */
 #define IMAGE_TLV_CYSB_IMAGE_ID            0x81   /* Image ID */
-#define IMAGE_TLV_CYSB_ROLLBACK_CNT        0x82   /* Rollback counter */
 
 /*
  * Compute SHA256 over the image.
@@ -327,7 +326,7 @@ bootutil_get_img_security_cnt(struct image_header *hdr,
     /* clear the destination variable */
     *img_security_cnt = 0;
 
-    return bootutil_get_tag_value(hdr, fap, IMAGE_TLV_CYSB_ROLLBACK_CNT, (void *)img_security_cnt, sizeof(uint8_t));
+    return bootutil_get_tag_value(hdr, fap, IMAGE_TLV_SEC_CNT, (void *)img_security_cnt, sizeof(uint32_t));
 }
 
 /*
@@ -353,8 +352,8 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     uint8_t buf[SIG_BUF_SIZE];
     uint8_t hash[32];
     uint32_t security_cnt = UINT32_MAX;
-    uint8_t  img_security_cnt = 0;        // currently rollbackcounter value in the image is uint8_t type
-    int security_counter_valid = 0;
+    uint32_t img_security_cnt = 0UL;
+    int valid_security_counter = 0;
     int rc;
 
     uint8_t image_id = 0u;
@@ -478,8 +477,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                 }
                 break;
         #endif /* EXPECTED_SIG_TLV */
-            // case IMAGE_TLV_SEC_CNT:
-            case IMAGE_TLV_CYSB_ROLLBACK_CNT:
+            case IMAGE_TLV_SEC_CNT:
                 {
                     /*
                      * Verify the image's security counter.
@@ -506,7 +504,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                      */
                     if ((uint32_t)img_security_cnt >= (uint32_t)security_cnt) {
                         /* The image's security counter has been successfully verified. */
-                        security_counter_valid = 1;
+                        valid_security_counter = 1;
                     }
                 }
                 break;
@@ -525,7 +523,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
         return -1;
     }
 
-    if (!security_counter_valid) {
+    if (!valid_security_counter) {
         /* The image's security counter is not accepted. */
         BOOT_LOG_ERR("Invalid secure counter of bootable image, ID = %d, image cnt(%d) < stored cnt(%d)", (int)image_id, (int)img_security_cnt, (int)security_cnt);
         return -1;
