@@ -42,7 +42,7 @@ variables:
       - develop
 
 
-mac_512K_Bootloader:
+.mac_512K_Bootloader:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
@@ -65,7 +65,7 @@ mac_512K_Bootloader:
       POST_BUILD=0
 
 
-mac_512K_BlinkyApp:
+.mac_512K_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
@@ -106,7 +106,7 @@ mac_512K_BlinkyApp:
       BUILDCFG=Debug        
 
 
-mac_512K_Multi_BlinkyApp:
+.mac_512K_Multi_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
@@ -151,7 +151,7 @@ mac_512K_Multi_BlinkyApp:
       BUILDCFG=Debug       
       
       
-mac_512K_SecureBlinkyApp:
+.mac_512K_SecureBlinkyApp:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
