@@ -124,7 +124,7 @@ ifeq ($(PLATFORM), PSOC_064_512K)
 	# Set RAM start and size
 	DEFINES_APP += -DRAM_START=0x08020000
 	DEFINES_APP += -DRAM_SIZE=0x5000
-	CY_SEC_TOOLS_TARGET := cyb06445lqi-s3d42
+	CY_SEC_TOOLS_TARGET := cyb06xx5
 	# Set flash start and size
 	ifeq ($(MULTI_IMAGE), 0)
 		CYB_IMG_ID := 4

@@ -98,7 +98,7 @@ ifeq ($(SMIF_UPGRADE), 0)
 else ifeq ($(SMIF_UPGRADE), 1)
 	MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4_smif.json
 endif
-CY_SEC_TOOLS_TARGET := cyb06445lqi-s3d42
+CY_SEC_TOOLS_TARGET := cyb06xx5
 endif
 
 # BSP does not define this macro for CM0p so define it here
