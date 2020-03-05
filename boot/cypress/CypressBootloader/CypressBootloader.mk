@@ -63,7 +63,7 @@ else ifeq ($(PLATFORM), PSOC_064_512K)
 CY_BOOTLOADER_APP_START ?= 0x10030000
 # 0x30000 slot size
 DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=384
-CY_SEC_TOOLS_TARGET := cyb06445lqi-s3d42
+CY_SEC_TOOLS_TARGET := cyb06xx5
 else
 $(error "Not suppoted target name $(PLATFORM)")
 endif
