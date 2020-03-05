@@ -59,7 +59,7 @@ endif
 
 # Define start of application unconditionally,
 # as it only can be built for multiimage case now
-DEFINES_APP += -DSECURE_APP_START=0x10000000
+SECURE_APP_START ?= 0x10000000
 SLOT_SIZE ?= 0x10000
 
 # Define RAM regions for targets, since they differ
@@ -68,12 +68,10 @@ DEFINES_APP += -DRAM_START=0x08040000
 DEFINES_APP += -DRAM_SIZE=0x20000
 ifeq ($(SMIF_UPGRADE), 0)
 	# Determine path to multi image policy file
-	MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4.json
-	DEFINES_APP += -DSECURE_APP_SIZE=0x70000
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4.json
 	SLOT_SIZE ?= 0x70000
 else ifeq ($(SMIF_UPGRADE), 1)
-	MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4_smif.json
-	DEFINES_APP += -DSECURE_APP_SIZE=0xC0000
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4_smif.json
 	SLOT_SIZE ?= 0xC0000
 endif
 CY_SEC_TOOLS_TARGET := cy8ckit-064b0s2-4343w
@@ -83,9 +81,9 @@ DEFINES_APP += -DRAM_START=0x08040000
 DEFINES_APP += -DRAM_SIZE=0x10000
 ifeq ($(SMIF_UPGRADE), 0)
 	# Determine path to multi image policy file
-	MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_multi_CM0_CM4.json
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_multi_CM0_CM4.json
 else ifeq ($(SMIF_UPGRADE), 1)
-	MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_multi_CM0_CM4.json
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_multi_CM0_CM4.json
 endif
 CY_SEC_TOOLS_TARGET := cy8cproto-064b0s1-ble
 
@@ -94,16 +92,15 @@ DEFINES_APP += -DRAM_START=0x08010000
 DEFINES_APP += -DRAM_SIZE=0x10000
 ifeq ($(SMIF_UPGRADE), 0)
 	# Determine path to multi image policy file
-	MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4.json
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4.json
 else ifeq ($(SMIF_UPGRADE), 1)
-	MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4_smif.json
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4_smif.json
 endif
-CY_SEC_TOOLS_TARGET := cyb06445lqi-s3d42
+CY_SEC_TOOLS_TARGET := cyb06xx5
 endif
 
-# BSP does not define this macro for CM0p so define it here
-# DEFINES_APP += -DCY_USING_HAL
-DEFINES_APP += $(DEFINES_PLATFORM)
+DEFINES_APP += -DSECURE_APP_START=$(SECURE_APP_START)
+DEFINES_APP += -DSECURE_APP_SIZE=$(SLOT_SIZE)
 
 # Collect Test Application sources
 SOURCES_APP_SRC := $(wildcard $(CUR_APP_PATH)/*.c)
@@ -165,4 +162,4 @@ pre_build:
 # Post build action to execute after main build job
 post_build: $(OUT_CFG)/$(APP_NAME).hex
 	$(info [POST_BUILD] - Executing post build script for $(APP_NAME))
-	$(PYTHON_PATH) -c "from cysecuretools import CySecureTools; tools = CySecureTools('$(CY_SEC_TOOLS_TARGET)', '$(MULTI_IMAGE_POLICY)'); tools.sign_image('$(OUT_CFG)/$(APP_NAME).hex', $(CYB_IMG_ID))"
+	$(PYTHON_PATH) -c "from cysecuretools import CySecureTools; tools = CySecureTools('$(CY_SEC_TOOLS_TARGET)', '$(IMAGE_POLICY)'); tools.sign_image('$(OUT_CFG)/$(APP_NAME).hex', $(CYB_IMG_ID))"

@@ -15,7 +15,7 @@ variables:
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
     CY_BOOTLOADER_TESTS_CONFIG: Debug
     
-    CY_SECURETOOLS_BRANCH: v1.4.0-ww2009.3
+    CY_SECURETOOLS_BRANCH: ci-test
     PYOCD_BRANCH: ww05-sync-0.24.1
     
 ##############################################################################
@@ -994,7 +994,7 @@ lin_2M_SecureBlinkyApp:
 ##################------------------------------------------------- TESTS 2M ---------------------------------------------#############################
 #######################################################################################################################################################
 
-mac_test_2M:
+.mac_test_2M:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
@@ -1083,7 +1083,7 @@ win_cpp_check:
 
 ##############################################################################
 # Upload build artifacts to http://iot-webserver.aus.cypress.com/projects/iot_release/ASSETS/repo/mcuboot/
-.deploy_asset:
+deploy_asset:
   stage: deploy
   variables:
     GIT_STRATEGY: none
@@ -1094,7 +1094,8 @@ win_cpp_check:
     - /^develop$/
     - /^cypress$/
     - /^integration/cy_bootloader$/
-    - /^feature/kosx-CI-1028$/
+    - /^feature/kosx-artifacts-zip$/ # TO DO delete this after test-deploy
   script:
+    - zip -rX deploy/cy_bootloader_artifacts_${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}.zip deploy
     - git clone git@git-ore.aus.cypress.com:devops/devops_scripts.git
     - bash devops_scripts/job_deploy_to_assets.sh

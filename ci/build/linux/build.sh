@@ -28,13 +28,12 @@ function prepare_to_build {
 
     [[ -d ${ROOT_DIR}/venv/lib/python3.6/site-packages/serial ]] || cmd_check pip install pyserial
 
-    [[ -d ${ROOT_DIR}/venv/lib/python3.6/site-packages/cysecuretools ]] || cmd_check pip install --upgrade git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@$CY_SECURETOOLS_BRANCH
+     #cmd_check pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-es10.3-rc1
     
-    
-    #install_cy_pymodule "cysecuretools" "http://git-ore.aus.cypress.com/repo/cysecuretools.git" $CY_SECURETOOLS_BRANCH
+    cmd_check pip install git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@$CY_SECURETOOLS_BRANCH -U
 
-    [[ -d ${ROOT_DIR}/venv/lib/python3.6/site-packages/pyocd ]] || cmd_check pip install --upgrade git+http://git-ore.aus.cypress.com/repo/pyocd.git@$PYOCD_BRANCH
-    #install_cy_pymodule "pyocd" "http://git-ore.aus.cypress.com/repo/pyocd.git" $PYOCD_BRANCH
+    #cmd_check pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
+    cmd_check pip install git+http://git-ore.aus.cypress.com/repo/pyocd.git@$PYOCD_BRANCH -U
    
     local cy_secure_tools_path=$(python -c "import cysecuretools; import os; print(os.path.dirname(os.path.dirname(cysecuretools.__file__)))")
     echo -e "[INFO]: CY_SEC_TOOLS ${cy_secure_tools_path}"

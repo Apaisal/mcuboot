@@ -75,27 +75,23 @@ ifeq ($(PLATFORM), PSOC_064_2M)
 	# Set flash start and size
 	ifeq ($(MULTI_IMAGE), 0)
 		CYB_IMG_ID := 4
-		DEFINES_APP += -DUSER_APP_START=0x10000000
+		USER_APP_START ?= 0x10000000
 		ifeq ($(SMIF_UPGRADE), 0)
-			SINGLE_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_single_stage_CM4.json
-			DEFINES_APP += -DUSER_APP_SIZE=0xE1000
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_single_stage_CM4.json
 			SLOT_SIZE ?= 0xE1000
 		else ifeq ($(SMIF_UPGRADE), 1)
-			SINGLE_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_single_stage_CM4_smif.json
-			DEFINES_APP += -DUSER_APP_SIZE=0x180000
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_single_stage_CM4_smif.json
 			SLOT_SIZE ?= 0x180000
 		endif
 	else
 		ifeq ($(SMIF_UPGRADE), 0)
 			# Determine path to multi image policy file
-			MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4.json
-			DEFINES_APP += -DUSER_APP_START=0x100E0000
-			DEFINES_APP += -DUSER_APP_SIZE=0x70000
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4.json
+			USER_APP_START ?= 0x100E0000
 			SLOT_SIZE ?= 0x70000
 		else ifeq ($(SMIF_UPGRADE), 1)
-			MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4_smif.json
-			DEFINES_APP += -DUSER_APP_START=0x100C0000
-			DEFINES_APP += -DUSER_APP_SIZE=0xC0000
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4_smif.json
+			USER_APP_START ?= 0x100C0000
 			SLOT_SIZE ?= 0xC0000
 		endif
 	endif
@@ -109,13 +105,13 @@ ifeq ($(PLATFORM), PSOC_064_1M)
 	# Set flash start and size
 	ifeq ($(MULTI_IMAGE), 0)
 		CYB_IMG_ID := 4
-		SINGLE_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_single_stage_CM4.json
-		DEFINES_APP += -DUSER_APP_START=0x10000000
+		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_single_stage_CM4.json
+		USER_APP_START ?= 0x10000000
         SLOT_SIZE ?= 0x10000
 	else
 		# Determine path to multi image policy file
-		MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_multi_CM0_CM4.json
-		DEFINES_APP += -DUSER_APP_START=0x10020000
+		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_multi_CM0_CM4.json
+		USER_APP_START ?= 0x10020000
         SLOT_SIZE ?= 0x10000
 	endif
 endif
@@ -124,28 +120,25 @@ ifeq ($(PLATFORM), PSOC_064_512K)
 	# Set RAM start and size
 	DEFINES_APP += -DRAM_START=0x08020000
 	DEFINES_APP += -DRAM_SIZE=0x5000
-	CY_SEC_TOOLS_TARGET := cyb06445lqi-s3d42
+	CY_SEC_TOOLS_TARGET := cyb06xx5
 	# Set flash start and size
 	ifeq ($(MULTI_IMAGE), 0)
 		CYB_IMG_ID := 4
-		DEFINES_APP += -DUSER_APP_START=0x10000000
+		USER_APP_START ?= 0x10000000
+		SLOT_SIZE ?= 0x20000
 		ifeq ($(SMIF_UPGRADE), 0)
-			SINGLE_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_single_stage_CM4.json
-			DEFINES_APP += -DUSER_APP_SIZE=0x20000
-			SLOT_SIZE ?= 0x20000
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_single_stage_CM4.json
 		else ifeq ($(SMIF_UPGRADE), 1)
-			SINGLE_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_single_stage_CM4_smif.json
-			DEFINES_APP += -DUSER_APP_SIZE=0x20000
-			SLOT_SIZE ?= 0x20000
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_single_stage_CM4_smif.json
 		endif
 	else
 		ifeq ($(SMIF_UPGRADE), 0)
 			# Determine path to multi image policy file
-			MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4.json
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4.json
 		else ifeq ($(SMIF_UPGRADE), 1)
-			MULTI_IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4_smif.json
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4_smif.json
 		endif
-		DEFINES_APP += -DUSER_APP_START=0x10040000
+		USER_APP_START ?= 0x10040000
 		SLOT_SIZE ?= 0x10000
 	endif
 endif
@@ -153,9 +146,12 @@ endif
 ifeq ($(PLATFORM), PSOC_062_2M)
 	DEFINES_APP += -DRAM_START=0x08000000
 	DEFINES_APP += -DRAM_SIZE=0x20000
-	DEFINES_APP += -DUSER_APP_START=0x10018000
+	USER_APP_START ?= 0x10018000
     SLOT_SIZE ?= 0x10000
 endif
+
+DEFINES_APP += -DUSER_APP_START=$(USER_APP_START)
+DEFINES_APP += -DUSER_APP_SIZE=$(SLOT_SIZE)
 
 # Collect Test Application sources
 SOURCES_APP_SRC := $(wildcard $(CUR_APP_PATH)/*.c)
@@ -215,11 +211,7 @@ post_build: $(OUT_CFG)/$(APP_NAME).hex
 	$(info [POST_BUILD] - Executing post build script for $(APP_NAME))
 # determine if target is Secure Boot - use cysecuretools for signing. built in imgtool for non secure targets
 ifneq ($(filter $(PLATFORM), $(SB_PLATFORMS)),)
-ifeq ($(MULTI_IMAGE), 1)
-	$(PYTHON_PATH) -c "from cysecuretools import CySecureTools; tools = CySecureTools('$(CY_SEC_TOOLS_TARGET)', '$(MULTI_IMAGE_POLICY)'); tools.sign_image('$(OUT_CFG)/$(APP_NAME).hex', $(CYB_IMG_ID))"
-else
-	$(PYTHON_PATH) -c "from cysecuretools import CySecureTools; tools = CySecureTools('$(CY_SEC_TOOLS_TARGET)', '$(SINGLE_IMAGE_POLICY)'); tools.sign_image('$(OUT_CFG)/$(APP_NAME).hex', $(CYB_IMG_ID))"
-endif
+	$(PYTHON_PATH) -c "from cysecuretools import CySecureTools; tools = CySecureTools('$(CY_SEC_TOOLS_TARGET)', '$(IMAGE_POLICY)'); tools.sign_image('$(OUT_CFG)/$(APP_NAME).hex', $(CYB_IMG_ID))"
 else
 	mv -f $(OUT_CFG)/$(APP_NAME).hex $(OUT_CFG)/$(APP_NAME)_unsigned.hex
 	$(PYTHON_PATH) $(IMGTOOL_PATH) $(SIGN_ARGS) $(OUT_CFG)/$(APP_NAME)_unsigned.hex $(OUT_CFG)/$(APP_NAME)$(UPGRADE_SUFFIX).hex
