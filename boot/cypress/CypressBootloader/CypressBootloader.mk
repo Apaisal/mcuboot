@@ -144,13 +144,15 @@ OUT_PLATFORM := $(OUT)/$(PLATFORM)
 OUT_CFG := $(OUT_PLATFORM)/$(BUILDCFG)
 
 # Set path to cypress key for certificate generation
-KEY ?= $(APP_NAME)/keys/cy_state_internal.json
+# Production version of CypressBootloader will be signed by Cypress Private Key
+# CERT_KEY ?= $(APP_NAME)/keys/cy_state_internal.json
+CERT_KEY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/common/prebuilt/oem_state.json
 
 # Post build action to execute after main build job
 post_build: $(OUT_CFG)/$(APP_NAME).hex
 	$(GCC_PATH)/bin/arm-none-eabi-objcopy --change-addresses=$(HEADER_OFFSET) -O ihex $(OUT_CFG)/$(APP_NAME).elf $(OUT_CFG)/$(APP_NAME)_CM0p.hex
 ifeq ($(POST_BUILD), 1)
 	$(info [POST_BUILD] - Creating image certificate for $(APP_NAME))
-	cysecuretools -t $(CY_SEC_TOOLS_TARGET) image-certificate -i $(OUT_CFG)/$(APP_NAME)_CM0p.hex -k $(KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt
+	cysecuretools -t $(CY_SEC_TOOLS_TARGET) image-certificate -i $(OUT_CFG)/$(APP_NAME)_CM0p.hex -k $(CERT_KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt
 endif
 ASM_FILES_APP :=
