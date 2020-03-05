@@ -187,7 +187,7 @@ variables:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
-win_512K_Bootloader:
+.win_512K_Bootloader:
   extends: .build_512K
   tags:
     - FWS_WIN_BUILD
@@ -210,7 +210,7 @@ win_512K_Bootloader:
       MAKEINFO=0
       POST_BUILD=0      
 
-win_512K_BlinkyApp:
+.win_512K_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_WIN_BUILD
@@ -252,7 +252,7 @@ win_512K_BlinkyApp:
       BUILDCFG=Debug        
 
 
-win_512K_Multi_BlinkyApp:
+.win_512K_Multi_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_WIN_BUILD
@@ -298,7 +298,7 @@ win_512K_Multi_BlinkyApp:
       BUILDCFG=Debug       
       
       
-win_512K_SecureBlinkyApp:
+.win_512K_SecureBlinkyApp:
   extends: .build_512K
   tags:
     - FWS_WIN_BUILD
@@ -335,7 +335,7 @@ win_512K_SecureBlinkyApp:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug      
 
-lin_512K_Bootloader:
+.lin_512K_Bootloader:
   extends: .build_512K
   tags:
     - FWS_LIN_BUILD
@@ -358,7 +358,7 @@ lin_512K_Bootloader:
       POST_BUILD=0
 
 
-lin_512K_BlinkyApp:
+.lin_512K_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_LIN_BUILD
@@ -399,7 +399,7 @@ lin_512K_BlinkyApp:
       BUILDCFG=Debug        
 
 
-lin_512K_Multi_BlinkyApp:
+.lin_512K_Multi_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_LIN_BUILD
@@ -444,7 +444,7 @@ lin_512K_Multi_BlinkyApp:
       BUILDCFG=Debug       
       
       
-lin_512K_SecureBlinkyApp:
+.lin_512K_SecureBlinkyApp:
   extends: .build_512K
   tags:
     - FWS_LIN_BUILD
