@@ -493,7 +493,7 @@ mac_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Release
       MAKEINFO=0
-      POST_BUILD=0
+      POST_BUILD=1
     # Build Debug
     - >
       ./ci/build/build.sh
@@ -501,7 +501,7 @@ mac_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Debug
       MAKEINFO=0
-      POST_BUILD=0
+      POST_BUILD=1
 
 
 mac_2M_BlinkyApp:
@@ -641,7 +641,7 @@ win_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Release
       MAKEINFO=0
-      POST_BUILD=0      
+      POST_BUILD=1      
     # Build Debug
     - >
       & "bash" "./ci/build/build.sh"
@@ -649,7 +649,7 @@ win_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Debug
       MAKEINFO=0
-      POST_BUILD=0      
+      POST_BUILD=1      
 
 win_2M_BlinkyApp:
   extends: .build_2M
@@ -788,7 +788,7 @@ lin_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Release
       MAKEINFO=0
-      POST_BUILD=0
+      POST_BUILD=1
     # Build Debug
     - >
       ./ci/build/build.sh
@@ -796,7 +796,7 @@ lin_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Debug
       MAKEINFO=0
-      POST_BUILD=0
+      POST_BUILD=1
 
 
 lin_2M_BlinkyApp:
@@ -960,7 +960,7 @@ lin_2M_SecureBlinkyApp:
 
     - echo "[INFO] Start tests"
 
-    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_temp && git branch && cd .. '
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd
@@ -971,7 +971,7 @@ lin_2M_SecureBlinkyApp:
     - cd ..
     - rm -rf tests
 
-    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_temp && git branch && cd .. '
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd
@@ -1020,7 +1020,7 @@ lin_2M_SecureBlinkyApp:
 
     - echo "[INFO] Start tests"
 
-    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_temp && git branch && cd .. '
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd
@@ -1031,7 +1031,7 @@ lin_2M_SecureBlinkyApp:
     - cd ..
     - rm -rf tests
 
-    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_temp && git branch && cd .. '
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd

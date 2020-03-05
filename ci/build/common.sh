@@ -211,10 +211,10 @@ function build_app {
     cmd_check make -j4 clean APP_NAME=$APP_NAME
     cmd_check make -j4 app $make_args
     
-    if [[ $APP_NAME == "CypressBootloader" ]]
-    then
-        cmd_check cysign_bootloader -f ${ROOT_DIR}/boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex -n $PLATFORM -v ${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}
-    fi
+    # if [[ $APP_NAME == "CypressBootloader" ]]
+    # then
+        # cmd_check cysign_bootloader -f ${ROOT_DIR}/boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex -n $PLATFORM -v ${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}
+    # fi
 }
 
 ############################
@@ -368,11 +368,11 @@ function collect_common {
         cmd_check cp -r ${ROOT_DIR}/boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.lst ${ROOT_DIR}/develop/$PLATFORM/$APP_NAME/$BUILDCFG/
         cmd_check cp -r ${ROOT_DIR}/boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.elf ${ROOT_DIR}/develop/$PLATFORM/$APP_NAME/$BUILDCFG/
         cmd_check cp -r ${ROOT_DIR}/boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.map ${ROOT_DIR}/develop/$PLATFORM/$APP_NAME/$BUILDCFG/
-
+        cmd_check cp -r ${ROOT_DIR}/boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.jwt ${ROOT_DIR}/develop/$PLATFORM/$APP_NAME/$BUILDCFG/
+        
         # Collect Signed application for ${PLATFORM} deploy
         cmd_check cp -r ${ROOT_DIR}/boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex ${ROOT_DIR}/deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
-        cmd_check cp -r ${ROOT_DIR}/boot/cypress/signed/*.jwt ${ROOT_DIR}/deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
-        cmd_check cp -r ${ROOT_DIR}/boot/cypress/signed/*.jwt ${ROOT_DIR}/develop/$PLATFORM/$APP_NAME/$BUILDCFG/
+        #cmd_check cp -r ${ROOT_DIR}/boot/cypress/signed/*.jwt ${ROOT_DIR}/deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
         
 
     else
