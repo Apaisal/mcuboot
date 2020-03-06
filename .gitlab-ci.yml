@@ -16,7 +16,7 @@ variables:
     CY_BOOTLOADER_TESTS_CONFIG: Debug
     
     CY_SECURETOOLS_BRANCH: feature/ihos/provisioning-sas-a
-    PYOCD_BRANCH: SECUREBOOT_MCU_BETA4_RC1
+    PYOCD_BRANCH: 2m-sysap-cm0
     
 ##############################################################################
 # Build 
