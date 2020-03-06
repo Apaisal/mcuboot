@@ -417,7 +417,7 @@ int main(void)
             }
         }
 #endif
-        apply_protections();
+        rc = apply_protections();
 #endif
     }
 
