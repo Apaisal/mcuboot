@@ -15,8 +15,8 @@ variables:
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
     CY_BOOTLOADER_TESTS_CONFIG: Debug
     
-    CY_SECURETOOLS_BRANCH: ci-test
-    PYOCD_BRANCH: ww05-sync-0.24.1
+    CY_SECURETOOLS_BRANCH: develop
+    PYOCD_BRANCH: SECUREBOOT_MCU_BETA4_RC1
     
 ##############################################################################
 # Build 
@@ -937,7 +937,8 @@ lin_2M_SecureBlinkyApp:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
-  cache: {}
+  variables:
+    GIT_SUBMODULE_STRATEGY: none    
   dependencies:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
@@ -950,7 +951,7 @@ lin_2M_SecureBlinkyApp:
     - source venv/bin/activate
     - python3 -m pip install pyserial
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@${CY_SECURETOOLS_BRANCH}
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@${PYOCD_BRANCH}
     - pwd
     - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_Release
     - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
@@ -996,6 +997,8 @@ lin_2M_SecureBlinkyApp:
 
 mac_test_2M:
   stage: tests
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
   tags:
     - MBED_TEST_MAC1014
   dependencies:
@@ -1010,7 +1013,7 @@ mac_test_2M:
     - source venv/bin/activate
     - python3 -m pip install pyserial
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@${CY_SECURETOOLS_BRANCH}
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@${PYOCD_BRANCH}
     - pwd
     - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_Release
     - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
@@ -1055,7 +1058,6 @@ mac_test_2M:
 win_cpp_check:
   stage: cppcheck
   variables:
-    GIT_STRATEGY: none
     GIT_SUBMODULE_STRATEGY: none
   dependencies: []
   tags:
