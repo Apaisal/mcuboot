@@ -15,7 +15,7 @@ variables:
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
     CY_BOOTLOADER_TESTS_CONFIG: Debug
     
-    CY_SECURETOOLS_BRANCH: ci-test
+    CY_SECURETOOLS_BRANCH: develop
     PYOCD_BRANCH: SECUREBOOT_MCU_BETA4_RC1
     
 ##############################################################################
@@ -937,7 +937,8 @@ lin_2M_SecureBlinkyApp:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
-  cache: {}
+  variables:
+    GIT_SUBMODULE_STRATEGY: none    
   dependencies:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
@@ -996,6 +997,8 @@ lin_2M_SecureBlinkyApp:
 
 mac_test_2M:
   stage: tests
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
   tags:
     - MBED_TEST_MAC1014
   dependencies:
@@ -1055,7 +1058,6 @@ mac_test_2M:
 win_cpp_check:
   stage: cppcheck
   variables:
-    GIT_STRATEGY: none
     GIT_SUBMODULE_STRATEGY: none
   dependencies: []
   tags:
