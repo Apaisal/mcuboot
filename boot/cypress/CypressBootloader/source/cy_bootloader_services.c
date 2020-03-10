@@ -203,9 +203,7 @@ void Cy_BLServ_Assert(int expr)
 
         if((CY_GET_REG32(CY_SRSS_TST_MODE_ADDR) & TST_MODE_TEST_MODE_MASK) != 0UL)
         {
-            /* Get IPC base register address */
-            IPC_STRUCT_Type * ipcStruct = Cy_IPC_Drv_GetIpcBaseAddress(CY_IPC_CHAN_SYSCALL_DAP);
-            Cy_IPC_Drv_WriteDataValue(ipcStruct, TST_MODE_ENTERED_MAGIC);
+            Cy_Utils_AcquireWindow();
 
             __disable_irq();
         }

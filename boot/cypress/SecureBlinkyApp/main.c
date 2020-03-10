@@ -119,7 +119,12 @@ debug_policy_t debug_policy;
 #if(0)
 void Cy_SystemInit(void)
 {
-    Cy_Utils_AcquireWindow();
+    if((CY_GET_REG32(CY_SRSS_TST_MODE_ADDR) & TST_MODE_TEST_MODE_MASK) != 0UL)
+    {
+        Cy_Utils_AcquireWindow();
+
+        __disable_irq();
+    }
 }
 #endif
 
