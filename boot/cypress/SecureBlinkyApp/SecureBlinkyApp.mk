@@ -102,6 +102,10 @@ endif
 DEFINES_APP += -DSECURE_APP_START=$(SECURE_APP_START)
 DEFINES_APP += -DSECURE_APP_SIZE=$(SLOT_SIZE)
 
+ifeq ($(BUILDCFG), Debug)
+DEFINES_APP += -DCY_SECURE_UTILS_LOG
+endif
+
 # Collect Test Application sources
 SOURCES_APP_SRC := $(wildcard $(CUR_APP_PATH)/*.c)
 
