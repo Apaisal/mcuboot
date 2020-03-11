@@ -15,7 +15,7 @@ variables:
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
     CY_BOOTLOADER_TESTS_CONFIG: Debug
     
-    CY_SECURETOOLS_BRANCH: feature/ihos/provisioning-sas-a
+    CY_SECURETOOLS_BRANCH: feature/ihos/provisioning-sas-a-DEBUG
     PYOCD_BRANCH: 2m-sysap-cm0
     
 ##############################################################################
