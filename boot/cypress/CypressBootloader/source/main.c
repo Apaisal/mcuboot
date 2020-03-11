@@ -417,7 +417,13 @@ int main(void)
             }
         }
 #endif
-        rc = apply_protections();
+
+        cy_en_prot_status_t prot_ret_code = apply_protections();
+        if(prot_ret_code != CY_PROT_SUCCESS)
+        {
+            BOOT_LOG_INF("CypressBootloader failed to apply protection settings, error = 0x%X", prot_ret_code) ;
+            Cy_BLServ_Assert(0);
+        }
 #endif
     }
 
