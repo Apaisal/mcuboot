@@ -978,7 +978,7 @@ lin_2M_SecureBlinkyApp:
     - pwd
 
     - echo "[INFO] Test provisioning multi image, CyBootloader WithLogs"
-    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_muilti_image
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_multi_image
 
     - cd ..
     - rm -rf tests
@@ -1040,7 +1040,7 @@ mac_test_2M:
     - pwd
 
     - echo "[INFO] Test provisioning multi image, CyBootloader WithLogs"
-    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_2M_release_muilti_image
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_2M_release_multi_image
 
     - cd ..
     - rm -rf tests
