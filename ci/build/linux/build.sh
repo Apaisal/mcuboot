@@ -20,7 +20,7 @@ function setup_environment {
 #
 function prepare_to_build {    
 
-    [[ -d ${ROOT_DIR}/venv ]] || cmd_check virtualenv --system-site-packages --python=python3 "$ROOT_DIR/venv" 
+    [[ -d ${ROOT_DIR}/venv ]] || cmd_check virtualenv --python=python3 "$ROOT_DIR/venv" 
    
     source ${ROOT_DIR}/venv/bin/activate
     
