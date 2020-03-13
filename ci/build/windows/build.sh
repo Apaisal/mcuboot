@@ -87,8 +87,8 @@ function build {
 
     pushd "$BOOT_CY_DIR"
     
-    #CURDIR=$(pwd | cygpath -m -f -)
-    CURDIR=.
+    CURDIR=$(pwd | cygpath -m -f -)
+    #CURDIR=.
     #local cy_secure_tools_path=$(python -c "import cysecuretools; import os; print(os.path.dirname(os.path.dirname(cysecuretools.__file__)))")
     #export CY_SEC_TOOLS_PATH=$(path_win_backslash $cy_secure_tools_path )
 
