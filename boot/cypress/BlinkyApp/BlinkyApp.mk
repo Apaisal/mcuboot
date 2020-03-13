@@ -71,26 +71,26 @@ ifeq ($(PLATFORM), PSOC_064_2M)
 	# Set RAM start and size
 	DEFINES_APP += -DRAM_START=0x08008000
 	DEFINES_APP += -DRAM_SIZE=0x3000
-	CY_SEC_TOOLS_TARGET := cy8ckit-064b0s2-4343w
+	CY_SEC_TOOLS_TARGET := cyb06xxa
 	# Set flash start and size
 	ifeq ($(MULTI_IMAGE), 0)
 		CYB_IMG_ID := 4
 		USER_APP_START ?= 0x10000000
 		ifeq ($(SMIF_UPGRADE), 0)
-			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_single_stage_CM4.json
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_single_stage_CM4.json
 			SLOT_SIZE ?= 0xE1000
 		else ifeq ($(SMIF_UPGRADE), 1)
-			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_single_stage_CM4_smif.json
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_single_stage_CM4_smif.json
 			SLOT_SIZE ?= 0x180000
 		endif
 	else
 		ifeq ($(SMIF_UPGRADE), 0)
 			# Determine path to multi image policy file
-			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4.json
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
 			USER_APP_START ?= 0x100E0000
 			SLOT_SIZE ?= 0x70000
 		else ifeq ($(SMIF_UPGRADE), 1)
-			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4_smif.json
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
 			USER_APP_START ?= 0x100C0000
 			SLOT_SIZE ?= 0xC0000
 		endif
@@ -101,16 +101,16 @@ ifeq ($(PLATFORM), PSOC_064_1M)
 	# Set RAM start and size
 	DEFINES_APP += -DRAM_START=0x08010000
 	DEFINES_APP += -DRAM_SIZE=0x5000
-	CY_SEC_TOOLS_TARGET := cy8cproto-064b0s1-ble
+	CY_SEC_TOOLS_TARGET := cyb06xx7
 	# Set flash start and size
 	ifeq ($(MULTI_IMAGE), 0)
 		CYB_IMG_ID := 4
-		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_single_stage_CM4.json
+		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_single_stage_CM4.json
 		USER_APP_START ?= 0x10000000
         SLOT_SIZE ?= 0x10000
 	else
 		# Determine path to multi image policy file
-		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_multi_CM0_CM4.json
+		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
 		USER_APP_START ?= 0x10020000
         SLOT_SIZE ?= 0x10000
 	endif
@@ -127,16 +127,16 @@ ifeq ($(PLATFORM), PSOC_064_512K)
 		USER_APP_START ?= 0x10000000
 		SLOT_SIZE ?= 0x20000
 		ifeq ($(SMIF_UPGRADE), 0)
-			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_single_stage_CM4.json
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_single_stage_CM4.json
 		else ifeq ($(SMIF_UPGRADE), 1)
-			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_single_stage_CM4_smif.json
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_single_stage_CM4_smif.json
 		endif
 	else
 		ifeq ($(SMIF_UPGRADE), 0)
 			# Determine path to multi image policy file
-			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4.json
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
 		else ifeq ($(SMIF_UPGRADE), 1)
-			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4_smif.json
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
 		endif
 		USER_APP_START ?= 0x10040000
 		SLOT_SIZE ?= 0x10000
