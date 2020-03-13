@@ -210,11 +210,6 @@ function build_app {
     
     cmd_check make -j4 clean APP_NAME=$APP_NAME
     cmd_check make -j4 app $make_args
-    
-    # if [[ $APP_NAME == "CypressBootloader" ]]
-    # then
-        # cmd_check cysign_bootloader -f ${ROOT_DIR}/boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex -n $PLATFORM -v ${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}
-    # fi
 }
 
 ############################

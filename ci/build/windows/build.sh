@@ -33,14 +33,8 @@ function prepare_to_build {
     print "[DEBUG] Python path: $(which python)"
 
     #cmd <<< "pip install pyserial"
-    #cmd <<< "set \"PATH=c:\Program Files\Git\cmd;%PATH%\" & pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-es10.3-rc1"
-    #cmd <<< "PATH=c:\Program Files\Git\cmd;%PATH%\" & pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1"
     
     [[ -d ${ROOT_DIR}/venv/lib/python3.7/site-packages/serial ]] || cmd_check pip install pyserial
-
-    #cmd_check pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-es10.3-rc1
-    
-
     
     [[ -d ${ROOT_DIR}/venv/lib/python3.7/site-packages/cysecuretools ]] || cmd_check pip install git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@$CY_SECURETOOLS_BRANCH
     #install_cy_pymodule "cysecuretools" "http://git-ore.aus.cypress.com/repo/cysecuretools.git" $CY_SECURETOOLS_BRANCH
