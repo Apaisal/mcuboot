@@ -67,7 +67,7 @@ MEMORY
     flash             (rx)    : ORIGIN = 0x100D0000, LENGTH = 0x10000
 
 
-     /* This is a 32K flash region used for EEPROM emulation. This region can also be used as the general purpose flash.
+    /* This is a 32K flash region used for EEPROM emulation. This region can also be used as the general purpose flash.
      * You can assign sections to this memory region for only one of the cores.
      * Note some middleware (e.g. BLE, Emulated EEPROM) can place their data into this memory region.
      * Therefore, repurposing this memory region will prevent such middleware from operation.
