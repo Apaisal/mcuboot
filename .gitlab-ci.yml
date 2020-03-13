@@ -628,7 +628,7 @@ mac_2M_SecureBlinkyApp:
 
 
 
-win_2M_Bootloader:
+.win_2M_Bootloader:
   extends: .build_2M
   tags:
     - FWS_WIN_BUILD
@@ -651,7 +651,7 @@ win_2M_Bootloader:
       MAKEINFO=0
       POST_BUILD=1      
 
-win_2M_BlinkyApp:
+.win_2M_BlinkyApp:
   extends: .build_2M
   tags:
     - FWS_WIN_BUILD
@@ -693,7 +693,7 @@ win_2M_BlinkyApp:
       BUILDCFG=Debug        
 
 
-win_2M_Multi_BlinkyApp:
+.win_2M_Multi_BlinkyApp:
   extends: .build_2M
   tags:
     - FWS_WIN_BUILD
@@ -739,7 +739,7 @@ win_2M_Multi_BlinkyApp:
       BUILDCFG=Debug       
       
       
-win_2M_SecureBlinkyApp:
+.win_2M_SecureBlinkyApp:
   extends: .build_2M
   tags:
     - FWS_WIN_BUILD
