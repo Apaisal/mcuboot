@@ -61,12 +61,10 @@ MEMORY
      * Your changes must be aligned with the corresponding memory regions for the CM4 core in 'xx_cm4_dual.ld',
      * where 'xx' is the device group; for example, 'cy8c6xx7_cm4_dual.ld'.
      */
+    public_ram        (rw)    : ORIGIN = 0x08000000, LENGTH = 0x800
     ram_heap          (rwx)   : ORIGIN = 0x08010000, LENGTH = 0x7000
     ram               (rwx)   : ORIGIN = 0x08017000, LENGTH = 0x15000
-    public_ram        (rw)    : ORIGIN = 0x0802C000, LENGTH = 0x800
-    flash             (rx)    : ORIGIN = 0x1002F000, LENGTH = 0x10E00
-
-    toc_3             (rx)    : ORIGIN = 0x1003FE00, LENGTH = 0x200 /* Used by Secure FlashBoot */
+    flash             (rx)    : ORIGIN = 0x10030000, LENGTH = 0x10000
 
     /* This is a 32K flash region used for EEPROM emulation. This region can also be used as the general purpose flash.
      * You can assign sections to this memory region for only one of the cores.
@@ -368,13 +366,6 @@ SECTIONS
     {
         KEEP(*(.cy_sflash_public_key))
     } > sflash_public_key
-
-
-    /* Supervisory Flash: Table of Content # 2 */
-    .cy_toc_part2 :
-    {
-        KEEP(*(.cy_toc_part2))
-    } > toc_3
 
 
     /* Supervisory Flash: Table of Content # 2 Copy */

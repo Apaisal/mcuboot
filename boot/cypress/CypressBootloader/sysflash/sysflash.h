@@ -12,7 +12,8 @@
 #define FLASH_AREA_IMAGE_2 5
 #define FLASH_AREA_IMAGE_3 6
 
-#define CY_BOOT_USE_EXTERNAL_FLASH
+/* This defines if External Flash (SMIF) will be used for Upgrade Slots */
+/* #define CY_BOOT_USE_EXTERNAL_FLASH */
 
 /* use PDL-defined offset or one from SMFI config */
 #define CY_SMIF_BASE_MEM_OFFSET             (0x18000000)

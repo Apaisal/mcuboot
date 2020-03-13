@@ -15,8 +15,8 @@ variables:
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
     CY_BOOTLOADER_TESTS_CONFIG: Debug
     
-    CY_SECURETOOLS_BRANCH: ci-test
-    PYOCD_BRANCH: ww05-sync-0.24.1
+    CY_SECURETOOLS_BRANCH: feature/ihos/provisioning-sas-a
+    PYOCD_BRANCH: 2m-sysap-cm0
     
 ##############################################################################
 # Build 
@@ -42,7 +42,7 @@ variables:
       - develop
 
 
-mac_512K_Bootloader:
+.mac_512K_Bootloader:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
@@ -65,7 +65,7 @@ mac_512K_Bootloader:
       POST_BUILD=0
 
 
-mac_512K_BlinkyApp:
+.mac_512K_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
@@ -106,7 +106,7 @@ mac_512K_BlinkyApp:
       BUILDCFG=Debug        
 
 
-mac_512K_Multi_BlinkyApp:
+.mac_512K_Multi_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
@@ -151,7 +151,7 @@ mac_512K_Multi_BlinkyApp:
       BUILDCFG=Debug       
       
       
-mac_512K_SecureBlinkyApp:
+.mac_512K_SecureBlinkyApp:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
@@ -187,7 +187,7 @@ mac_512K_SecureBlinkyApp:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
-win_512K_Bootloader:
+.win_512K_Bootloader:
   extends: .build_512K
   tags:
     - FWS_WIN_BUILD
@@ -210,7 +210,7 @@ win_512K_Bootloader:
       MAKEINFO=0
       POST_BUILD=0      
 
-win_512K_BlinkyApp:
+.win_512K_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_WIN_BUILD
@@ -252,7 +252,7 @@ win_512K_BlinkyApp:
       BUILDCFG=Debug        
 
 
-win_512K_Multi_BlinkyApp:
+.win_512K_Multi_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_WIN_BUILD
@@ -298,7 +298,7 @@ win_512K_Multi_BlinkyApp:
       BUILDCFG=Debug       
       
       
-win_512K_SecureBlinkyApp:
+.win_512K_SecureBlinkyApp:
   extends: .build_512K
   tags:
     - FWS_WIN_BUILD
@@ -335,7 +335,7 @@ win_512K_SecureBlinkyApp:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug      
 
-lin_512K_Bootloader:
+.lin_512K_Bootloader:
   extends: .build_512K
   tags:
     - FWS_LIN_BUILD
@@ -358,7 +358,7 @@ lin_512K_Bootloader:
       POST_BUILD=0
 
 
-lin_512K_BlinkyApp:
+.lin_512K_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_LIN_BUILD
@@ -399,7 +399,7 @@ lin_512K_BlinkyApp:
       BUILDCFG=Debug        
 
 
-lin_512K_Multi_BlinkyApp:
+.lin_512K_Multi_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_LIN_BUILD
@@ -444,7 +444,7 @@ lin_512K_Multi_BlinkyApp:
       BUILDCFG=Debug       
       
       
-lin_512K_SecureBlinkyApp:
+.lin_512K_SecureBlinkyApp:
   extends: .build_512K
   tags:
     - FWS_LIN_BUILD
@@ -493,7 +493,7 @@ mac_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Release
       MAKEINFO=0
-      POST_BUILD=0
+      POST_BUILD=1
     # Build Debug
     - >
       ./ci/build/build.sh
@@ -501,7 +501,7 @@ mac_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Debug
       MAKEINFO=0
-      POST_BUILD=0
+      POST_BUILD=1
 
 
 mac_2M_BlinkyApp:
@@ -628,7 +628,7 @@ mac_2M_SecureBlinkyApp:
 
 
 
-win_2M_Bootloader:
+.win_2M_Bootloader:
   extends: .build_2M
   tags:
     - FWS_WIN_BUILD
@@ -641,7 +641,7 @@ win_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Release
       MAKEINFO=0
-      POST_BUILD=0      
+      POST_BUILD=1      
     # Build Debug
     - >
       & "bash" "./ci/build/build.sh"
@@ -649,9 +649,9 @@ win_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Debug
       MAKEINFO=0
-      POST_BUILD=0      
+      POST_BUILD=1      
 
-win_2M_BlinkyApp:
+.win_2M_BlinkyApp:
   extends: .build_2M
   tags:
     - FWS_WIN_BUILD
@@ -693,7 +693,7 @@ win_2M_BlinkyApp:
       BUILDCFG=Debug        
 
 
-win_2M_Multi_BlinkyApp:
+.win_2M_Multi_BlinkyApp:
   extends: .build_2M
   tags:
     - FWS_WIN_BUILD
@@ -739,7 +739,7 @@ win_2M_Multi_BlinkyApp:
       BUILDCFG=Debug       
       
       
-win_2M_SecureBlinkyApp:
+.win_2M_SecureBlinkyApp:
   extends: .build_2M
   tags:
     - FWS_WIN_BUILD
@@ -788,7 +788,7 @@ lin_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Release
       MAKEINFO=0
-      POST_BUILD=0
+      POST_BUILD=1
     # Build Debug
     - >
       ./ci/build/build.sh
@@ -796,7 +796,7 @@ lin_2M_Bootloader:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Debug
       MAKEINFO=0
-      POST_BUILD=0
+      POST_BUILD=1
 
 
 lin_2M_BlinkyApp:
@@ -933,11 +933,12 @@ lin_2M_SecureBlinkyApp:
 #######################################################################################################################################################
 
 
-mac_test_512K:
+.mac_test_512K:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
-  cache: {}
+  variables:
+    GIT_SUBMODULE_STRATEGY: none    
   dependencies:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
@@ -950,7 +951,7 @@ mac_test_512K:
     - source venv/bin/activate
     - python3 -m pip install pyserial
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@${CY_SECURETOOLS_BRANCH}
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@${PYOCD_BRANCH}
     - pwd
     - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_Release
     - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
@@ -960,7 +961,7 @@ mac_test_512K:
 
     - echo "[INFO] Start tests"
 
-    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_temp && git branch && cd .. '
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd
@@ -971,13 +972,13 @@ mac_test_512K:
     - cd ..
     - rm -rf tests
 
-    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_temp && git branch && cd .. '
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd
 
     - echo "[INFO] Test provisioning multi image, CyBootloader WithLogs"
-    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_muilti_image
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_multi_image
 
     - cd ..
     - rm -rf tests
@@ -994,8 +995,10 @@ mac_test_512K:
 ##################------------------------------------------------- TESTS 2M ---------------------------------------------#############################
 #######################################################################################################################################################
 
-.mac_test_2M:
+mac_test_2M:
   stage: tests
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
   tags:
     - MBED_TEST_MAC1014
   dependencies:
@@ -1010,17 +1013,17 @@ mac_test_512K:
     - source venv/bin/activate
     - python3 -m pip install pyserial
     - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@${CY_SECURETOOLS_BRANCH}
-    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@SECUREBOOT_MCU_BETA4_RC1
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@${PYOCD_BRANCH}
     - pwd
-    - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_Release
-    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
-    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.hex
-    - cp -r ./develop/PSOC_064_2M/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_WithLogs/
-    - cp -r ./develop/PSOC_064_2M/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cy8ckit_064x0s2_4343w/prebuilt/CyBootloader_WithLogs/
+    - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xxa/prebuilt/CyBootloader_Release
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xxa/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xxa/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.hex
+    - cp -r ./develop/PSOC_064_2M/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xxa/prebuilt/CyBootloader_WithLogs/
+    - cp -r ./develop/PSOC_064_2M/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xxa/prebuilt/CyBootloader_WithLogs/
 
     - echo "[INFO] Start tests"
 
-    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_temp && git branch && cd .. '
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd
@@ -1031,13 +1034,13 @@ mac_test_512K:
     - cd ..
     - rm -rf tests
 
-    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_temp && git branch && cd .. '
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd
 
     - echo "[INFO] Test provisioning multi image, CyBootloader WithLogs"
-    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_2M_release_muilti_image
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_2M_release_multi_image
 
     - cd ..
     - rm -rf tests
@@ -1055,7 +1058,6 @@ mac_test_512K:
 win_cpp_check:
   stage: cppcheck
   variables:
-    GIT_STRATEGY: none
     GIT_SUBMODULE_STRATEGY: none
   dependencies: []
   tags:

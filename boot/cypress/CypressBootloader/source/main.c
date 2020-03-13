@@ -104,26 +104,6 @@
 #define CY_BOOTLOADER_SMIF_SFDP_MAX (0x4)
 #define CY_BOOTLOADER_SMIF_CFG  (0x2)
 
-/* TOC3 Table */
-/* valid TOC3, section name cy_toc_part2 used for CRC calculation */
-__attribute__((used, section(".cy_toc_part2") )) static const int cyToc[512 / 4 ] =
-{
-    0x200-4,                /* Object Size, bytes */
-    0x01211221,             /* TOC Part 3, ID */
-    0x00000000,             /* Reserved */
-    0x00000000,             /* Reserved */
-    CY_BOOTLOADER_START,    /* Bootloader image start address */
-    0x00011E00,             /* Bootloader image length */
-    CY_BOOTLOADER_VERSION,  /* Bootloader version Major.Minor.Rev */
-    CY_BOOTLOADER_BUILD,    /* Bootloader build number */
-    1,                      /* Number of the next objects to add to SECURE_HASH */
-    0x100FDA00,             /* TODO: it is obsoleted. Provisioning JWT string starting with length  */
-    0,
-    [(512 / sizeof(int)) - 2] =
-    (TOC_LISTEN_WINDOW_20MS_IDX << 2) |
-    (TOC_FREQ_50MHZ_IDX << 0),
-};
-
 /** SecureBoot policies*/
 /** Boot & Upgrade policy structure */
 bnu_policy_t cy_bl_bnu_policy;
@@ -184,7 +164,7 @@ static void do_boot(struct boot_rsp *rsp)
      * reset vector
      */
     application_start = (rsp->br_image_off + rsp->br_hdr->ih_hdr_size);
-    BOOT_LOG_INF("Application at: 0x%p", (void*)application_start);
+    BOOT_LOG_INF("Application at: 0x%08lx", application_start);
 
     if((cy_bl_bnu_policy.bnu_img_policy[0].multi_image == 1) &&
         (cy_bl_bnu_policy.bnu_img_policy[1].multi_image == 2))
@@ -234,12 +214,15 @@ void Cy_Bl_ApplyPolicy(void)
 
     secondary_1.fa_id = FLASH_AREA_IMAGE_SECONDARY(0);
     secondary_1.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
+
+#ifdef CY_BOOT_USE_EXTERNAL_FLASH
         /* check if upgrade slot is requested from external memory */
     if(cy_bl_bnu_policy.bnu_img_policy[0].smif_id != 0)
     {
         secondary_1.fa_device_id = FLASH_DEVICE_EXTERNAL_FLAG;
         BOOT_LOG_INF("Secondary Slot 1 will upgrade from External Memory");
     }
+#endif
     secondary_1.fa_off = cy_bl_bnu_policy.bnu_img_policy[0].upgrade_area.start;
     secondary_1.fa_size = cy_bl_bnu_policy.bnu_img_policy[0].upgrade_area.size;
 
@@ -256,12 +239,15 @@ void Cy_Bl_ApplyPolicy(void)
 
         secondary_2.fa_id = FLASH_AREA_IMAGE_SECONDARY(1);
         secondary_2.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
+
+#ifdef CY_BOOT_USE_EXTERNAL_FLASH
             /* check if upgrade slot is requested from external memory */
         if(cy_bl_bnu_policy.bnu_img_policy[1].smif_id != 0)
         {
             secondary_2.fa_device_id = FLASH_DEVICE_EXTERNAL_FLAG;
             BOOT_LOG_INF("Secondary Slot 2 will upgrade from External Memory");
         }
+#endif
         secondary_2.fa_off = cy_bl_bnu_policy.bnu_img_policy[1].upgrade_area.start;
         secondary_2.fa_size = cy_bl_bnu_policy.bnu_img_policy[1].upgrade_area.size;
 
@@ -356,6 +342,7 @@ int main(void)
     rc = Cy_JWT_GetProvisioningDetails(FB_POLICY_JWT, &jwt, &jwtLen);
     if(0 == rc)
     {
+        /* BOOT_LOG_INF("Provisioning packet : %s", jwt); */
         rc = Cy_JWT_ParseProvisioningPacket(jwt, &cy_bl_bnu_policy, &debug_policy,
                 CY_BOOTLOADER_MASTER_IMG_ID);
     }
@@ -415,6 +402,7 @@ int main(void)
         scratch.fa_off = bootloader.fa_off - CY_BOOTLOADER_SCRATCH_SIZE;
         scratch.fa_size = CY_BOOTLOADER_SCRATCH_SIZE;
 
+#ifdef CY_BOOT_USE_EXTERNAL_FLASH
         /* if supported/requested */
         if(Cy_Bl_InitSMIF() != 0)
         {   /* SMIF initialization failed, disallow upgrade */
@@ -428,7 +416,14 @@ int main(void)
                 cy_bl_bnu_policy.bnu_img_policy[1].upgrade = false;
             }
         }
-        apply_protections();
+#endif
+
+        cy_en_prot_status_t prot_ret_code = apply_protections();
+        if(prot_ret_code != CY_PROT_SUCCESS)
+        {
+            BOOT_LOG_INF("CypressBootloader failed to apply protection settings, error = 0x%X", prot_ret_code) ;
+            Cy_BLServ_Assert(0);
+        }
 #endif
     }
 

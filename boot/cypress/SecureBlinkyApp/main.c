@@ -119,7 +119,12 @@ debug_policy_t debug_policy;
 #if(0)
 void Cy_SystemInit(void)
 {
-    Cy_Utils_AcquireWindow();
+    if((CY_GET_REG32(CY_SRSS_TST_MODE_ADDR) & TST_MODE_TEST_MODE_MASK) != 0UL)
+    {
+        Cy_Utils_AcquireWindow();
+
+        __disable_irq();
+    }
 }
 #endif
 
@@ -211,7 +216,12 @@ int main(void)
     }
 #endif
 
-    apply_protections();
+    cy_en_prot_status_t prot_ret_code = apply_protections();
+    if(prot_ret_code != CY_PROT_SUCCESS)
+    {
+        printf("Application failed to apply protection settings, error = 0x%X\n\r", prot_ret_code) ;
+        CY_ASSERT(0);
+    }
 
     for (i = 0; i < CM0_TIMEOUT ; i++)
     {

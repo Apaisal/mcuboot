@@ -20,20 +20,17 @@ function setup_environment {
 #
 function prepare_to_build {    
 
-    [[ -d ${ROOT_DIR}/venv ]] || cmd_check virtualenv --system-site-packages --python=python3 "$ROOT_DIR/venv" 
+    [[ -d ${ROOT_DIR}/venv ]] || cmd_check virtualenv --python=python3 "$ROOT_DIR/venv" 
    
     cmd_check source ${ROOT_DIR}/venv/bin/activate
     
     echo "[DEBUG] Python path: $(which python)"
 
-    cmd_check pip install pyserial -U
+    cmd_check pip install --upgrade --force-reinstall pyserial -U
 
-    #cmd_check pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@v1.4.0-es10.3-rc1
-    
-    cmd_check pip install git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@$CY_SECURETOOLS_BRANCH -U
-
-    #cmd_check pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@ww05-sync-0.24.1
-    cmd_check pip install git+http://git-ore.aus.cypress.com/repo/pyocd.git@$PYOCD_BRANCH -U
+    cmd_check pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@$CY_SECURETOOLS_BRANCH -U --no-cache-dir
+	
+    cmd_check pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@$PYOCD_BRANCH -U --no-cache-dir
    
     local cy_secure_tools_path=$(python -c "import cysecuretools; import os; print(os.path.dirname(os.path.dirname(cysecuretools.__file__)))")
     echo "[INFO]: CY_SEC_TOOLS ${cy_secure_tools_path}"
@@ -42,6 +39,8 @@ function prepare_to_build {
     cmd_check cp -R ${ROOT_DIR}/../../../../keys ${cy_secure_tools_path}/cysecuretools/targets/cy8cproto_064s1_sb/
     cmd_check cp -R ${ROOT_DIR}/../../../../keys ${cy_secure_tools_path}/cysecuretools/targets/cy8cproto_064s2_sb/
     cmd_check cp -R ${ROOT_DIR}/../../../../keys ${cy_secure_tools_path}/cysecuretools/targets/cyb06xx5/
+    cmd_check cp -R ${ROOT_DIR}/../../../../keys ${cy_secure_tools_path}/cysecuretools/targets/cyb06xx7/
+    cmd_check cp -R ${ROOT_DIR}/../../../../keys ${cy_secure_tools_path}/cysecuretools/targets/cyb06xxa/
 }
 
 ############################

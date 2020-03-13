@@ -66,41 +66,45 @@ SLOT_SIZE ?= 0x10000
 ifeq ($(PLATFORM), PSOC_064_2M)
 DEFINES_APP += -DRAM_START=0x08040000
 DEFINES_APP += -DRAM_SIZE=0x20000
+CY_SEC_TOOLS_TARGET := cyb06xxa
 ifeq ($(SMIF_UPGRADE), 0)
 	# Determine path to multi image policy file
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4.json
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
 	SLOT_SIZE ?= 0x70000
 else ifeq ($(SMIF_UPGRADE), 1)
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8ckit_064x0s2_4343w/policy/policy_multi_CM0_CM4_smif.json
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
 	SLOT_SIZE ?= 0xC0000
 endif
-CY_SEC_TOOLS_TARGET := cy8ckit-064b0s2-4343w
 
 else ifeq ($(PLATFORM), PSOC_064_1M)
 DEFINES_APP += -DRAM_START=0x08040000
 DEFINES_APP += -DRAM_SIZE=0x10000
+CY_SEC_TOOLS_TARGET := cyb06xx7
 ifeq ($(SMIF_UPGRADE), 0)
 	# Determine path to multi image policy file
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_multi_CM0_CM4.json
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
 else ifeq ($(SMIF_UPGRADE), 1)
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cy8cproto_064s1_sb/policy/policy_multi_CM0_CM4.json
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
 endif
-CY_SEC_TOOLS_TARGET := cy8cproto-064b0s1-ble
 
 else ifeq ($(PLATFORM), PSOC_064_512K)
 DEFINES_APP += -DRAM_START=0x08010000
 DEFINES_APP += -DRAM_SIZE=0x10000
+CY_SEC_TOOLS_TARGET := cyb06xx5
 ifeq ($(SMIF_UPGRADE), 0)
 	# Determine path to multi image policy file
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4.json
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
 else ifeq ($(SMIF_UPGRADE), 1)
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/cyb06xx5/policy/policy_multi_CM0_CM4_smif.json
+	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
 endif
-CY_SEC_TOOLS_TARGET := cyb06xx5
 endif
 
 DEFINES_APP += -DSECURE_APP_START=$(SECURE_APP_START)
 DEFINES_APP += -DSECURE_APP_SIZE=$(SLOT_SIZE)
+
+ifeq ($(BUILDCFG), Debug)
+DEFINES_APP += -DCY_SECURE_UTILS_LOG
+endif
 
 # Collect Test Application sources
 SOURCES_APP_SRC := $(wildcard $(CUR_APP_PATH)/*.c)
