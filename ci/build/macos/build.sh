@@ -28,9 +28,9 @@ function prepare_to_build {
 
     cmd_check pip install --upgrade --force-reinstall pyserial -U
 
-    cmd_check pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@$CY_SECURETOOLS_BRANCH -U
+    cmd_check pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@$CY_SECURETOOLS_BRANCH -U --no-cache-dir
 	
-    cmd_check pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@$PYOCD_BRANCH -U
+    cmd_check pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@$PYOCD_BRANCH -U --no-cache-dir
    
     local cy_secure_tools_path=$(python -c "import cysecuretools; import os; print(os.path.dirname(os.path.dirname(cysecuretools.__file__)))")
     echo "[INFO]: CY_SEC_TOOLS ${cy_secure_tools_path}"
