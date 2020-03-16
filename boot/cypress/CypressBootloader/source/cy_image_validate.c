@@ -323,10 +323,27 @@ bootutil_get_img_security_cnt(struct image_header *hdr,
                               const struct flash_area *fap,
                               uint32_t *img_security_cnt)
 {
+    int rc = -1;
+    uint32_t security_cnt = 0;
+
     /* clear the destination variable */
     *img_security_cnt = 0;
 
-    return bootutil_get_tag_value(hdr, fap, IMAGE_TLV_SEC_CNT, (void *)img_security_cnt, sizeof(uint32_t));
+    rc = bootutil_get_tag_value(hdr, fap, IMAGE_TLV_SEC_CNT, (void *)&security_cnt, sizeof(uint32_t));
+
+    if ((rc == 0) && ((uint32_t)security_cnt <= 255UL))
+    {
+        /* update the destination variable */
+        *img_security_cnt = security_cnt;
+        rc = 0;
+    }
+    else
+    {
+        /* Security counter is not valid. */
+        BOOT_LOG_DBG("Invalid security counter TLV value = %d", (int)security_cnt);
+    }
+
+    return rc;
 }
 
 /*
@@ -485,13 +502,20 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                      */
                     if (len != sizeof(img_security_cnt)) {
                         /* Security counter is not valid. */
-                        BOOT_LOG_ERR("Invalid security counter TLV size, image ID = %d", (int)image_id);
+                        BOOT_LOG_DBG("Invalid security counter TLV size, image ID = %d", (int)image_id);
                         return -1;
                     }
 
                     rc = flash_area_read(fap, off, &img_security_cnt, len);
                     if (rc) {
                         return rc;
+                    }
+
+                    if ((uint32_t)img_security_cnt > 255UL)
+                    {
+                        /* Security counter is not valid. */
+                        BOOT_LOG_DBG("Invalid security counter TLV value = %d, image ID = %d", (int)img_security_cnt, (int)image_id);
+                        return -1;
                     }
 
                     rc = boot_nv_security_counter_get(image_index, &security_cnt);
