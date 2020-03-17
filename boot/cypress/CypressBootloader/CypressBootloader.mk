@@ -35,6 +35,11 @@ CUR_APP_PATH = $(CURDIR)/$(APP_NAME)
 
 CY_BOOTLOADER_LOG_LEVEL ?= MCUBOOT_LOG_LEVEL_INFO
 
+CY_BOOTLOADER_MAJOR ?= 1
+CY_BOOTLOADER_MINOR ?= 1
+CY_BOOTLOADER_REV ?= 0
+CY_BOOTLOADER_BUILD ?= 111
+
 include $(CUR_APP_PATH)/platforms.mk
 include $(CUR_APP_PATH)/libs.mk
 include $(CUR_APP_PATH)/toolchains.mk
@@ -153,6 +158,6 @@ post_build: $(OUT_CFG)/$(APP_NAME).hex
 	$(GCC_PATH)/bin/arm-none-eabi-objcopy --change-addresses=$(HEADER_OFFSET) -O ihex $(OUT_CFG)/$(APP_NAME).elf $(OUT_CFG)/$(APP_NAME)_CM0p.hex
 ifeq ($(POST_BUILD), 1)
 	$(info [POST_BUILD] - Creating image certificate for $(APP_NAME))
-	cysecuretools -t $(CY_SEC_TOOLS_TARGET) image-certificate -i $(OUT_CFG)/$(APP_NAME)_CM0p.hex -k $(CERT_KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt
+	cysecuretools -t $(CY_SEC_TOOLS_TARGET) image-certificate -i $(OUT_CFG)/$(APP_NAME)_CM0p.hex -k $(CERT_KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt -v '${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}'
 endif
 ASM_FILES_APP :=

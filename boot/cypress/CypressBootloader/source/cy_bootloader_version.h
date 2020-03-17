@@ -29,7 +29,7 @@
 #endif
 
 #ifndef CY_BOOTLOADER_BUILD
-#define CY_BOOTLOADER_BUILD   (420u)
+#define CY_BOOTLOADER_BUILD   (111u)
 #endif
 
 #define CY_BOOTLOADER_VERSION (((CY_BOOTLOADER_MAJOR & 0xFF) << 16u) | \
