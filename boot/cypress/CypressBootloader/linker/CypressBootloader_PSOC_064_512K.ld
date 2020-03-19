@@ -40,6 +40,8 @@ SEARCH_DIR(.)
 GROUP(-lgcc -lc -lnosys)
 ENTRY(Reset_Handler)
 
+/* Allocated size for CypressBootloader in the flash */
+CY_BOOTLOADER_SIZE = 0x10000;
 
 /* Force symbol to be entered in the output file as an undefined symbol. Doing
 * this may, for example, trigger linking of additional modules from standard
@@ -64,7 +66,7 @@ MEMORY
     public_ram        (rw)    : ORIGIN = 0x08000000, LENGTH = 0x800
     ram_heap          (rwx)   : ORIGIN = 0x08010000, LENGTH = 0x7000
     ram               (rwx)   : ORIGIN = 0x08017000, LENGTH = 0x15000
-    flash             (rx)    : ORIGIN = 0x10030000, LENGTH = 0x10000
+    flash             (rx)    : ORIGIN = 0x10030000, LENGTH = CY_BOOTLOADER_SIZE
 
     /* This is a 32K flash region used for EEPROM emulation. This region can also be used as the general purpose flash.
      * You can assign sections to this memory region for only one of the cores.
@@ -339,6 +341,9 @@ SECTIONS
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed with stack")
 
+    /* Check if code + data exceeds FLASH image limit */
+    __FlashImageSize = SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.copy.table) + + SIZEOF(.zero.table);
+    ASSERT(__FlashImageSize <= CY_BOOTLOADER_SIZE, "Result image does not fit into bootloader region")
 
     /* Emulated EEPROM Flash area */
     .cy_em_eeprom :
