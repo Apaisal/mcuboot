@@ -45,7 +45,6 @@ STACK_SIZE = 0x1000;
 
 /* Allocated size for CypressBootloader in the flash */
 CY_BOOTLOADER_SIZE = 0x10000;
-/*CY_BOOTLOADER_SIZE = 0x106F8;*/
 
 /* Force symbol to be entered in the output file as an undefined symbol. Doing
 * this may, for example, trigger linking of additional modules from standard
