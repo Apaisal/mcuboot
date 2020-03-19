@@ -43,8 +43,12 @@ ENTRY(Reset_Handler)
 /* Size of the stack section at the end of CM0+ SRAM */
 STACK_SIZE = 0x1000;
 
-/* Allocated size for CypressBootloader in the flash */
-CY_BOOTLOADER_SIZE = 0x10000;
+/* CypressBootloader start address */
+CY_BOOTLOADER_START = 0x101D0000;
+
+/* CypressBootloader occupies a 64k flash region before SecureFlashboot */
+CY_SFLASHBOOT_START = 0x101E0000;
+CY_BOOTLOADER_SIZE = CY_SFLASHBOOT_START - CY_BOOTLOADER_START;
 
 /* Force symbol to be entered in the output file as an undefined symbol. Doing
 * this may, for example, trigger linking of additional modules from standard
@@ -69,7 +73,7 @@ MEMORY
     public_ram        (rw)    : ORIGIN = 0x08000000, LENGTH = 0x800
     ram_heap          (rwx)   : ORIGIN = 0x0804E000, LENGTH = 0xA000
     ram               (rwx)   : ORIGIN = 0x08058000, LENGTH = 0x94000
-    flash             (rx)    : ORIGIN = 0x101D0000, LENGTH = CY_BOOTLOADER_SIZE
+    flash             (rx)    : ORIGIN = CY_BOOTLOADER_START, LENGTH = CY_BOOTLOADER_SIZE
 
 
     /* This is a 32K flash region used for EEPROM emulation. This region can also be used as the general purpose flash.

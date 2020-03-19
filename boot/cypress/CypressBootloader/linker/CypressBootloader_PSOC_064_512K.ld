@@ -40,8 +40,12 @@ SEARCH_DIR(.)
 GROUP(-lgcc -lc -lnosys)
 ENTRY(Reset_Handler)
 
-/* Allocated size for CypressBootloader in the flash */
-CY_BOOTLOADER_SIZE = 0x10000;
+/* CypressBootloader start address */
+CY_BOOTLOADER_START = 0x10030000;
+
+/* CypressBootloader occupies a 64k flash region before other firmware slots */
+CY_FIRMWAREDATA_START = 0x10040000;
+CY_BOOTLOADER_SIZE = CY_FIRMWAREDATA_START - CY_BOOTLOADER_START;
 
 /* Force symbol to be entered in the output file as an undefined symbol. Doing
 * this may, for example, trigger linking of additional modules from standard
@@ -66,7 +70,7 @@ MEMORY
     public_ram        (rw)    : ORIGIN = 0x08000000, LENGTH = 0x800
     ram_heap          (rwx)   : ORIGIN = 0x08010000, LENGTH = 0x7000
     ram               (rwx)   : ORIGIN = 0x08017000, LENGTH = 0x15000
-    flash             (rx)    : ORIGIN = 0x10030000, LENGTH = CY_BOOTLOADER_SIZE
+    flash             (rx)    : ORIGIN = CY_BOOTLOADER_START, LENGTH = CY_BOOTLOADER_SIZE
 
     /* This is a 32K flash region used for EEPROM emulation. This region can also be used as the general purpose flash.
      * You can assign sections to this memory region for only one of the cores.
