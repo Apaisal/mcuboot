@@ -40,13 +40,13 @@ SEARCH_DIR(.)
 GROUP(-lgcc -lc -lnosys)
 ENTRY(Reset_Handler)
 
-CY_FIRMWAREDATA_START = 0x10040000; /* DO NOT CHANGE THIS NUMBER */
+CY_PROTECTED_DATA_START = 0x10040000; /* DO NOT CHANGE THIS NUMBER */
 
 /* CypressBootloader start address */
 CY_BOOTLOADER_START = 0x10030000;
 
 /* CypressBootloader occupies a 64k flash region before other firmware slots */
-CY_BOOTLOADER_SIZE = CY_FIRMWAREDATA_START - CY_BOOTLOADER_START;
+CY_BOOTLOADER_SIZE = CY_PROTECTED_DATA_START - CY_BOOTLOADER_START;
 
 /* Force symbol to be entered in the output file as an undefined symbol. Doing
 * this may, for example, trigger linking of additional modules from standard
