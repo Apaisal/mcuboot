@@ -40,11 +40,12 @@ SEARCH_DIR(.)
 GROUP(-lgcc -lc -lnosys)
 ENTRY(Reset_Handler)
 
+CY_FIRMWAREDATA_START = 0x10040000; /* DO NOT CHANGE THIS NUMBER */
+
 /* CypressBootloader start address */
 CY_BOOTLOADER_START = 0x10030000;
 
 /* CypressBootloader occupies a 64k flash region before other firmware slots */
-CY_FIRMWAREDATA_START = 0x10040000;
 CY_BOOTLOADER_SIZE = CY_FIRMWAREDATA_START - CY_BOOTLOADER_START;
 
 /* Force symbol to be entered in the output file as an undefined symbol. Doing

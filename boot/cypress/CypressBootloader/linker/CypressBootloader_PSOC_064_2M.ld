@@ -43,11 +43,12 @@ ENTRY(Reset_Handler)
 /* Size of the stack section at the end of CM0+ SRAM */
 STACK_SIZE = 0x1000;
 
+CY_SFLASHBOOT_START = 0x101E0000; /* DO NOT CHANGE THIS NUMBER */
+
 /* CypressBootloader start address */
 CY_BOOTLOADER_START = 0x101D0000;
 
 /* CypressBootloader occupies a 64k flash region before SecureFlashboot */
-CY_SFLASHBOOT_START = 0x101E0000;
 CY_BOOTLOADER_SIZE = CY_SFLASHBOOT_START - CY_BOOTLOADER_START;
 
 /* Force symbol to be entered in the output file as an undefined symbol. Doing

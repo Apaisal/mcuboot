@@ -40,11 +40,12 @@ SEARCH_DIR(.)
 GROUP(-lgcc -lc -lnosys)
 ENTRY(Reset_Handler)
 
+CY_SFLASHBOOT_START = 0x100E0000; /* DO NOT CHANGE THIS NUMBER */
+
 /* CypressBootloader start address */
 CY_BOOTLOADER_START = 0x100D0000;
 
 /* CypressBootloader occupies a 64k flash region before SecureFlashboot */
-CY_SFLASHBOOT_START = 0x100E0000;
 CY_BOOTLOADER_SIZE = CY_SFLASHBOOT_START - CY_BOOTLOADER_START;
 
 /* Force symbol to be entered in the output file as an undefined symbol. Doing
