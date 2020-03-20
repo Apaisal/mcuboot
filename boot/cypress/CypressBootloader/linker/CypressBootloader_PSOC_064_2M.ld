@@ -43,6 +43,15 @@ ENTRY(Reset_Handler)
 /* Size of the stack section at the end of CM0+ SRAM */
 STACK_SIZE = 0x1000;
 
+/* The point to SecureFlashboot code */
+CY_PROTECTED_DATA_START = 0x101E0000; /* DO NOT CHANGE THIS NUMBER */
+
+/* CypressBootloader start address */
+CY_BOOTLOADER_START = 0x101D0000;
+
+/* CypressBootloader occupies a 64k flash region before SecureFlashboot */
+CY_BOOTLOADER_SIZE = CY_PROTECTED_DATA_START - CY_BOOTLOADER_START;
+
 /* Force symbol to be entered in the output file as an undefined symbol. Doing
 * this may, for example, trigger linking of additional modules from standard
 * libraries. You may list several symbols for each EXTERN, and you may use
@@ -66,7 +75,7 @@ MEMORY
     public_ram        (rw)    : ORIGIN = 0x08000000, LENGTH = 0x800
     ram_heap          (rwx)   : ORIGIN = 0x0804E000, LENGTH = 0xA000
     ram               (rwx)   : ORIGIN = 0x08058000, LENGTH = 0x94000
-    flash             (rx)    : ORIGIN = 0x101D0000, LENGTH = 0x10000
+    flash             (rx)    : ORIGIN = CY_BOOTLOADER_START, LENGTH = CY_BOOTLOADER_SIZE
 
 
     /* This is a 32K flash region used for EEPROM emulation. This region can also be used as the general purpose flash.
@@ -351,6 +360,9 @@ SECTIONS
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed with stack")
 
+    /* Check if code + data exceeds FLASH image limit */
+    __FlashImageSize = SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.copy.table) + + SIZEOF(.zero.table);
+    ASSERT(__FlashImageSize <= CY_BOOTLOADER_SIZE, "Result image does not fit into bootloader region")
 
     /* Emulated EEPROM Flash area */
     .cy_em_eeprom :
