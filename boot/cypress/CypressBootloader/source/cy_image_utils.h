@@ -27,10 +27,14 @@ int cy_bootutil_check_image_id(const struct flash_area *fap, uint8_t image_id);
 
 int cy_bootutil_check_upgrade(const struct flash_area *fap);
 
-int cy_bootutil_find_key(const struct flash_area *fap);
+int cy_bootutil_get_image_sign_key(const struct flash_area *fap);
 
-int cy_bootutil_find_sec_counter(const struct flash_area *fap);
+int cy_bootutil_get_image_enc_key(const struct flash_area *fap);
 
-int cy_bootutil_get_sec_counter(uint32_t image_id);
+int cy_bootutil_find_image_sec_counter(const struct flash_area *fap);
+
+int cy_bootutil_get_image_sec_counter(uint32_t image_id);
+
+int cy_bootutil_get_image_encrypt(const struct flash_area *fap);
 
 #endif /* SOURCE_CY_IMAGE_UTILS_H_ */

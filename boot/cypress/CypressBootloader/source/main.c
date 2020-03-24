@@ -99,10 +99,10 @@
 
 #define CY_BOOTLOADER_MASTER_IMG_ID      CY_BOOTLOADER_IMG_ID_CM0P
 
-#define CY_BOOTLOADER_SCRATCH_SIZE (0x1000)
+#define CY_BOOTLOADER_SCRATCH_SIZE       (0x1000)
 
-#define CY_BOOTLOADER_SMIF_SFDP_MAX (0x4)
-#define CY_BOOTLOADER_SMIF_CFG  (0x2)
+#define CY_BOOTLOADER_SMIF_SFDP_MAX      (0x4)
+#define CY_BOOTLOADER_SMIF_CFG           (0x2)
 
 /** SecureBoot policies*/
 /** Boot & Upgrade policy structure */
@@ -215,6 +215,13 @@ void Cy_Bl_ApplyPolicy(void)
     secondary_1.fa_id = FLASH_AREA_IMAGE_SECONDARY(0);
     secondary_1.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
 
+#if defined(MCUBOOT_ENC_IMAGES)
+    if(cy_bl_bnu_policy.bnu_img_policy[0].encrypt != 0)
+    {
+        BOOT_LOG_INF("Secondary Slot 1 will upgrade from encrypted image");
+    }
+#endif
+
 #ifdef CY_BOOT_USE_EXTERNAL_FLASH
         /* check if upgrade slot is requested from external memory */
     if(cy_bl_bnu_policy.bnu_img_policy[0].smif_id != 0)
@@ -239,6 +246,13 @@ void Cy_Bl_ApplyPolicy(void)
 
         secondary_2.fa_id = FLASH_AREA_IMAGE_SECONDARY(1);
         secondary_2.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
+
+#if defined(MCUBOOT_ENC_IMAGES)
+        if(cy_bl_bnu_policy.bnu_img_policy[1].encrypt != 0)
+        {
+            BOOT_LOG_INF("Secondary Slot 2 will upgrade from encrypted image");
+        }
+#endif
 
 #ifdef CY_BOOT_USE_EXTERNAL_FLASH
             /* check if upgrade slot is requested from external memory */

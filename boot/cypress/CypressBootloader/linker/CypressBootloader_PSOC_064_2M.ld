@@ -361,7 +361,7 @@ SECTIONS
     ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed with stack")
 
     /* Check if code + data exceeds FLASH image limit */
-    __FlashImageSize = SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.copy.table) + + SIZEOF(.zero.table);
+    __FlashImageSize = SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.copy.table) + SIZEOF(.zero.table);
     ASSERT(__FlashImageSize <= CY_BOOTLOADER_SIZE, "Result image does not fit into bootloader region")
 
     /* Emulated EEPROM Flash area */

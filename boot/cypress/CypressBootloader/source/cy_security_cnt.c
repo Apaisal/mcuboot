@@ -89,8 +89,8 @@ boot_nv_security_counter_init(void)
     BOOT_LOG_DBG("> Init security counter");
 
     /* Do nothing. */
+    BOOT_LOG_DBG(" * ok");
 
-    BOOT_LOG_DBG("* ok");
     return 0;
 }
 
@@ -102,7 +102,7 @@ boot_nv_security_counter_get(uint32_t image_id, uint32_t *security_cnt)
 
     BOOT_LOG_DBG("> Get security counter value, image ID = %d", (int)image_id);
 
-    sec_cnt_id = cy_bootutil_get_sec_counter(image_id);
+    sec_cnt_id = cy_bootutil_get_image_sec_counter(image_id);
 
     uint32_t syscall_param[1];
     uint32_t syscall_cmd[2];
@@ -117,7 +117,7 @@ boot_nv_security_counter_get(uint32_t image_id, uint32_t *security_cnt)
         *security_cnt = syscall_param[0];
     }
 
-    BOOT_LOG_DBG("* security counter: status = %d, id = %d, value = %d", (int)status, (int)sec_cnt_id, (int)*security_cnt);
+    BOOT_LOG_DBG(" * security counter: status = %d, id = %d, value = %d", (int)status, (int)sec_cnt_id, (int)*security_cnt);
 
     return status;
 }
@@ -128,7 +128,7 @@ boot_nv_security_counter_update(uint32_t image_id, uint32_t img_security_cnt)
     int32_t status;
     uint8_t sec_cnt_id;
 
-    sec_cnt_id = cy_bootutil_get_sec_counter(image_id);
+    sec_cnt_id = cy_bootutil_get_image_sec_counter(image_id);
 
     BOOT_LOG_DBG("> Update security counter value, image ID = %d, cnt_id = %d, img_security_cnt = %d", (int)image_id, (int)sec_cnt_id, (int)img_security_cnt);
 
@@ -144,12 +144,12 @@ boot_nv_security_counter_update(uint32_t image_id, uint32_t img_security_cnt)
 
     if (status == 0)
     {
-        BOOT_LOG_DBG("* update ok");
+        BOOT_LOG_DBG(" * update ok");
     }
     else
     {
-        BOOT_LOG_DBG("* update ERROR");
+        BOOT_LOG_DBG(" * update ERROR");
     }
 
-    return 0;
+    return status;
 }
