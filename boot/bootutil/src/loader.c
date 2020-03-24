@@ -602,6 +602,7 @@ boot_validate_slot(struct boot_loader_state *state, int slot,
 
     if (!boot_is_header_valid(hdr, fap) || boot_image_check(state, hdr, fap, bs)) {
         if (slot != BOOT_PRIMARY_SLOT) {
+            BOOT_LOG_DBG(" * Image in the secondary slot is invalid. Erase the image");
             flash_area_erase(fap, 0, fap->fa_size);
             /* Image in the secondary slot is invalid. Erase the image and
              * continue booting from the primary slot.
@@ -746,10 +747,12 @@ boot_copy_region(struct boot_loader_state *state,
     uint8_t image_index;
 #endif
 
-#ifdef MCUBOOT_OVERWRITE_CHUNK_SIZE 
-    TARGET_STATIC uint8_t buf[MCUBOOT_OVERWRITE_CHUNK_SIZE];
-#else
     TARGET_STATIC uint8_t buf[1024];
+
+#ifdef MCUBOOT_OVERWRITE_CHUNK_SIZE
+    #define MCUBOOT_CHUNK_SIZE MCUBOOT_OVERWRITE_CHUNK_SIZE
+#else
+    #define MCUBOOT_CHUNK_SIZE (sizeof buf)
 #endif
 
 #if !defined(MCUBOOT_ENC_IMAGES)
@@ -758,8 +761,8 @@ boot_copy_region(struct boot_loader_state *state,
 
     bytes_copied = 0;
     while (bytes_copied < sz) {
-        if (sz - bytes_copied > sizeof buf) {
-            chunk_sz = sizeof buf;
+        if (sz - bytes_copied > MCUBOOT_CHUNK_SIZE) {
+            chunk_sz = MCUBOOT_CHUNK_SIZE;
         } else {
             chunk_sz = sz - bytes_copied;
         }
@@ -796,7 +799,7 @@ boot_copy_region(struct boot_loader_state *state,
                 if (off + bytes_copied < hdr->ih_hdr_size) {
                     /* do not decrypt header */
                     blk_off = 0;
-                    blk_sz = chunk_sz - hdr->ih_hdr_size;
+                    blk_sz = (chunk_sz > hdr->ih_hdr_size) ? (chunk_sz) : (hdr->ih_hdr_size - chunk_sz);
                     idx = hdr->ih_hdr_size;
                 } else {
                     blk_off = ((off + bytes_copied) - hdr->ih_hdr_size) & 0xf;

@@ -33,12 +33,6 @@ CUR_LIBS_PATH = $(CURDIR)/libs
 # Collect source files for PDL
 SOURCES_PDL := $(wildcard $(CUR_LIBS_PATH)/pdl/psoc6pdl/drivers/source/*.c)
 
-# Collect source files for Retarget-io
-# SOURCES_RETARGET_IO := $(wildcard $(CUR_LIBS_PATH)/retarget-io/*.c)
-
-# Collect source files for HAL
-# SOURCES_HAL := $(wildcard $(CUR_LIBS_PATH)/psoc6hal/src/*.c)
-
 # Cy secureboot utils
 SOURCES_SECBOOT_UTILS := $(wildcard $(CUR_LIBS_PATH)/cy_secureboot_utils/cy_jwt/*.c)
 SOURCES_SECBOOT_UTILS += $(wildcard $(CUR_LIBS_PATH)/cy_secureboot_utils/cy_secure_utils/*.c)
@@ -54,14 +48,8 @@ INCLUDE_DIRS_PDL += $(CUR_LIBS_PATH)/pdl/psoc6pdl/devices/include/ip
 INCLUDE_DIRS_PDL += $(CUR_LIBS_PATH)/pdl/psoc6pdl/devices/include
 INCLUDE_DIRS_PDL += $(CUR_LIBS_PATH)/pdl/psoc6pdl/cmsis/include
 
-# Retarget-io related include directories
-# INCLUDE_DIRS_RETARGET_IO := $(CUR_LIBS_PATH)/retarget-io
-
 # core-libs related include directories
 INCLUDE_DIRS_CORE_LIB := $(CUR_LIBS_PATH)/core-lib/include
-
-# core-libs related include directories
-# INCLUDE_DIRS_HAL := $(CUR_LIBS_PATH)/psoc6hal/include
 
 # Include secure bootloader utility dependencies
 INCLUDE_DIRS_SECBOOT_UTILS := $(CUR_LIBS_PATH)/cy_secureboot_utils
@@ -82,33 +70,29 @@ INCLUDE_DIRS_SECBOOT_UTILS += $(CUR_LIBS_PATH)/cy_secureboot_utils/memory_val
 # Collected source files for libraries
 SOURCES_LIBS := $(SOURCES_PDL)
 SOURCES_LIBS += $(SOURCES_PLATFORM)
-# SOURCES_LIBS += $(SOURCES_RETARGET_IO)
-# SOURCES_LIBS += $(SOURCES_HAL)
 SOURCES_LIBS += $(SOURCES_SECBOOT_UTILS)
 
 # Collected include directories for libraries
 INCLUDE_DIRS_LIBS := $(addprefix -I,$(INCLUDE_DIRS_PDL))
 INCLUDE_DIRS_LIBS += $(addprefix -I,$(INCLUDE_DIRS_PLATFORM))
-# INCLUDE_DIRS_LIBS += $(addprefix -I,$(INCLUDE_DIRS_RETARGET_IO))
 INCLUDE_DIRS_LIBS += $(addprefix -I,$(INCLUDE_DIRS_CORE_LIB))
-# INCLUDE_DIRS_LIBS += $(addprefix -I,$(INCLUDE_DIRS_HAL))
 INCLUDE_DIRS_LIBS += $(addprefix -I,$(INCLUDE_DIRS_SECBOOT_UTILS))
 
 ################################################################################
-# mbedTLS settings
+# mbedTLS settings from Flashboot
 ################################################################################
 # MbedTLS related include directories
-INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/mbedtls/include
-INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/mbedtls/include/mbedtls
-INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/mbedtls/crypto/include
-INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/mbedtls/crypto/include/mbedtls
+INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/cy_secureboot_utils/flashboot_mbedtls/inc
+INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/cy_secureboot_utils/flashboot_mbedtls/inc/mbedtls
+INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/cy_secureboot_utils/flashboot_mbedtls/mbed-crypto/inc
+INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/cy_secureboot_utils/flashboot_mbedtls/mbed-crypto/inc/psa
+INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/cy_secureboot_utils/flashboot_mbedtls/mbed-crypto/platform/COMPONENT_PSA_SRV_IMPL/COMPONENT_NSPE
 #
 INCLUDE_DIRS_LIBS += $(addprefix -I,$(INCLUDE_DIRS_MBEDTLS))
 # Collect source files for MbedTLS
-SOURCES_MBEDTLS := $(wildcard $(CUR_LIBS_PATH)/mbedtls/library/*.c)
-SOURCES_MBEDTLS += $(wildcard $(CUR_LIBS_PATH)/mbedtls/crypto/library/*.c)
-# Collected source files for libraries
-SOURCES_LIBS += $(SOURCES_MBEDTLS)
+SOURCES_MBEDTLS := $(wildcard $(CUR_LIBS_PATH)/cy_secureboot_utils/flashboot_mbedtls/src/*.c)
+SOURCES_MBEDTLS += $(wildcard $(CUR_LIBS_PATH)/cy_secureboot_utils/flashboot_mbedtls/mbed-crypto/src/*.c)
+SOURCES_MBEDTLS += $(wildcard $(CUR_LIBS_PATH)/cy_secureboot_utils/flashboot_mbedtls/mbed-crypto/platform/COMPONENT_PSA_SRV_IMPL/*.c)
 ## mbedTLS settings
 
 ASM_FILES_PDL :=

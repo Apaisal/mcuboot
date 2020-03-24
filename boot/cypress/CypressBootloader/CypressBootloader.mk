@@ -58,12 +58,12 @@ ifeq ($(PLATFORM), PSOC_064_2M)
 CY_BOOTLOADER_APP_START ?= 0x101D0000
 # 0x1D0000 max slot size
 DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=3712
-CY_SEC_TOOLS_TARGET := cy8ckit-064b0s2-4343w
+CY_SEC_TOOLS_TARGET := cyb06xxa
 else ifeq ($(PLATFORM), PSOC_064_1M)
 CY_BOOTLOADER_APP_START ?= 0x100D0000
 # 0xD0000 max slot size
 DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=1664
-CY_SEC_TOOLS_TARGET := cy8cproto-064b0s1-ble
+CY_SEC_TOOLS_TARGET := cyb06xx7
 else ifeq ($(PLATFORM), PSOC_064_512K)
 CY_BOOTLOADER_APP_START ?= 0x10030000
 # 0x30000 slot size
@@ -73,20 +73,41 @@ else
 $(error "Not suppoted target name $(PLATFORM)")
 endif
 
+# Overwite path to linker script if custom is required, otherwise platform default is used
+ifeq ($(COMPILER), GCC_ARM)
+LINKER_SCRIPT := $(CUR_APP_PATH)/linker/$(APP_NAME)_$(PLATFORM).ld
+else
+$(error Only GCC ARM is supported at this moment)
+endif
+
+# Define maximum Cybootloader image size
+ifeq ($(MAKEINFO), 1)
+CY_BOOTLOADER_APP_START=$(shell cat $(LINKER_SCRIPT) | grep '^CY_BOOTLOADER_START' | sed -e 's/^.*\(0[xX][0-9a-fA-F]*\)[^0-9a-fA-F].*$\/\1/')
+CY_PROTECTED_DATA_START=$(shell cat $(LINKER_SCRIPT) | grep '^CY_PROTECTED_DATA_START' | sed -e 's/^.*\(0[xX][0-9a-fA-F]*\)[^0-9a-fA-F].*$\/\1/')
+CY_BOOTLOADER_START=$(shell printf "%d" $(CY_BOOTLOADER_APP_START))
+CY_PROTECTEDD_START=$(shell printf "%d" $(CY_PROTECTED_DATA_START))
+CY_BOOTLOADER_SIZE=$(shell expr $(CY_PROTECTEDD_START) - $(CY_BOOTLOADER_START) )
+# TODO: Add additional checking and debug information
+# $(info CY_BOOTLOADER_APP_SIZE = $(CY_BOOTLOADER_SIZE))
+endif
+
 # multi-image setup ?
 DEFINES_APP += -DMCUBOOT_IMAGE_NUMBER=2
 
 # Use external flash map descriptors since flash map is driven by policy
 DEFINES_APP += -DCY_FLASH_MAP_EXT_DESC
 DEFINES_APP += -DCY_BOOTLOADER_START=$(CY_BOOTLOADER_APP_START)
-#DEFINES_APP += -DCY_BOOTLOADER_VERSION
-#DEFINES_APP += -DCY_BOOTLOADER_BUILD
+DEFINES_APP += -DCY_BOOTLOADER_SIZE=$(CY_BOOTLOADER_APP_SIZE)
 DEFINES_APP += -D__NO_SYSTEM_INIT
 DEFINES_APP += -DCY_BOOTLOADER_DIAGNOSTIC_GPIO
 DEFINES_APP += $(DEFINES_USER)
 DEFINES_APP += -D$(BUILDCFG)
 DEFINES_APP += -D$(APP_NAME)
+
+ifdef ($(CY_BOOT_USE_EXTERNAL_FLASH))
+$(info Enable external memory support (SMIF))
 DEFINES_APP += -DCY_BOOT_USE_EXTERNAL_FLASH
+endif
 
 ifeq ($(BUILDCFG), Debug)
 DEFINES_APP += -DMCUBOOT_LOG_LEVEL=$(CY_BOOTLOADER_LOG_LEVEL)
@@ -103,8 +124,7 @@ endif
 
 # TODO: MCUBoot library
 # Collect MCUBoot sourses
-# SOURCES_MCUBOOT := $(wildcard $(CURDIR)/../bootutil/src/*.c)
-SRC_FILES_MCUBOOT := bootutil_misc.c caps.c encrypted.c loader.c tlv.c swap_misc.c swap_move.c swap_scratch.c
+SRC_FILES_MCUBOOT := bootutil_misc.c caps.c loader.c tlv.c swap_scratch.c
 SOURCES_MCUBOOT := $(addprefix $(CURDIR)/../bootutil/src/, $(SRC_FILES_MCUBOOT))
 
 # Collect CypresBootloader Application sources
@@ -134,13 +154,6 @@ INCLUDE_FILES_MCUBOOT := bootutil_priv.h
 
 INCLUDE_FILES_APP := $(addprefix $(CURDIR)/../bootutil/src/, $(INCLUDE_FILES_MCUBOOT))
 
-# Overwite path to linker script if custom is required, otherwise platform default is used
-ifeq ($(COMPILER), GCC_ARM)
-LINKER_SCRIPT := $(CUR_APP_PATH)/linker/$(APP_NAME)_$(PLATFORM).ld
-else
-$(error Only GCC ARM is supported at this moment)
-endif
-
 # Output folder
 OUT := $(APP_NAME)/out
 # Output folder to contain build artifacts
@@ -150,12 +163,26 @@ OUT_CFG := $(OUT_PLATFORM)/$(BUILDCFG)
 
 # Set path to cypress key for certificate generation
 # Production version of CypressBootloader will be signed by Cypress Private Key
-# CERT_KEY ?= $(APP_NAME)/keys/cy_state_internal.json
 CERT_KEY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/common/prebuilt/oem_state.json
 
 # Post build action to execute after main build job
 post_build: $(OUT_CFG)/$(APP_NAME).hex
 	$(GCC_PATH)/bin/arm-none-eabi-objcopy --change-addresses=$(HEADER_OFFSET) -O ihex $(OUT_CFG)/$(APP_NAME).elf $(OUT_CFG)/$(APP_NAME)_CM0p.hex
+ifeq ($(MAKEINFO), 1)
+	$(eval CYBOOT_SIZE = $(shell $(GCC_PATH)/bin/arm-none-eabi-size -t $(OUT_APP)/$(APP_NAME).hex | grep TOTAL | sed -e 's/^[^0-9]*\([0-9]*\)[^0-9]*\([0-9]*\)[^0-9]*.*$\/\2/'))
+	$(eval CYBOOT_UNUSED = $(shell expr $(CY_BOOTLOADER_SIZE) - $(CYBOOT_SIZE)))
+	$(info  )
+	$(info *****************************************************)
+	$(info ***   Bootloader  allocated space = $(CY_BOOTLOADER_SIZE) bytes   ***)
+	$(info *** --------------------------------------------- ***)
+	$(info ***   Bootloader total image size = $(CYBOOT_SIZE) bytes   ***)
+	$(info *****************************************************)
+	$(info ***                                               ***)
+	$(info ***   Bootloader   UNUSED   space = $(CYBOOT_UNUSED) bytes   ***)
+	$(info ***                                               ***)
+	$(info *****************************************************)
+	$(info  )
+endif
 ifeq ($(POST_BUILD), 1)
 	$(info [POST_BUILD] - Creating image certificate for $(APP_NAME))
 	cysecuretools -t $(CY_SEC_TOOLS_TARGET) image-certificate -i $(OUT_CFG)/$(APP_NAME)_CM0p.hex -k $(CERT_KEY) -o $(OUT_CFG)/$(APP_NAME)_CM0p.jwt -v '${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}'

@@ -15,7 +15,7 @@ variables:
     CY_BOOTLOADER_REV: 0
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
     CY_BOOTLOADER_TESTS_CONFIG: Debug
-    
+
     CY_SECURETOOLS_BRANCH: tags/provisioning-sas-a
     PYOCD_BRANCH: 2m-sysap-cm0
     
@@ -196,7 +196,7 @@ mac_1M_BlinkyApp:
       BUILDCFG=Debug
 
 
-mac_512K_Bootloader:
+.mac_512K_Bootloader:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
@@ -219,7 +219,7 @@ mac_512K_Bootloader:
       POST_BUILD=1
 
 
-mac_512K_BlinkyApp:
+.mac_512K_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
@@ -257,10 +257,10 @@ mac_512K_BlinkyApp:
       MULTI_IMAGE=0
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug        
+      BUILDCFG=Debug
 
 
-mac_512K_Multi_BlinkyApp:
+.mac_512K_Multi_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
@@ -302,10 +302,10 @@ mac_512K_Multi_BlinkyApp:
       MULTI_IMAGE=1
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug       
-      
-      
-mac_512K_SecureBlinkyApp:
+      BUILDCFG=Debug
+
+
+.mac_512K_SecureBlinkyApp:
   extends: .build_512K
   tags:
     - FWS_MAC_BUILD
@@ -403,7 +403,7 @@ mac_512K_SecureBlinkyApp:
       MULTI_IMAGE=0
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug        
+      BUILDCFG=Debug
 
 
 .win_512K_Multi_BlinkyApp:
@@ -449,9 +449,9 @@ mac_512K_SecureBlinkyApp:
       MULTI_IMAGE=1
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug       
-      
-      
+      BUILDCFG=Debug
+
+
 .win_512K_SecureBlinkyApp:
   extends: .build_512K
   tags:
@@ -660,7 +660,7 @@ lin_512K_Bootloader:
       POST_BUILD=1
 
 
-lin_512K_BlinkyApp:
+.lin_512K_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_LIN_BUILD
@@ -698,10 +698,10 @@ lin_512K_BlinkyApp:
       MULTI_IMAGE=0
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug        
+      BUILDCFG=Debug
 
 
-lin_512K_Multi_BlinkyApp:
+.lin_512K_Multi_BlinkyApp:
   extends: .build_512K
   tags:
     - FWS_LIN_BUILD
@@ -743,10 +743,10 @@ lin_512K_Multi_BlinkyApp:
       MULTI_IMAGE=1
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug       
-      
-      
-lin_512K_SecureBlinkyApp:
+      BUILDCFG=Debug
+
+
+.lin_512K_SecureBlinkyApp:
   extends: .build_512K
   tags:
     - FWS_LIN_BUILD
@@ -780,7 +780,7 @@ lin_512K_SecureBlinkyApp:
       PLATFORM=PSOC_064_512K
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug      
+      BUILDCFG=Debug
 
 
 mac_2M_Bootloader:
@@ -844,13 +844,13 @@ mac_2M_BlinkyApp:
       MULTI_IMAGE=0
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug        
+      BUILDCFG=Debug
 
 
 mac_2M_Multi_BlinkyApp:
   extends: .build_2M
   tags:
-    - FWS_MAC_BUILD 
+    - FWS_MAC_BUILD
   script:
     # BOOT
     - >
@@ -889,9 +889,9 @@ mac_2M_Multi_BlinkyApp:
       MULTI_IMAGE=1
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug       
-      
-      
+      BUILDCFG=Debug
+
+
 mac_2M_SecureBlinkyApp:
   extends: .build_2M
   tags:
@@ -926,7 +926,7 @@ mac_2M_SecureBlinkyApp:
       PLATFORM=PSOC_064_2M
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug      
+      BUILDCFG=Debug
 
 
 
@@ -943,7 +943,7 @@ mac_2M_SecureBlinkyApp:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Release
       MAKEINFO=0
-      POST_BUILD=1      
+      POST_BUILD=1
     # Build Debug
     - >
       & "bash" "./ci/build/build.sh"
@@ -951,7 +951,7 @@ mac_2M_SecureBlinkyApp:
       PLATFORM=PSOC_064_2M
       BUILDCFG=Debug
       MAKEINFO=0
-      POST_BUILD=1      
+      POST_BUILD=1
 
 .win_2M_BlinkyApp:
   extends: .build_2M
@@ -992,7 +992,7 @@ mac_2M_SecureBlinkyApp:
       MULTI_IMAGE=0
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug        
+      BUILDCFG=Debug
 
 
 .win_2M_Multi_BlinkyApp:
@@ -1038,9 +1038,9 @@ mac_2M_SecureBlinkyApp:
       MULTI_IMAGE=1
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug       
-      
-      
+      BUILDCFG=Debug
+
+
 .win_2M_SecureBlinkyApp:
   extends: .build_2M
   tags:
@@ -1076,9 +1076,9 @@ mac_2M_SecureBlinkyApp:
       PLATFORM=PSOC_064_2M
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug      
+      BUILDCFG=Debug
 
-lin_2M_Bootloader:
+.lin_2M_Bootloader:
   extends: .build_2M
   tags:
     - FWS_LIN_BUILD
@@ -1101,7 +1101,7 @@ lin_2M_Bootloader:
       POST_BUILD=1
 
 
-lin_2M_BlinkyApp:
+.lin_2M_BlinkyApp:
   extends: .build_2M
   tags:
     - FWS_LIN_BUILD
@@ -1139,10 +1139,10 @@ lin_2M_BlinkyApp:
       MULTI_IMAGE=0
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug        
+      BUILDCFG=Debug
 
 
-lin_2M_Multi_BlinkyApp:
+.lin_2M_Multi_BlinkyApp:
   extends: .build_2M
   tags:
     - FWS_LIN_BUILD
@@ -1184,10 +1184,10 @@ lin_2M_Multi_BlinkyApp:
       MULTI_IMAGE=1
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug       
-      
-      
-lin_2M_SecureBlinkyApp:
+      BUILDCFG=Debug
+
+
+.lin_2M_SecureBlinkyApp:
   extends: .build_2M
   tags:
     - FWS_LIN_BUILD
@@ -1221,12 +1221,12 @@ lin_2M_SecureBlinkyApp:
       PLATFORM=PSOC_064_2M
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug      
+      BUILDCFG=Debug
 
 
 
 ##############################################################################
-# Run Test 
+# Run Test
 #
 
 
@@ -1235,12 +1235,12 @@ lin_2M_SecureBlinkyApp:
 #######################################################################################################################################################
 
 
-mac_test_512K:
+.mac_test_512K:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
   variables:
-    GIT_SUBMODULE_STRATEGY: none    
+    GIT_SUBMODULE_STRATEGY: none
   dependencies:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp

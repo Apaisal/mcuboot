@@ -98,6 +98,8 @@
 /* Additional TLV tags */
 #define IMAGE_TLV_CYSB_IMAGE_ID            0x81   /* Image ID */
 
+#define IMAGE_CY_SEC_CNT_MAX_VALUE        255UL
+
 /*
  * Compute SHA256 over the image.
  */
@@ -116,6 +118,8 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
     uint32_t blk_off;
     uint32_t tlv_off;
 
+    BOOT_LOG_DBG("> bootutil_img_hash") ;
+
     // TODO: run-time multi-image
 //#if (BOOT_IMAGE_NUMBER == 1) || !defined(MCUBOOT_ENC_IMAGES)
     (void)enc_state;
@@ -129,6 +133,8 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
     /* Encrypted images only exist in the secondary slot */
     if (MUST_DECRYPT(fap, image_index, hdr) &&
             !boot_enc_valid(enc_state, image_index, fap)) {
+
+        BOOT_LOG_DBG("< bootutil_img_hash: boot_enc_valid = FALSE") ;
         return -1;
     }
 #endif
@@ -193,6 +199,8 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
     		psa_ret = bootutil_sha256_finish(&sha256_ctx, hash_result);
 	    }
     }
+
+    BOOT_LOG_DBG("< bootutil_img_hash") ;
 
     return (int)psa_ret;
 }
@@ -368,7 +376,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     struct image_tlv_iter it;
     uint8_t buf[SIG_BUF_SIZE];
     uint8_t hash[32];
-    uint32_t security_cnt = UINT32_MAX;
+    uint32_t security_cnt = IMAGE_CY_SEC_CNT_MAX_VALUE;
     uint32_t img_security_cnt = 0UL;
     int valid_security_counter = 0;
     int rc;
@@ -376,6 +384,42 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     uint8_t image_id = 0u;
 
     BOOT_LOG_DBG("> Validate image, index = %d", (int)image_index);
+
+    /* Get boolean image encrypted status from the header flags */
+    bool is_image_encrypted = (IS_ENCRYPTED(hdr) > 0);
+
+    /* Check image encrypted status only for UPGRADE slots */
+    rc = cy_bootutil_get_slot_id(fap);
+    if (rc < 0) {
+        return rc;
+    }
+    else
+    if (rc == 1)
+    {
+        /* Check for upgrade is enabled in the policy */
+        rc = cy_bootutil_check_upgrade(fap);
+        if (rc < 0) {
+            return rc;
+        }
+
+        /* Check if encrypted status in the image does match to the policy */
+        if ( is_image_encrypted != (bool)cy_bootutil_get_image_encrypt(fap))
+        {
+            BOOT_LOG_DBG(" * Image encryption (%d) does not match the policy (%d), index = %d", (int)IS_ENCRYPTED(hdr), cy_bootutil_get_image_encrypt(fap), (int)image_index);
+
+            //TODO: Enchance a policy checking
+            return -1;
+        }
+    }
+    else
+    {
+        if (is_image_encrypted)
+        {
+            BOOT_LOG_DBG(" * Image encryption (%d) is not valid for BOOT slot, index = %d", (int)IS_ENCRYPTED(hdr), (int)image_index);
+
+            return -1;
+        }
+    }
 
     rc = bootutil_img_hash(enc_state, image_index, hdr, fap, tmp_buf,
             tmp_buf_sz, hash, seed, seed_len);
@@ -385,12 +429,6 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
 
     if (out_hash) {
         memcpy(out_hash, hash, 32);
-    }
-
-    /* Check for upgrade is enabled in the policy */
-    rc = cy_bootutil_check_upgrade(fap);
-    if (rc) {
-        return rc;
     }
 
     /*
@@ -425,7 +463,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                     return -1;
                 }
 
-                BOOT_LOG_DBG("* Check image ID, index = %d, ID = %d", (int)image_index, (int)image_id);
+                BOOT_LOG_DBG(" * Check image ID, index = %d, ID = %d", (int)image_index, (int)image_id);
 
                 valid_image_id = 1;
 
@@ -464,7 +502,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                         return rc;
                     }
 
-                    key_id = cy_bootutil_find_key(fap);
+                    key_id = cy_bootutil_get_image_sign_key(fap);
 
                     /*
                      * The key may not be found, which is acceptable.  There
@@ -511,16 +549,26 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                         return rc;
                     }
 
-                    if ((uint32_t)img_security_cnt > 255UL)
+                    if ((uint32_t)img_security_cnt > IMAGE_CY_SEC_CNT_MAX_VALUE)
                     {
                         /* Security counter is not valid. */
-                        BOOT_LOG_DBG("Invalid security counter TLV value = %d, image ID = %d", (int)img_security_cnt, (int)image_id);
+                        BOOT_LOG_DBG(" * Invalid security counter TLV value = %d, image ID = %d", (int)img_security_cnt, (int)image_id);
                         return -1;
                     }
 
                     rc = boot_nv_security_counter_get(image_index, &security_cnt);
-                    if (rc) {
+                    if (rc != 0) {
                         return rc;
+                    }
+
+                    if ((uint32_t)security_cnt > IMAGE_CY_SEC_CNT_MAX_VALUE)
+                    {
+                        /* Security counter is not valid. */
+                        BOOT_LOG_DBG(" * Invalid security counter stored value = %d, image ID = %d", (int)security_cnt, (int)image_id);
+
+                        security_cnt = IMAGE_CY_SEC_CNT_MAX_VALUE;
+
+                        return -1;
                     }
 
                     /* Compare the new image's security counter value against the
@@ -538,24 +586,24 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     }
 
     if (!valid_sha256) {
-        BOOT_LOG_ERR("Invalid SHA256 digest of bootable image, ID = %d", (int)image_id);
+        BOOT_LOG_DBG(" * Invalid SHA256 digest of bootable image, ID = %d", (int)image_id);
         return -1;
     }
 
     if (!valid_image_id) {
-        BOOT_LOG_ERR("Invalid image ID of bootable image, ID = %d", (int)image_id);
+        BOOT_LOG_DBG(" * Invalid image ID of bootable image, ID = %d", (int)image_id);
         return -1;
     }
 
     if (!valid_security_counter) {
         /* The image's security counter is not accepted. */
-        BOOT_LOG_ERR("Invalid secure counter of bootable image, ID = %d, image cnt(%d) < stored cnt(%d)", (int)image_id, (int)img_security_cnt, (int)security_cnt);
+        BOOT_LOG_DBG(" * Invalid secure counter of bootable image, ID = %d, image cnt(%d) < stored cnt(%d)", (int)image_id, (int)img_security_cnt, (int)security_cnt);
         return -1;
     }
 
 #ifdef EXPECTED_SIG_TLV
     if (!valid_signature) {
-        BOOT_LOG_ERR("Invalid signature of bootable image, ID = %d", (int)image_id);
+        BOOT_LOG_DBG(" * Invalid signature of bootable image, ID = %d", (int)image_id);
         return -1;
     }
 #endif
