@@ -1,4 +1,5 @@
 stages:
+  - Build_1M
   - Build_512K
   - Build_2M
   - cppcheck
@@ -21,7 +22,14 @@ variables:
 ##############################################################################
 # Build 
 #
-
+.build_1M:
+  stage: Build_1M
+  dependencies: []
+  artifacts:
+    expire_in: 4 weeks
+    paths:
+      - deploy
+      - develop
 
 .build_512K:
   stage: Build_512K
@@ -40,6 +48,152 @@ variables:
     paths:
       - deploy
       - develop
+
+
+mac_1M_Bootloader:
+  extends: .build_1M
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # Build Release
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_1M
+      BUILDCFG=Release
+      MAKEINFO=0
+      POST_BUILD=1
+    # (TO DO: "Result image does not fit into bootloader region") Build Debug 
+    # - >
+      # ./ci/build/build.sh
+      # APP_NAME=CypressBootloader
+      # PLATFORM=PSOC_064_1M
+      # BUILDCFG=Debug
+      # MAKEINFO=0
+      # POST_BUILD=1 
+
+
+mac_1M_BlinkyApp:
+  extends: .build_1M
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug        
+
+
+.mac_1M_Multi_BlinkyApp:
+  extends: .build_1M
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug       
+      
+      
+.mac_1M_SecureBlinkyApp:
+  extends: .build_1M
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug
 
 
 mac_512K_Bootloader:
@@ -334,6 +488,154 @@ mac_512K_SecureBlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug      
+
+
+lin_1M_Bootloader:
+  extends: .build_1M
+  tags:
+    - FWS_LIN_BUILD
+  script:
+    # Build Release
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_1M
+      BUILDCFG=Release
+      MAKEINFO=0
+      POST_BUILD=1
+    # (TO DO: "Result image does not fit into bootloader region") Build Debug 
+    # - >
+      # ./ci/build/build.sh
+      # APP_NAME=CypressBootloader
+      # PLATFORM=PSOC_064_1M
+      # BUILDCFG=Debug
+      # MAKEINFO=0
+      # POST_BUILD=1
+
+
+lin_1M_BlinkyApp:
+  extends: .build_1M
+  tags:
+    - FWS_LIN_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug        
+
+
+.lin_1M_Multi_BlinkyApp:
+  extends: .build_1M
+  tags:
+    - FWS_LIN_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      APP_SUFX=Multi
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug       
+      
+      
+.lin_1M_SecureBlinkyApp:
+  extends: .build_1M
+  tags:
+    - FWS_LIN_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug
+
+
 
 lin_512K_Bootloader:
   extends: .build_512K
