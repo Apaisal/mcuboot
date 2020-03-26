@@ -28,7 +28,7 @@
 COMPILER ?= GCC_ARM
 
 ifneq ($(COMPILER), GCC_ARM)
-$(error Only GCC ARM is supported at this moment)
+    $(error Only GCC ARM is supported at this moment)
 endif
 
 CUR_APP_PATH = $(CURDIR)/$(APP_NAME)
@@ -55,40 +55,43 @@ DEFINES_APP += -DCORE=$(CORE)
 # equal to all available flash for BOOT slot. it is assumed that UPGRADE
 # slot in this case is located in External Memory
 ifeq ($(PLATFORM), PSOC_064_2M)
-CY_BOOTLOADER_APP_START ?= 0x101D0000
-# 0x1D0000 max slot size
-DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=3712
-CY_SEC_TOOLS_TARGET := cyb06xxa
+    CY_BOOTLOADER_APP_START ?= 0x101D0000
+    # 0x1D0000 max slot size
+    DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=3712
+    DEFINES_APP += -DCY_BOOTLOADER_BUF_SZ=0x40000
+    CY_SEC_TOOLS_TARGET := cyb06xxa
 else ifeq ($(PLATFORM), PSOC_064_1M)
-CY_BOOTLOADER_APP_START ?= 0x100D0000
-# 0xD0000 max slot size
-DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=1664
-CY_SEC_TOOLS_TARGET := cyb06xx7
+    CY_BOOTLOADER_APP_START ?= 0x100D0000
+    # 0xD0000 max slot size
+    DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=1664
+    DEFINES_APP += -DCY_BOOTLOADER_BUF_SZ=0xE000
+    CY_SEC_TOOLS_TARGET := cyb06xx7
 else ifeq ($(PLATFORM), PSOC_064_512K)
-CY_BOOTLOADER_APP_START ?= 0x10030000
-# 0x30000 slot size
-DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=384
-CY_SEC_TOOLS_TARGET := cyb06xx5
+    CY_BOOTLOADER_APP_START ?= 0x10030000
+    # 0x30000 slot size
+    DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=384
+    DEFINES_APP += -DCY_BOOTLOADER_BUF_SZ=0xE000
+    CY_SEC_TOOLS_TARGET := cyb06xx5
 else
-$(error "Not suppoted target name $(PLATFORM)")
+    $(error "Not suppoted target name $(PLATFORM)")
 endif
 
 # Overwite path to linker script if custom is required, otherwise platform default is used
 ifeq ($(COMPILER), GCC_ARM)
-LINKER_SCRIPT := $(CUR_APP_PATH)/linker/$(APP_NAME)_$(PLATFORM).ld
+    LINKER_SCRIPT := $(CUR_APP_PATH)/linker/$(APP_NAME)_$(PLATFORM).ld
 else
-$(error Only GCC ARM is supported at this moment)
+    $(error Only GCC ARM is supported at this moment)
 endif
 
 # Define maximum Cybootloader image size
 ifeq ($(MAKEINFO), 1)
-CY_BOOTLOADER_APP_START=$(shell cat $(LINKER_SCRIPT) | grep '^CY_BOOTLOADER_START' | sed -e 's/^.*\(0[xX][0-9a-fA-F]*\)[^0-9a-fA-F].*$\/\1/')
-CY_PROTECTED_DATA_START=$(shell cat $(LINKER_SCRIPT) | grep '^CY_PROTECTED_DATA_START' | sed -e 's/^.*\(0[xX][0-9a-fA-F]*\)[^0-9a-fA-F].*$\/\1/')
-CY_BOOTLOADER_START=$(shell printf "%d" $(CY_BOOTLOADER_APP_START))
-CY_PROTECTEDD_START=$(shell printf "%d" $(CY_PROTECTED_DATA_START))
-CY_BOOTLOADER_SIZE=$(shell expr $(CY_PROTECTEDD_START) - $(CY_BOOTLOADER_START) )
-# TODO: Add additional checking and debug information
-# $(info CY_BOOTLOADER_APP_SIZE = $(CY_BOOTLOADER_SIZE))
+    CY_BOOTLOADER_APP_START=$(shell cat $(LINKER_SCRIPT) | grep '^CY_BOOTLOADER_START' | sed -e 's/^.*\(0[xX][0-9a-fA-F]*\)[^0-9a-fA-F].*$\/\1/')
+    CY_PROTECTED_DATA_START=$(shell cat $(LINKER_SCRIPT) | grep '^CY_PROTECTED_DATA_START' | sed -e 's/^.*\(0[xX][0-9a-fA-F]*\)[^0-9a-fA-F].*$\/\1/')
+    CY_BOOTLOADER_START=$(shell printf "%d" $(CY_BOOTLOADER_APP_START))
+    CY_PROTECTEDD_START=$(shell printf "%d" $(CY_PROTECTED_DATA_START))
+    CY_BOOTLOADER_SIZE=$(shell expr $(CY_PROTECTEDD_START) - $(CY_BOOTLOADER_START) )
+    # TODO: Add additional checking and debug information
+    # $(info CY_BOOTLOADER_APP_SIZE = $(CY_BOOTLOADER_SIZE))
 endif
 
 # multi-image setup ?
@@ -105,21 +108,21 @@ DEFINES_APP += -D$(BUILDCFG)
 DEFINES_APP += -D$(APP_NAME)
 
 ifdef ($(CY_BOOT_USE_EXTERNAL_FLASH))
-$(info Enable external memory support (SMIF))
-DEFINES_APP += -DCY_BOOT_USE_EXTERNAL_FLASH
+    $(info Enable external memory support (SMIF))
+    DEFINES_APP += -DCY_BOOT_USE_EXTERNAL_FLASH
 endif
 
 ifeq ($(BUILDCFG), Debug)
-DEFINES_APP += -DMCUBOOT_LOG_LEVEL=$(CY_BOOTLOADER_LOG_LEVEL)
-DEFINES_APP += -DMCUBOOT_HAVE_LOGGING
-DEFINES_APP += -DCY_SECURE_UTILS_LOG
+    DEFINES_APP += -DMCUBOOT_LOG_LEVEL=$(CY_BOOTLOADER_LOG_LEVEL)
+    DEFINES_APP += -DMCUBOOT_HAVE_LOGGING
+    DEFINES_APP += -DCY_SECURE_UTILS_LOG
 else
-	ifeq ($(BUILDCFG), Release)
-		DEFINES_APP += -DMCUBOOT_LOG_LEVEL=MCUBOOT_LOG_LEVEL_OFF
-#		DEFINES_APP += -DNDEBUG
+    ifeq ($(BUILDCFG), Release)
+        DEFINES_APP += -DMCUBOOT_LOG_LEVEL=MCUBOOT_LOG_LEVEL_OFF
+        # DEFINES_APP += -DNDEBUG
 	else
-		$(error "Not supported build configuration : $(BUILDCFG)")
-	endif
+        $(error "Not supported build configuration : $(BUILDCFG)")
+    endif
 endif
 
 # TODO: MCUBoot library

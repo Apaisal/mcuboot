@@ -16,8 +16,8 @@ variables:
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
     CY_BOOTLOADER_TESTS_CONFIG: Debug
 
-    CY_SECURETOOLS_BRANCH: tags/provisioning-sas-a
-    PYOCD_BRANCH: 2m-sysap-cm0
+    CY_SECURETOOLS_BRANCH: develop
+    PYOCD_BRANCH: smif-support
     
 ##############################################################################
 # Build 
@@ -64,13 +64,13 @@ mac_1M_Bootloader:
       MAKEINFO=0
       POST_BUILD=1
     # (TO DO: "Result image does not fit into bootloader region") Build Debug 
-    # - >
-      # ./ci/build/build.sh
-      # APP_NAME=CypressBootloader
-      # PLATFORM=PSOC_064_1M
-      # BUILDCFG=Debug
-      # MAKEINFO=0
-      # POST_BUILD=1 
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_1M
+      BUILDCFG=Debug
+      MAKEINFO=0
+      POST_BUILD=1 
 
 
 mac_1M_BlinkyApp:
@@ -114,7 +114,7 @@ mac_1M_BlinkyApp:
       BUILDCFG=Debug        
 
 
-.mac_1M_Multi_BlinkyApp:
+mac_1M_Multi_BlinkyApp:
   extends: .build_1M
   tags:
     - FWS_MAC_BUILD
@@ -159,7 +159,7 @@ mac_1M_BlinkyApp:
       BUILDCFG=Debug       
       
       
-.mac_1M_SecureBlinkyApp:
+mac_1M_SecureBlinkyApp:
   extends: .build_1M
   tags:
     - FWS_MAC_BUILD
@@ -504,13 +504,13 @@ lin_1M_Bootloader:
       MAKEINFO=0
       POST_BUILD=1
     # (TO DO: "Result image does not fit into bootloader region") Build Debug 
-    # - >
-      # ./ci/build/build.sh
-      # APP_NAME=CypressBootloader
-      # PLATFORM=PSOC_064_1M
-      # BUILDCFG=Debug
-      # MAKEINFO=0
-      # POST_BUILD=1
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_1M
+      BUILDCFG=Debug
+      MAKEINFO=0
+      POST_BUILD=1
 
 
 lin_1M_BlinkyApp:
@@ -554,7 +554,7 @@ lin_1M_BlinkyApp:
       BUILDCFG=Debug        
 
 
-.lin_1M_Multi_BlinkyApp:
+lin_1M_Multi_BlinkyApp:
   extends: .build_1M
   tags:
     - FWS_LIN_BUILD
@@ -599,7 +599,7 @@ lin_1M_BlinkyApp:
       BUILDCFG=Debug       
       
       
-.lin_1M_SecureBlinkyApp:
+lin_1M_SecureBlinkyApp:
   extends: .build_1M
   tags:
     - FWS_LIN_BUILD
