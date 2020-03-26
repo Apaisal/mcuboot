@@ -14,7 +14,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#	 http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,7 @@
 
 # Cypress' MCUBoot Application supports GCC ARM only at this moment
 # Set defaults to:
-# 	- compiler GCC
+#   - compiler GCC
 #   - build configuration to Debug
 #   - image type to BOOT
 COMPILER ?= GCC_ARM
@@ -47,7 +47,7 @@ CYB_IMG_ID ?= 16
 SEC_CNT ?= 0
 
 ifneq ($(COMPILER), GCC_ARM)
-$(error Only GCC ARM is supported at this moment)
+	$(error Only GCC ARM is supported at this moment)
 endif
 
 CUR_APP_PATH = $(CURDIR)/$(APP_NAME)
@@ -105,14 +105,24 @@ ifeq ($(PLATFORM), PSOC_064_1M)
 	# Set flash start and size
 	ifeq ($(MULTI_IMAGE), 0)
 		CYB_IMG_ID := 4
-		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_single_stage_CM4.json
 		USER_APP_START ?= 0x10000000
-        SLOT_SIZE ?= 0x10000
+		ifeq ($(SMIF_UPGRADE), 0)
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_single_stage_CM4.json
+			SLOT_SIZE ?= 0x50000
+		else ifeq ($(SMIF_UPGRADE), 1)
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_single_stage_CM4_smif.json
+			SLOT_SIZE ?= 0x80000
+		endif
 	else
-		# Determine path to multi image policy file
-		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
-		USER_APP_START ?= 0x10020000
-        SLOT_SIZE ?= 0x10000
+		ifeq ($(SMIF_UPGRADE), 0)
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
+			USER_APP_START ?= 0x10060000
+			SLOT_SIZE ?= 0x30000
+		else ifeq ($(SMIF_UPGRADE), 1)
+			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
+			USER_APP_START ?= 0x10040000
+			SLOT_SIZE ?= 0x40000
+		endif
 	endif
 endif
 
@@ -147,7 +157,7 @@ ifeq ($(PLATFORM), PSOC_062_2M)
 	DEFINES_APP += -DRAM_START=0x08000000
 	DEFINES_APP += -DRAM_SIZE=0x20000
 	USER_APP_START ?= 0x10018000
-    SLOT_SIZE ?= 0x10000
+	SLOT_SIZE ?= 0x10000
 endif
 
 DEFINES_APP += -DUSER_APP_START=$(USER_APP_START)
@@ -164,9 +174,9 @@ INCLUDE_DIRS_APP += $(addprefix -I, $(CUR_APP_PATH))
 
 # Overwite path to linker script if custom is required, otherwise default from BSP is used
 ifeq ($(COMPILER), GCC_ARM)
-LINKER_SCRIPT := $(subst /cygdrive/c,c:,$(CUR_APP_PATH)/linker/$(APP_NAME).ld)
+	LINKER_SCRIPT := $(subst /cygdrive/c,c:,$(CUR_APP_PATH)/linker/$(APP_NAME).ld)
 else
-$(error Only GCC ARM is supported at this moment)
+	$(error Only GCC ARM is supported at this moment)
 endif
 
 ASM_FILES_APP :=
@@ -195,9 +205,9 @@ OUT_CFG := $(OUT_TARGET)/$(BUILDCFG)
 
 # Set build directory for BOOT and UPGRADE images
 ifeq ($(IMG_TYPE), UPGRADE)
-    ifeq ($(ENC_IMG), 1)
-        SIGN_ARGS += --encrypt $(ENC_KEY_FILE)
-    endif
+	ifeq ($(ENC_IMG), 1)
+		SIGN_ARGS += --encrypt $(ENC_KEY_FILE)
+	endif
 	SIGN_ARGS += --pad
 	UPGRADE_SUFFIX :=_upgrade
 	OUT_CFG := $(OUT_CFG)/upgrade
@@ -207,7 +217,7 @@ endif
 
 pre_build:
 	$(info [PRE_BUILD] - Generating linker script for application $(CUR_APP_PATH)/linker/$(APP_NAME).ld)
-	@$(CC) -E -x c $(CFLAGS) $(INCLUDE_DIRS) $(CUR_APP_PATH)/linker/$(APP_NAME)_template.ld | grep -v '^#' >$(CUR_APP_PATH)/linker/$(APP_NAME).ld
+	@$(CC) -E -x c $(CFLAGS) $(INCLUDE_DIRS) $(CUR_APP_PATH)/linker/$(APP_NAME)_template.ld | grep -v '^#' > $(CUR_APP_PATH)/linker/$(APP_NAME).ld
 
 # Post build action to execute after main build job
 post_build: $(OUT_CFG)/$(APP_NAME).hex

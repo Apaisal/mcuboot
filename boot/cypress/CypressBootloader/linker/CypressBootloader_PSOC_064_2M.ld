@@ -73,8 +73,8 @@ MEMORY
      * where 'xx' is the device group; for example, 'cy8c6xx7_cm4_dual.ld'.
      */
     public_ram        (rw)    : ORIGIN = 0x08000000, LENGTH = 0x800
-    ram_heap          (rwx)   : ORIGIN = 0x0804E000, LENGTH = 0xA000
-    ram               (rwx)   : ORIGIN = 0x08058000, LENGTH = 0x94000
+    ram_heap          (rwx)   : ORIGIN = 0x0800E000, LENGTH = 0xA000
+    ram               (rwx)   : ORIGIN = 0x08018000, LENGTH = 0xD4000
     flash             (rx)    : ORIGIN = CY_BOOTLOADER_START, LENGTH = CY_BOOTLOADER_SIZE
 
 

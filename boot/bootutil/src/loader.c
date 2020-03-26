@@ -385,7 +385,7 @@ static int
 boot_image_check(struct boot_loader_state *state, struct image_header *hdr,
                  const struct flash_area *fap, struct boot_status *bs)
 {
-    TARGET_STATIC uint8_t tmpbuf[BOOT_TMPBUF_SZ];
+    TARGET_STATIC uint8_t tmpbuf[CY_BOOTLOADER_BUF_SZ];
     uint8_t image_index;
     int rc;
     // TODO: run-time multi-image
@@ -411,7 +411,7 @@ boot_image_check(struct boot_loader_state *state, struct image_header *hdr,
 #endif
 
     if (bootutil_img_validate(BOOT_CURR_ENC(state), image_index, hdr, fap, tmpbuf,
-                              BOOT_TMPBUF_SZ, NULL, 0, NULL)) {
+                              sizeof(tmpbuf), NULL, 0, NULL)) {
         return BOOT_EBADIMAGE;
     }
 
@@ -1921,3 +1921,4 @@ done:
     free(sectors);
     return rc;
 }
+

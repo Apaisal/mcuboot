@@ -25,7 +25,7 @@
 
 # Cypress' MCUBoot Application supports GCC ARM only at this moment
 # Set defaults to:
-# 	- compiler GCC
+#   - compiler GCC
 #   - build configuration to Debug
 #   - image type to BOOT
 COMPILER ?= GCC_ARM
@@ -41,7 +41,7 @@ CYB_IMG_ID ?= 1
 SMIF_UPGRADE ?= 0
 
 ifneq ($(COMPILER), GCC_ARM)
-$(error Only GCC ARM is supported at this moment)
+	$(error Only GCC ARM is supported at this moment)
 endif
 
 CUR_APP_PATH = $(CURDIR)/$(APP_NAME)
@@ -64,46 +64,46 @@ SLOT_SIZE ?= 0x10000
 
 # Define RAM regions for targets, since they differ
 ifeq ($(PLATFORM), PSOC_064_2M)
-DEFINES_APP += -DRAM_START=0x08040000
-DEFINES_APP += -DRAM_SIZE=0x20000
-CY_SEC_TOOLS_TARGET := cyb06xxa
-ifeq ($(SMIF_UPGRADE), 0)
-	# Determine path to multi image policy file
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
-	SLOT_SIZE ?= 0x70000
-else ifeq ($(SMIF_UPGRADE), 1)
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
-	SLOT_SIZE ?= 0xC0000
-endif
-
+	DEFINES_APP += -DRAM_START=0x08040000
+	DEFINES_APP += -DRAM_SIZE=0x20000
+	CY_SEC_TOOLS_TARGET := cyb06xxa
+	ifeq ($(SMIF_UPGRADE), 0)
+		# Determine path to multi image policy file
+		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
+		SLOT_SIZE ?= 0x70000
+	else ifeq ($(SMIF_UPGRADE), 1)
+		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
+		SLOT_SIZE ?= 0xC0000
+	endif
 else ifeq ($(PLATFORM), PSOC_064_1M)
-DEFINES_APP += -DRAM_START=0x08040000
-DEFINES_APP += -DRAM_SIZE=0x10000
-CY_SEC_TOOLS_TARGET := cyb06xx7
-ifeq ($(SMIF_UPGRADE), 0)
-	# Determine path to multi image policy file
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
-else ifeq ($(SMIF_UPGRADE), 1)
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
-endif
-
+	DEFINES_APP += -DRAM_START=0x08040000
+	DEFINES_APP += -DRAM_SIZE=0x10000
+	CY_SEC_TOOLS_TARGET := cyb06xx7
+	ifeq ($(SMIF_UPGRADE), 0)
+		# Determine path to multi image policy file
+		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
+		SLOT_SIZE ?= 0x30000
+	else ifeq ($(SMIF_UPGRADE), 1)
+		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
+		SLOT_SIZE ?= 0x40000
+	endif
 else ifeq ($(PLATFORM), PSOC_064_512K)
-DEFINES_APP += -DRAM_START=0x08010000
-DEFINES_APP += -DRAM_SIZE=0x10000
-CY_SEC_TOOLS_TARGET := cyb06xx5
-ifeq ($(SMIF_UPGRADE), 0)
-	# Determine path to multi image policy file
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
-else ifeq ($(SMIF_UPGRADE), 1)
-	IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
-endif
+	DEFINES_APP += -DRAM_START=0x08010000
+	DEFINES_APP += -DRAM_SIZE=0x10000
+	CY_SEC_TOOLS_TARGET := cyb06xx5
+	ifeq ($(SMIF_UPGRADE), 0)
+		# Determine path to multi image policy file
+		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
+	else ifeq ($(SMIF_UPGRADE), 1)
+		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
+	endif
 endif
 
 DEFINES_APP += -DSECURE_APP_START=$(SECURE_APP_START)
 DEFINES_APP += -DSECURE_APP_SIZE=$(SLOT_SIZE)
 
 ifeq ($(BUILDCFG), Debug)
-DEFINES_APP += -DCY_SECURE_UTILS_LOG
+	DEFINES_APP += -DCY_SECURE_UTILS_LOG
 endif
 
 # Collect Test Application sources
@@ -119,10 +119,10 @@ INCLUDE_DIRS_APP += $(addprefix -I, $(CUR_APP_PATH))
 INCLUDE_DIRS_APP += $(addprefix -I, $(INCLUDE_DIRS_PLATFORM))
 
 ifeq ($(COMPILER), GCC_ARM)
-# TODO: do we need platform-dependent linker?
-LINKER_SCRIPT := $(subst /cygdrive/c,c:,$(CUR_APP_PATH)/linker/$(APP_NAME).ld)
+	# TODO: do we need platform-dependent linker?
+	LINKER_SCRIPT := $(subst /cygdrive/c,c:,$(CUR_APP_PATH)/linker/$(APP_NAME).ld)
 else
-$(error Only GCC ARM is supported at this moment)
+	$(error Only GCC ARM is supported at this moment)
 endif
 
 ASM_FILES_APP :=
