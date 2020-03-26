@@ -411,15 +411,6 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
             return -1;
         }
     }
-    else
-    {
-        if (is_image_encrypted)
-        {
-            BOOT_LOG_DBG(" * Image encryption (%d) is not valid for BOOT slot, index = %d", (int)IS_ENCRYPTED(hdr), (int)image_index);
-
-            return -1;
-        }
-    }
 
     rc = bootutil_img_hash(enc_state, image_index, hdr, fap, tmp_buf,
             tmp_buf_sz, hash, seed, seed_len);
