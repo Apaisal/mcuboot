@@ -107,10 +107,8 @@ DEFINES_APP += $(DEFINES_USER)
 DEFINES_APP += -D$(BUILDCFG)
 DEFINES_APP += -D$(APP_NAME)
 
-ifdef ($(CY_BOOT_USE_EXTERNAL_FLASH))
-    $(info Enable external memory support (SMIF))
-    DEFINES_APP += -DCY_BOOT_USE_EXTERNAL_FLASH
-endif
+# comment it out if smaller image is needed for debug purposes
+DEFINES_APP += -DCY_BOOT_USE_EXTERNAL_FLASH
 
 ifeq ($(BUILDCFG), Debug)
     DEFINES_APP += -DMCUBOOT_LOG_LEVEL=$(CY_BOOTLOADER_LOG_LEVEL)

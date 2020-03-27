@@ -104,6 +104,41 @@ function link {
 
 
 ############################
+# Build 
+#
+function build {
+
+    pushd "$BOOT_CY_DIR"
+    
+    #CURDIR=$(pwd | cygpath -m -f -)
+    CURDIR=.
+    #local cy_secure_tools_path=$(python -c "import cysecuretools; import os; print(os.path.dirname(os.path.dirname(cysecuretools.__file__)))")
+    #export CY_SEC_TOOLS_PATH=$(path_win_backslash $cy_secure_tools_path )
+
+    unset_build_app_vars
+    
+    possible_parameters=(APP_NAME APP_SUFX PLATFORM IMG_TYPE MULTI_IMAGE MAKEINFO BUILDCFG CURDIR TOOLCHAIN_PATH POST_BUILD TARGET SMIF_UPGRADE)
+    
+    for input_param in "$@"
+    do
+        IFS='=' read -ra param_value <<< "$input_param"
+        for param_name in ${possible_parameters[*]}
+        do
+            if [[ ${param_value[0]} == ${param_name} ]]
+            then
+                printf -v ${param_name} "${param_value[1]}" 
+            fi
+        done      
+    done
+
+    
+    build_app
+
+    popd
+}
+
+
+############################
 # Remove a link, cross-platform.
 #
 function rmlink {
@@ -187,7 +222,7 @@ function build_app {
     
         export SLOT=`echo $IMG_TYPE | awk '{print tolower($0)}'`
         if [ $SLOT == 'upgrade' ]; then export SUFX=_$SLOT; else export SUFX=''; fi
-        if [ ! -z $MULTI_IMAGE ]; then if [ $MULTI_IMAGE -eq 0 ]; then export APP_SUFX=''; export APP_BUILD_OPTIONS+='MULTI_IMAGE=0 '; fi; fi
+        if [ ! -z $MULTI_IMAGE ]; then if [ $MULTI_IMAGE -eq 0 ] && [ $SMIF_UPGRADE -eq 0 ]; then export APP_SUFX=''; export APP_BUILD_OPTIONS+='MULTI_IMAGE=0 '; fi; fi
         if [ ! -z $HEADER_OFFSET ]; then export APP_BUILD_OPTIONS+=HEADER_OFFSET=$HEADER_OFFSET; fi
         if [ -z $HEX_NAME ]; then export HEX_NAME=$APP_NAME; fi
     
@@ -207,6 +242,7 @@ function build_app {
     [ -z ${POST_BUILD+x} ] || { make_args="${make_args} POST_BUILD=$POST_BUILD"; }
     [ -z ${TOOLCHAIN_PATH+x} ] || { make_args="${make_args} TOOLCHAIN_PATH=$TOOLCHAIN_PATH"; }
     [ -z ${CURDIR+x} ] || { make_args="${make_args} CURDIR=$CURDIR"; }
+    [ -z ${SMIF_UPGRADE+x} ] || { make_args="${make_args} SMIF_UPGRADE=$SMIF_UPGRADE"; }
     
     cmd_check make -j4 clean APP_NAME=$APP_NAME
     cmd_check make -j4 app $make_args
