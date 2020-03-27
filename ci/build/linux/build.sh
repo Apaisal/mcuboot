@@ -72,39 +72,6 @@ function fetch_inputs {
     echo -e "\n[INFO] Fetching build inputs..."
 }
 
-############################
-# Build 
-#
-function build {
-
-    pushd "$BOOT_CY_DIR"
-    
-    #CURDIR=$(pwd | cygpath -m -f -)
-    CURDIR=.
-    #local cy_secure_tools_path=$(python -c "import cysecuretools; import os; print(os.path.dirname(os.path.dirname(cysecuretools.__file__)))")
-    #export CY_SEC_TOOLS_PATH=$(path_win_backslash $cy_secure_tools_path )
-
-    unset_build_app_vars
-    
-    possible_parameters=(APP_NAME APP_SUFX PLATFORM IMG_TYPE MULTI_IMAGE MAKEINFO BUILDCFG CURDIR TOOLCHAIN_PATH POST_BUILD TARGET)
-    
-    for input_param in "$@"
-    do
-        IFS='=' read -ra param_value <<< "$input_param"
-        for param_name in ${possible_parameters[*]}
-        do
-            if [[ ${param_value[0]} == ${param_name} ]]
-            then
-                printf -v ${param_name} "${param_value[1]}" 
-            fi
-        done      
-    done
-
-    
-    build_app
-
-    popd
-}
 
 
 ############################

@@ -14,14 +14,16 @@ variables:
     CY_BOOTLOADER_MINOR: 1
     CY_BOOTLOADER_REV: 0
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
-    CY_BOOTLOADER_TESTS_CONFIG: Debug
-
+    CY_BOOTLOADER_TESTS_CONFIG: Release
+    
     CY_SECURETOOLS_BRANCH: develop
     PYOCD_BRANCH: smif-support
+    
     
 ##############################################################################
 # Build 
 #
+
 .build_1M:
   stage: Build_1M
   dependencies: []
@@ -30,7 +32,7 @@ variables:
     paths:
       - deploy
       - develop
-
+      
 .build_512K:
   stage: Build_512K
   dependencies: []
@@ -49,7 +51,6 @@ variables:
       - deploy
       - develop
 
-
 mac_1M_Bootloader:
   extends: .build_1M
   tags:
@@ -64,13 +65,13 @@ mac_1M_Bootloader:
       MAKEINFO=0
       POST_BUILD=1
     # (TO DO: "Result image does not fit into bootloader region") Build Debug 
-    - >
-      ./ci/build/build.sh
-      APP_NAME=CypressBootloader
-      PLATFORM=PSOC_064_1M
-      BUILDCFG=Debug
-      MAKEINFO=0
-      POST_BUILD=1 
+    # - >
+      # ./ci/build/build.sh
+      # APP_NAME=CypressBootloader
+      # PLATFORM=PSOC_064_1M
+      # BUILDCFG=Debug
+      # MAKEINFO=0
+      # POST_BUILD=1 
 
 
 mac_1M_BlinkyApp:
@@ -209,14 +210,14 @@ mac_512K_Bootloader:
       BUILDCFG=Release
       MAKEINFO=0
       POST_BUILD=1
-    # Build Debug
-    - >
-      ./ci/build/build.sh
-      APP_NAME=CypressBootloader
-      PLATFORM=PSOC_064_512K
-      BUILDCFG=Debug
-      MAKEINFO=0
-      POST_BUILD=1
+# (TO DO: "Result image does not fit into bootloader region") Build Debug 
+    # - >
+      # ./ci/build/build.sh
+      # APP_NAME=CypressBootloader
+      # PLATFORM=PSOC_064_512K
+      # BUILDCFG=Debug
+      # MAKEINFO=0
+      # POST_BUILD=1
 
 
 mac_512K_BlinkyApp:
@@ -340,6 +341,150 @@ mac_512K_SecureBlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
+
+mac_512K_BlinkyApp_smif:
+  extends: .build_512K
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug        
+
+
+mac_512K_Multi_BlinkyApp_smif:
+  extends: .build_512K
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_512K
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug       
+      
+      
+mac_512K_SecureBlinkyApp_smif:
+  extends: .build_512K
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_512K
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug
+
+
 
 .win_512K_Bootloader:
   extends: .build_512K
@@ -504,13 +649,13 @@ lin_1M_Bootloader:
       MAKEINFO=0
       POST_BUILD=1
     # (TO DO: "Result image does not fit into bootloader region") Build Debug 
-    - >
-      ./ci/build/build.sh
-      APP_NAME=CypressBootloader
-      PLATFORM=PSOC_064_1M
-      BUILDCFG=Debug
-      MAKEINFO=0
-      POST_BUILD=1
+    # - >
+      # ./ci/build/build.sh
+      # APP_NAME=CypressBootloader
+      # PLATFORM=PSOC_064_1M
+      # BUILDCFG=Debug
+      # MAKEINFO=0
+      # POST_BUILD=1
 
 
 lin_1M_BlinkyApp:
@@ -650,14 +795,14 @@ lin_512K_Bootloader:
       BUILDCFG=Release
       MAKEINFO=0
       POST_BUILD=1
-    # Build Debug
-    - >
-      ./ci/build/build.sh
-      APP_NAME=CypressBootloader
-      PLATFORM=PSOC_064_512K
-      BUILDCFG=Debug
-      MAKEINFO=0
-      POST_BUILD=1
+    #(TO DO: "Result image does not fit into bootloader region") Build Debug 
+    # - >
+      # ./ci/build/build.sh
+      # APP_NAME=CypressBootloader
+      # PLATFORM=PSOC_064_512K
+      # BUILDCFG=Debug
+      # MAKEINFO=0
+      # POST_BUILD=1
 
 
 lin_512K_BlinkyApp:
@@ -796,14 +941,14 @@ mac_2M_Bootloader:
       BUILDCFG=Release
       MAKEINFO=0
       POST_BUILD=1
-    # Build Debug
-    - >
-      ./ci/build/build.sh
-      APP_NAME=CypressBootloader
-      PLATFORM=PSOC_064_2M
-      BUILDCFG=Debug
-      MAKEINFO=0
-      POST_BUILD=1
+    #(TO DO: "Result image does not fit into bootloader region") Build Debug 
+    # - >
+      # ./ci/build/build.sh
+      # APP_NAME=CypressBootloader
+      # PLATFORM=PSOC_064_2M
+      # BUILDCFG=Debug
+      # MAKEINFO=0
+      # POST_BUILD=1
 
 
 mac_2M_BlinkyApp:
@@ -923,6 +1068,148 @@ mac_2M_SecureBlinkyApp:
     - >
       ci/build/build.sh
       APP_NAME=SecureBlinkyApp
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug
+
+.mac_2M_BlinkyApp_smif:
+  extends: .build_2M
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug        
+
+
+.mac_2M_Multi_BlinkyApp_smif:
+  extends: .build_2M
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_2M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug       
+      
+      
+.mac_2M_SecureBlinkyApp_smif:
+  extends: .build_2M
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_2M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
       PLATFORM=PSOC_064_2M
       MAKEINFO=0
       IMG_TYPE=UPGRADE
@@ -1091,14 +1378,14 @@ lin_2M_Bootloader:
       BUILDCFG=Release
       MAKEINFO=0
       POST_BUILD=1
-    # Build Debug
-    - >
-      ./ci/build/build.sh
-      APP_NAME=CypressBootloader
-      PLATFORM=PSOC_064_2M
-      BUILDCFG=Debug
-      MAKEINFO=0
-      POST_BUILD=1
+    #(TO DO: "Result image does not fit into bootloader region") Build Debug 
+    # - >
+      # ./ci/build/build.sh
+      # APP_NAME=CypressBootloader
+      # PLATFORM=PSOC_064_2M
+      # BUILDCFG=Debug
+      # MAKEINFO=0
+      # POST_BUILD=1
 
 
 lin_2M_BlinkyApp:
@@ -1224,9 +1511,8 @@ lin_2M_SecureBlinkyApp:
       BUILDCFG=Debug
 
 
-
 ##############################################################################
-# Run Test
+# Run Test 
 #
 
 
@@ -1234,13 +1520,12 @@ lin_2M_SecureBlinkyApp:
 ##################------------------------------------------------- TESTS 512K -------------------------------------------#############################
 #######################################################################################################################################################
 
-
 mac_test_512K:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
   variables:
-    GIT_SUBMODULE_STRATEGY: none
+    GIT_SUBMODULE_STRATEGY: none    
   dependencies:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
@@ -1261,29 +1546,29 @@ mac_test_512K:
     - cp -r ./develop/PSOC_064_512K/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/
     - cp -r ./develop/PSOC_064_512K/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/
 
-    - echo "[INFO] Start tests"
+
 
     - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd
-
     - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
     - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_single_image
-
     - cd ..
     - rm -rf tests
+    
+    
 
     - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd
-
     - echo "[INFO] Test provisioning multi image, CyBootloader WithLogs"
     - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_multi_image
-
     - cd ..
     - rm -rf tests
+
+
 
     - deactivate
 
@@ -1292,6 +1577,65 @@ mac_test_512K:
     paths:
       - deploy
 
+
+
+mac_test_512K_smif:
+  stage: tests
+  tags:
+    - MBED_TEST_MAC1014
+  variables:
+    GIT_SUBMODULE_STRATEGY: none    
+  dependencies:
+    - mac_512K_Bootloader
+    - mac_512K_Multi_BlinkyApp_smif
+    - mac_512K_SecureBlinkyApp_smif
+    - mac_512K_BlinkyApp_smif
+  script:
+    - export https_proxy=http://proxy.ua.cypress.com:8080
+    - python3 --version
+    - virtualenv venv
+    - source venv/bin/activate
+    - python3 -m pip install pyserial
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@${CY_SECURETOOLS_BRANCH}
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@${PYOCD_BRANCH}
+    - pwd
+    - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_Release
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.hex
+    - cp -r ./develop/PSOC_064_512K/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/
+    - cp -r ./develop/PSOC_064_512K/CypressBootloader/${CY_BOOTLOADER_TESTS_CONFIG}/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx5/prebuilt/CyBootloader_WithLogs/
+
+
+
+    - echo "[INFO] Start tests"
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    - cd tests
+    - mbedls -j > mbedls_data.json
+    - pwd
+    - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_single_image_smif
+    - cd ..
+    - rm -rf tests    
+
+    
+
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    - cd tests
+    - mbedls -j > mbedls_data.json
+    - pwd
+    - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_multi_image_smif
+    - cd ..
+    - rm -rf tests
+    
+
+
+    - deactivate
+
+  artifacts:
+    expire_in: 4 weeks
+    paths:
+      - deploy
 
 #######################################################################################################################################################
 ##################------------------------------------------------- TESTS 2M ---------------------------------------------#############################
@@ -1308,6 +1652,9 @@ mac_test_2M:
     - mac_2M_Multi_BlinkyApp
     - mac_2M_SecureBlinkyApp
     - mac_2M_BlinkyApp
+    #- mac_2M_Multi_BlinkyApp_smif
+    #- mac_2M_SecureBlinkyApp_smif
+    #- mac_2M_BlinkyApp_smif
   script:
     - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
@@ -1325,27 +1672,50 @@ mac_test_2M:
 
     - echo "[INFO] Start tests"
 
+
     - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd
-
     - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
     - python3 -m unittest test_provisioning.TestProvisioning.test_provision_2M_release_single_image
-
     - cd ..
     - rm -rf tests
+
+
+
+    # - echo "[INFO] Start tests"
+    # - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    # - cd tests
+    # - mbedls -j > mbedls_data.json
+    # - pwd
+    # - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
+    # - python3 -m unittest test_provisioning.TestProvisioning.test_provision_2M_release_single_image_smif
+    # - cd ..
+    # - rm -rf tests
+
+
 
     - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
     - mbedls -j > mbedls_data.json
     - pwd
-
     - echo "[INFO] Test provisioning multi image, CyBootloader WithLogs"
     - python3 -m unittest test_provisioning.TestProvisioning.test_provision_2M_release_multi_image
-
     - cd ..
     - rm -rf tests
+
+
+
+    # - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    # - cd tests
+    # - mbedls -j > mbedls_data.json
+    # - pwd
+    # - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
+    # - python3 -m unittest test_provisioning.TestProvisioning.test_provision_2M_release_multi_image_smif
+    # - cd ..
+    # - rm -rf tests
+
 
     - deactivate
 
