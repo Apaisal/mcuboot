@@ -40,14 +40,17 @@ SEARCH_DIR(.)
 GROUP(-lgcc -lc -lnosys)
 ENTRY(Reset_Handler)
 
+/* set it to 0 if everything fits 64k */
+CY_BOOTLOADER_DBG_MARGIN = 0x0;
+
 /* The point to SecureFlashboot code */
 CY_PROTECTED_DATA_START = 0x100E0000; /* DO NOT CHANGE THIS NUMBER */
 
 /* CypressBootloader start address */
-CY_BOOTLOADER_START = 0x100D0000;
+CY_BOOTLOADER_START = 0x100D0000 - CY_BOOTLOADER_DBG_MARGIN;
 
 /* CypressBootloader occupies a 64k flash region before SecureFlashboot */
-CY_BOOTLOADER_SIZE = CY_PROTECTED_DATA_START - CY_BOOTLOADER_START;
+CY_BOOTLOADER_SIZE = CY_PROTECTED_DATA_START - CY_BOOTLOADER_START + CY_BOOTLOADER_DBG_MARGIN;
 
 /* Force symbol to be entered in the output file as an undefined symbol. Doing
 * this may, for example, trigger linking of additional modules from standard
@@ -351,6 +354,9 @@ SECTIONS
     /* Check if code + data exceeds FLASH image limit */
     __FlashImageSize = SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.copy.table) + SIZEOF(.zero.table);
     ASSERT(__FlashImageSize <= CY_BOOTLOADER_SIZE, "Result image does not fit into bootloader region")
+    
+    /* Comment this line for debug purposes*/
+    ASSERT(CY_BOOTLOADER_SIZE <= 0x10000 , "Result image does not fit 64kB region")
 
     /* Emulated EEPROM Flash area */
     .cy_em_eeprom :
