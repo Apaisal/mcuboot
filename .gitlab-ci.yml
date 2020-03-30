@@ -14,7 +14,7 @@ variables:
     CY_BOOTLOADER_MINOR: 1
     CY_BOOTLOADER_REV: 0
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
-    CY_BOOTLOADER_TESTS_CONFIG: Release
+    CY_BOOTLOADER_TESTS_CONFIG: Debug
     
     CY_SECURETOOLS_BRANCH: develop
     PYOCD_BRANCH: smif-support
@@ -65,13 +65,13 @@ mac_1M_Bootloader:
       MAKEINFO=0
       POST_BUILD=1
     # (TO DO: "Result image does not fit into bootloader region") Build Debug 
-    # - >
-      # ./ci/build/build.sh
-      # APP_NAME=CypressBootloader
-      # PLATFORM=PSOC_064_1M
-      # BUILDCFG=Debug
-      # MAKEINFO=0
-      # POST_BUILD=1 
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_1M
+      BUILDCFG=Debug
+      MAKEINFO=0
+      POST_BUILD=1 
 
 
 mac_1M_BlinkyApp:
@@ -211,13 +211,13 @@ mac_512K_Bootloader:
       MAKEINFO=0
       POST_BUILD=1
 # (TO DO: "Result image does not fit into bootloader region") Build Debug 
-    # - >
-      # ./ci/build/build.sh
-      # APP_NAME=CypressBootloader
-      # PLATFORM=PSOC_064_512K
-      # BUILDCFG=Debug
-      # MAKEINFO=0
-      # POST_BUILD=1
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_512K
+      BUILDCFG=Debug
+      MAKEINFO=0
+      POST_BUILD=1
 
 
 mac_512K_BlinkyApp:
@@ -942,13 +942,13 @@ mac_2M_Bootloader:
       MAKEINFO=0
       POST_BUILD=1
     #(TO DO: "Result image does not fit into bootloader region") Build Debug 
-    # - >
-      # ./ci/build/build.sh
-      # APP_NAME=CypressBootloader
-      # PLATFORM=PSOC_064_2M
-      # BUILDCFG=Debug
-      # MAKEINFO=0
-      # POST_BUILD=1
+    - >
+      ./ci/build/build.sh
+      APP_NAME=CypressBootloader
+      PLATFORM=PSOC_064_2M
+      BUILDCFG=Debug
+      MAKEINFO=0
+      POST_BUILD=1
 
 
 mac_2M_BlinkyApp:
@@ -1214,8 +1214,6 @@ mac_2M_SecureBlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
-
-
 
 .win_2M_Bootloader:
   extends: .build_2M

@@ -90,7 +90,8 @@ ifeq ($(COMPILER), GCC_ARM)
 	# set build-in compiler flags
 	CFLAGS_COMMON := -mcpu=cortex-m0plus -mthumb -mfloat-abi=soft -fno-stack-protector -ffunction-sections -fdata-sections -ffat-lto-objects -fstrict-aliasing -g -Wall -Wextra
 	ifeq ($(BUILDCFG), Debug)
-		CFLAGS_COMMON += -Og -g3
+		CFLAGS_SPECIAL ?= -Og -g3
+		CFLAGS_COMMON += $(CFLAGS_SPECIAL) 
 	else ifeq ($(BUILDCFG), Release)
 		CFLAGS_COMMON += -Os -g
 	else
@@ -102,7 +103,8 @@ $(error BUILDCFG : '$(BUILDCFG)' is not supported)
 
 	LDFLAGS_COMMON := -mcpu=cortex-m0plus -mthumb -specs=nano.specs -ffunction-sections -fdata-sections  -Wl,--gc-sections -L "$(GCC_PATH)/lib/gcc/arm-none-eabi/7.2.1/thumb/v6-m" -ffat-lto-objects -g --enable-objc-gc
 	ifeq ($(BUILDCFG), Debug)
-		LDFLAGS_COMMON += -Og
+		LDFLAGS_SPECIAL ?= -Og
+		LDFLAGS_COMMON += $(LDFLAGS_SPECIAL)
 	else ifeq ($(BUILDCFG), Release)
 		LDFLAGS_COMMON += -Os
 	else
