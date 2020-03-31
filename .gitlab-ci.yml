@@ -1,7 +1,7 @@
 stages:
-  - Build_1M
   - Build_512K
   - Build_2M
+  - Build_1M
   - cppcheck
   - tests
   - deploy
@@ -1509,6 +1509,7 @@ lin_2M_SecureBlinkyApp:
       BUILDCFG=Debug
 
 
+
 ##############################################################################
 # Run Test 
 #
@@ -1524,7 +1525,7 @@ mac_test_512K:
     - MBED_TEST_MAC1014
   variables:
     GIT_SUBMODULE_STRATEGY: none    
-  dependencies:
+  needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
     - mac_512K_SecureBlinkyApp
@@ -1583,7 +1584,7 @@ mac_test_512K_smif:
     - MBED_TEST_MAC1014
   variables:
     GIT_SUBMODULE_STRATEGY: none    
-  dependencies:
+  needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp_smif
     - mac_512K_SecureBlinkyApp_smif
@@ -1645,7 +1646,7 @@ mac_test_2M:
     GIT_SUBMODULE_STRATEGY: none
   tags:
     - MBED_TEST_MAC1014
-  dependencies:
+  needs:
     - mac_2M_Bootloader
     - mac_2M_Multi_BlinkyApp
     - mac_2M_SecureBlinkyApp
@@ -1729,14 +1730,14 @@ win_cpp_check:
   stage: cppcheck
   variables:
     GIT_SUBMODULE_STRATEGY: none
-  dependencies: []
+  needs: []
   tags:
     - MBED_TEST
   script:
     - cd boot/cypress
     - make run_cppcheck
     - cd ../../
-  when: always
+
 
 
 .MCUboot_simulator:
@@ -1752,6 +1753,8 @@ win_cpp_check:
     - git submodule update --init --recursive
     - cd sim
     - cargo test --verbose
+
+
 
 ##############################################################################
 # Upload build artifacts to http://iot-webserver.aus.cypress.com/projects/iot_release/ASSETS/repo/mcuboot/
