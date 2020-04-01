@@ -64,8 +64,8 @@ SLOT_SIZE ?= 0x10000
 
 # Define RAM regions for targets, since they differ
 ifeq ($(PLATFORM), PSOC_064_2M)
-	DEFINES_APP += -DRAM_START=0x08040000
-	DEFINES_APP += -DRAM_SIZE=0x20000
+	DEFINES_APP += -DRAM_START=0x080E0000
+	DEFINES_APP += -DRAM_SIZE=0xC000
 	CY_SEC_TOOLS_TARGET := cyb06xxa
 	ifeq ($(SMIF_UPGRADE), 0)
 		# Determine path to multi image policy file
@@ -76,8 +76,8 @@ ifeq ($(PLATFORM), PSOC_064_2M)
 		SLOT_SIZE ?= 0xC0000
 	endif
 else ifeq ($(PLATFORM), PSOC_064_1M)
-	DEFINES_APP += -DRAM_START=0x08010000
-	DEFINES_APP += -DRAM_SIZE=0x10000
+	DEFINES_APP += -DRAM_START=0x08020000
+	DEFINES_APP += -DRAM_SIZE=0xC000
 	CY_SEC_TOOLS_TARGET := cyb06xx7
 	ifeq ($(SMIF_UPGRADE), 0)
 		# Determine path to multi image policy file
@@ -88,8 +88,8 @@ else ifeq ($(PLATFORM), PSOC_064_1M)
 		SLOT_SIZE ?= 0x40000
 	endif
 else ifeq ($(PLATFORM), PSOC_064_512K)
-	DEFINES_APP += -DRAM_START=0x08010000
-	DEFINES_APP += -DRAM_SIZE=0x10000
+	DEFINES_APP += -DRAM_START=0x08020000
+	DEFINES_APP += -DRAM_SIZE=0xC000
 	CY_SEC_TOOLS_TARGET := cyb06xx5
 	ifeq ($(SMIF_UPGRADE), 0)
 		# Determine path to multi image policy file
