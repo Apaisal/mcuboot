@@ -47,8 +47,10 @@ extern "C" {
  * return followed by line feed (CR & LF) on the output direction (STDOUT). You
  * can define this macro through the DEFINES variable in the application
  * Makefile.
+ *
+ * \note Disabled on default
  */
-#define CY_RETARGET_IO_CONVERT_LF_TO_CRLF
+/* #define CY_RETARGET_IO_CONVERT_LF_TO_CRLF */
 
 cy_rslt_t cy_retarget_io_pdl_init(uint32_t baudrate);
 

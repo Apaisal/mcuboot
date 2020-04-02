@@ -113,7 +113,7 @@ endif
 
 # TODO: MCUBoot library
 # Collect MCUBoot sourses
-SRC_FILES_MCUBOOT := bootutil_misc.c caps.c loader.c tlv.c swap_scratch.c
+SRC_FILES_MCUBOOT := bootutil_misc.c caps.c loader.c tlv.c
 SOURCES_MCUBOOT := $(addprefix $(CURDIR)/../bootutil/src/, $(SRC_FILES_MCUBOOT))
 
 # Collect CypresBootloader Application sources
