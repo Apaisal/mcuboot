@@ -17,6 +17,7 @@
 #include "cy_image_utils.h"
 
 #include "bootutil/bootutil_log.h"
+
 #include "sysflash/sysflash.h"
 #include <stdint.h>
 
