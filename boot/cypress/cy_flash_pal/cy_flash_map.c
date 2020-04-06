@@ -506,12 +506,12 @@ uint8_t flash_area_erased_val(const struct flash_area *fap)
 
     if (fap->fa_device_id == FLASH_DEVICE_INTERNAL_FLASH)
     {
-        ret = CY_BOOT_INTERNAL_FLASH_ERASE_VALUE ;
+        ret = CY_BOOT_INTERNAL_FLASH_ERASE_VALUE;
     }
 #ifdef CY_BOOT_USE_EXTERNAL_FLASH
     else if ((fap->fa_device_id & FLASH_DEVICE_EXTERNAL_FLAG) == FLASH_DEVICE_EXTERNAL_FLAG)
     {
-        ret = 0;
+        ret = CY_BOOT_EXTERNAL_FLASH_ERASE_VALUE;
     }
 #endif
     else
