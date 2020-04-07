@@ -1529,6 +1529,9 @@ mac_test_512K_Release:
     - mac_512K_Multi_BlinkyApp
     - mac_512K_SecureBlinkyApp
     - mac_512K_BlinkyApp
+  only:
+    variables:
+      - $SCHEDULE == "true"
   script:
     - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
@@ -1645,6 +1648,9 @@ mac_test_512K_smif_Release:
     - mac_512K_Multi_BlinkyApp_smif
     - mac_512K_SecureBlinkyApp_smif
     - mac_512K_BlinkyApp_smif
+  only:
+    variables:
+      - $SCHEDULE == "true"
   script:
     - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
@@ -1770,6 +1776,9 @@ mac_test_2M_Release:
     - mac_2M_Multi_BlinkyApp
     - mac_2M_SecureBlinkyApp
     - mac_2M_BlinkyApp
+  only:
+    variables:
+      - $SCHEDULE == "true"
   script:
     - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
@@ -1891,6 +1900,9 @@ mac_test_2M_smif_Release:
     - mac_2M_Multi_BlinkyApp_smif
     - mac_2M_SecureBlinkyApp_smif
     - mac_2M_BlinkyApp_smif
+  only:
+    variables:
+      - $SCHEDULE == "true"
   script:
     - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
