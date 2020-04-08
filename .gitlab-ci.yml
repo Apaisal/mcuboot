@@ -1828,7 +1828,7 @@ mac_test_2M_Release:
 
 
 
-mac_test_2M_Debug:
+.mac_test_2M_Debug:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -1952,7 +1952,7 @@ mac_test_2M_smif_Release:
 
 
 
-mac_test_2M_smif_Debug:
+.mac_test_2M_smif_Debug:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
