@@ -195,9 +195,11 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
 #endif
                 psa_ret = bootutil_sha256_update(&sha256_ctx, tmp_buf, blk_sz);
             }
-
-    		psa_ret = bootutil_sha256_finish(&sha256_ctx, hash_result);
-	    }
+            if (psa_ret == PSA_SUCCESS)
+            {
+                psa_ret = bootutil_sha256_finish(&sha256_ctx, hash_result);
+            }
+        }
     }
 
     BOOT_LOG_DBG("< bootutil_img_hash") ;

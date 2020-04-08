@@ -310,8 +310,6 @@ int flash_area_write(const struct flash_area *fa, uint32_t off,
     cy_en_flashdrv_status_t rc = CY_FLASH_DRV_SUCCESS;
     size_t write_start_addr;
     size_t write_end_addr;
-    uint32_t row_addr = 0;
-    int row_number = 0;
     const uint32_t * row_ptr = NULL;
 
     assert(off < fa->fa_off);
@@ -326,6 +324,9 @@ int flash_area_write(const struct flash_area *fa, uint32_t off,
 #endif
     if (fa->fa_device_id == FLASH_DEVICE_INTERNAL_FLASH)
     {
+        int row_number = 0;
+        uint32_t row_addr = 0;
+
         assert(!(len % CY_FLASH_SIZEOF_ROW));
         /* Check if chunk size for write request is exactly equal to 
             one internal flash row size. This implementation is defined
@@ -368,9 +369,6 @@ int flash_area_erase(const struct flash_area *fa, uint32_t off, uint32_t len)
     cy_en_flashdrv_status_t rc = CY_FLASH_DRV_SUCCESS;
     size_t erase_start_addr;
     size_t erase_end_addr;
-    uint32_t row_id = 0;
-    uint32_t row_addr = 0;
-    int row_number = 0;
 
     assert(off < fa->fa_off);
     assert(off + len < fa->fa_off);
@@ -386,6 +384,9 @@ int flash_area_erase(const struct flash_area *fa, uint32_t off, uint32_t len)
 
     if (fa->fa_device_id == FLASH_DEVICE_INTERNAL_FLASH)
     {
+        int row_number = 0;
+        uint32_t row_addr = 0;
+
         row_number = (erase_end_addr - erase_start_addr) / CY_FLASH_SIZEOF_ROW;
         row_addr = erase_start_addr;
 
@@ -525,7 +526,6 @@ uint8_t flash_area_erased_val(const struct flash_area *fap)
 int flash_area_read_is_empty(const struct flash_area *fa, uint32_t off,
         void *dst, uint32_t len)
 {
-    uint8_t i = 0;
     uint8_t *mem_dest;
     int rc;
 
@@ -535,7 +535,7 @@ int flash_area_read_is_empty(const struct flash_area *fa, uint32_t off,
         return -1;
     }
 
-    for (i = 0; i < len; i++) {
+    for (uint8_t i = 0; i < len; i++) {
         if (mem_dest[i] != flash_area_erased_val(fa)) {
             return 0;
         }
@@ -548,9 +548,6 @@ int flash_area_get_sectors(int idx, uint32_t *cnt, struct flash_sector *ret)
     int rc = 0;
     uint32_t i = 0;
     struct flash_area *fa;
-    size_t sector_size = 0;
-    size_t sectors_n = 0;
-    uint32_t addr = 0;
 
     while(NULL != boot_area_descs[i])
     {
@@ -564,6 +561,8 @@ int flash_area_get_sectors(int idx, uint32_t *cnt, struct flash_sector *ret)
 
     if(NULL != boot_area_descs[i])
     {
+        size_t sector_size = 0;
+
         if(fa->fa_device_id == FLASH_DEVICE_INTERNAL_FLASH)
         {
             sector_size = CY_FLASH_SIZEOF_ROW;
@@ -583,6 +582,9 @@ int flash_area_get_sectors(int idx, uint32_t *cnt, struct flash_sector *ret)
 
         if(0 == rc)
         {
+            uint32_t addr = 0;
+            size_t sectors_n = 0;
+
             sectors_n = (fa->fa_size + (sector_size - 1)) / sector_size;
             assert(sectors_n <= *cnt);
 

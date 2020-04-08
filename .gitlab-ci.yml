@@ -72,7 +72,6 @@ mac_1M_Bootloader:
       MAKEINFO=0
       POST_BUILD=1 
 
-
 mac_1M_BlinkyApp:
   extends: .build_1M
   tags:
@@ -112,7 +111,6 @@ mac_1M_BlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug        
-
 
 mac_1M_Multi_BlinkyApp:
   extends: .build_1M
@@ -157,8 +155,7 @@ mac_1M_Multi_BlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug       
-      
-      
+
 mac_1M_SecureBlinkyApp:
   extends: .build_1M
   tags:
@@ -195,7 +192,6 @@ mac_1M_SecureBlinkyApp:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
-
 mac_512K_Bootloader:
   extends: .build_512K
   tags:
@@ -217,7 +213,6 @@ mac_512K_Bootloader:
       BUILDCFG=Debug
       MAKEINFO=0
       POST_BUILD=1
-
 
 mac_512K_BlinkyApp:
   extends: .build_512K
@@ -258,7 +253,6 @@ mac_512K_BlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
-
 
 mac_512K_Multi_BlinkyApp:
   extends: .build_512K
@@ -303,7 +297,6 @@ mac_512K_Multi_BlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
-
 
 mac_512K_SecureBlinkyApp:
   extends: .build_512K
@@ -389,7 +382,6 @@ mac_512K_BlinkyApp_smif:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug        
 
-
 mac_512K_Multi_BlinkyApp_smif:
   extends: .build_512K
   tags:
@@ -437,8 +429,7 @@ mac_512K_Multi_BlinkyApp_smif:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug       
-      
-      
+
 mac_512K_SecureBlinkyApp_smif:
   extends: .build_512K
   tags:
@@ -482,8 +473,6 @@ mac_512K_SecureBlinkyApp_smif:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
-
-
 
 .win_512K_Bootloader:
   extends: .build_512K
@@ -549,7 +538,6 @@ mac_512K_SecureBlinkyApp_smif:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
-
 .win_512K_Multi_BlinkyApp:
   extends: .build_512K
   tags:
@@ -595,7 +583,6 @@ mac_512K_SecureBlinkyApp_smif:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
-
 .win_512K_SecureBlinkyApp:
   extends: .build_512K
   tags:
@@ -633,7 +620,6 @@ mac_512K_SecureBlinkyApp_smif:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug      
 
-
 lin_1M_Bootloader:
   extends: .build_1M
   tags:
@@ -655,7 +641,6 @@ lin_1M_Bootloader:
       # BUILDCFG=Debug
       # MAKEINFO=0
       # POST_BUILD=1
-
 
 lin_1M_BlinkyApp:
   extends: .build_1M
@@ -696,7 +681,6 @@ lin_1M_BlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug        
-
 
 lin_1M_Multi_BlinkyApp:
   extends: .build_1M
@@ -741,8 +725,7 @@ lin_1M_Multi_BlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug       
-      
-      
+
 lin_1M_SecureBlinkyApp:
   extends: .build_1M
   tags:
@@ -779,8 +762,6 @@ lin_1M_SecureBlinkyApp:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
-
-
 lin_512K_Bootloader:
   extends: .build_512K
   tags:
@@ -802,7 +783,6 @@ lin_512K_Bootloader:
       # BUILDCFG=Debug
       # MAKEINFO=0
       # POST_BUILD=1
-
 
 lin_512K_BlinkyApp:
   extends: .build_512K
@@ -843,7 +823,6 @@ lin_512K_BlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
-
 
 lin_512K_Multi_BlinkyApp:
   extends: .build_512K
@@ -889,7 +868,6 @@ lin_512K_Multi_BlinkyApp:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
-
 lin_512K_SecureBlinkyApp:
   extends: .build_512K
   tags:
@@ -926,7 +904,6 @@ lin_512K_SecureBlinkyApp:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
-
 mac_2M_Bootloader:
   extends: .build_2M
   tags:
@@ -948,7 +925,6 @@ mac_2M_Bootloader:
       BUILDCFG=Debug
       MAKEINFO=0
       POST_BUILD=1
-
 
 mac_2M_BlinkyApp:
   extends: .build_2M
@@ -989,7 +965,6 @@ mac_2M_BlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
-
 
 mac_2M_Multi_BlinkyApp:
   extends: .build_2M
@@ -1034,7 +1009,6 @@ mac_2M_Multi_BlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
-
 
 mac_2M_SecureBlinkyApp:
   extends: .build_2M
@@ -1120,7 +1094,6 @@ mac_2M_BlinkyApp_smif:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug        
 
-
 mac_2M_Multi_BlinkyApp_smif:
   extends: .build_2M
   tags:
@@ -1168,8 +1141,7 @@ mac_2M_Multi_BlinkyApp_smif:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug       
-      
-      
+
 mac_2M_SecureBlinkyApp_smif:
   extends: .build_2M
   tags:
@@ -1278,7 +1250,6 @@ mac_2M_SecureBlinkyApp_smif:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
-
 .win_2M_Multi_BlinkyApp:
   extends: .build_2M
   tags:
@@ -1323,7 +1294,6 @@ mac_2M_SecureBlinkyApp_smif:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
-
 
 .win_2M_SecureBlinkyApp:
   extends: .build_2M
@@ -1384,7 +1354,6 @@ lin_2M_Bootloader:
       # MAKEINFO=0
       # POST_BUILD=1
 
-
 lin_2M_BlinkyApp:
   extends: .build_2M
   tags:
@@ -1424,7 +1393,6 @@ lin_2M_BlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
-
 
 lin_2M_Multi_BlinkyApp:
   extends: .build_2M
@@ -1469,7 +1437,6 @@ lin_2M_Multi_BlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
-
 
 lin_2M_SecureBlinkyApp:
   extends: .build_2M
@@ -1765,7 +1732,7 @@ mac_test_512K_smif_Debug:
 ##################------------------------------------------------- TESTS 2M ---------------------------------------------#############################
 #######################################################################################################################################################
 
-mac_test_2M_Release:
+.mac_test_2M_Release:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -1828,7 +1795,7 @@ mac_test_2M_Release:
 
 
 
-mac_test_2M_Debug:
+.mac_test_2M_Debug:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -1889,7 +1856,7 @@ mac_test_2M_Debug:
 
 
 
-mac_test_2M_smif_Release:
+.mac_test_2M_smif_Release:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -1952,7 +1919,7 @@ mac_test_2M_smif_Release:
 
 
 
-mac_test_2M_smif_Debug:
+.mac_test_2M_smif_Debug:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -2014,14 +1981,14 @@ mac_test_2M_smif_Debug:
 # static code analyzer with Cppcheck tool
 win_cpp_check:
   stage: cppcheck
-  variables:
-    GIT_SUBMODULE_STRATEGY: none
   needs: []
   tags:
     - MBED_TEST
   script:
     - cd boot/cypress
-    - make run_cppcheck
+    - make run_cppcheck PLATFORM=PSOC_064_2M APP_NAME=CypressBootloader CPP_CHECK_SCOPE=all
+    - make run_cppcheck PLATFORM=PSOC_064_1M APP_NAME=CypressBootloader CPP_CHECK_SCOPE=all
+    - make run_cppcheck PLATFORM=PSOC_064_512K APP_NAME=CypressBootloader CPP_CHECK_SCOPE=all
     - cd ../../
 
 

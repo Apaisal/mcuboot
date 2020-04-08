@@ -53,6 +53,8 @@ CY_SEC_TOOLS_PATH ?= $(shell $(PYTHON_PATH) $(CURDIR)/scripts/find_cysectools.py
 
 BUILDCFG ?= Debug
 
+CPP_CHECK_SCOPE ?=
+
 # Set of supported applications
 APPS := MCUBootApp BlinkyApp CypressBootloader SecureBlinkyApp
 
@@ -197,7 +199,7 @@ clean_upgrade:
 
 run_cppcheck:
 	@echo "Performing static code analysis with Cppcheck tool..."
-	../../scripts/cpp_check.sh ../../scripts/cpp_check.dat
+	../../scripts/cpp_check.sh ../../scripts/cpp_check.dat $(PLATFORM) "$(DEFINES)" "$(INCLUDE_DIRS)" $(CPP_CHECK_SCOPE)
 
 # TODO: update with generic solution
 load:

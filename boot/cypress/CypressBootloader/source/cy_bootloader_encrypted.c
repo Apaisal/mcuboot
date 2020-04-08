@@ -183,9 +183,11 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
                                                   key_label, CY_IMG_CRYPTO_BLK_SIZE
                                                 );
     }
-
-    status = fb_psa_export_public_key(privateKeyHandle, publicKey, publicKeyLength, &publicKeyLength);
-
+    if(status == PSA_SUCCESS)
+    {
+        status = fb_psa_export_public_key(privateKeyHandle, publicKey, publicKeyLength, &publicKeyLength);
+    }
+    
     memset( publicKey, 0, publicKeyLength);
     free( publicKey );
 

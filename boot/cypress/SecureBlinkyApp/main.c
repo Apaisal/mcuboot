@@ -202,14 +202,14 @@ int main(void)
     app_addr = cy_bl_bnu_policy.bnu_img_policy[1].boot_area.start + CM4_APP_HEADER_SIZE;
 
 #if defined(DEBUG)
-    printf("%s CM4 app address 0x%08lx\n\r", GREETING_MESSAGE, app_addr);
+    printf("%s CM4 app address 0x%08x\n\r", GREETING_MESSAGE, app_addr);
     printf("%s Memory regions to protect:\n\r", GREETING_MESSAGE);
 
     for(i = 0; i < POLICY_MAX_N_OF_PROT_REGIONS; i++)
     {
         if(0 != cy_bl_bnu_policy.prot_regions[i].start)
         {
-            printf("address: 0x%08lx; size 0x%08lx;\n\r",
+            printf("address: 0x%08x; size 0x%08x;\n\r",
                    cy_bl_bnu_policy.prot_regions[i].start,
                    (uint32_t)(1 << (cy_bl_bnu_policy.prot_regions[i].size + 1)));
         }

@@ -128,6 +128,5 @@ extern const cy_stc_gpio_pin_config_t QSPI_DATA0_config;
 extern const cy_stc_gpio_pin_config_t QSPI_SPI_CLOCK_config;
 
 void Cy_InitPSoC6_HW(void);
-void Cy_InitSmifPins(void);
 
 #endif /* SOURCE_CY_BOOTLOADER_HW_H_ */
