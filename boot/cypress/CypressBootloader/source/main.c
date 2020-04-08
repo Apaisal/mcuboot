@@ -279,7 +279,6 @@ int Cy_Bl_InitSMIF(void)
 {
     int rc = 0;
     uint32_t smif_id = 0;
-    cy_stc_smif_block_config_t *smifConfigPtr;
 
         /* initialize SMIF if at least one secondary slot requires it */
     if(cy_bl_bnu_policy.bnu_img_policy[0].smif_id != 0)
@@ -311,6 +310,8 @@ int Cy_Bl_InitSMIF(void)
 /*        else
         if(smif_id == TBD)
         {
+            cy_stc_smif_block_config_t *smifConfigPtr;
+
             smifConfigPtr = &smifBlockConfig;
             rc = qspi_init(smifConfigPtr);
             if(rc == 0)
@@ -331,7 +332,7 @@ int Cy_Bl_InitSMIF(void)
 ************************************/
 int main(void)
 {
-    cy_rslt_t rc = !CY_RSLT_SUCCESS;
+    cy_rslt_t rc;
     struct boot_rsp rsp ;
 
 #if defined(__NO_SYSTEM_INIT)

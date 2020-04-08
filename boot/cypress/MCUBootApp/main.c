@@ -60,7 +60,6 @@ static void do_boot(struct boot_rsp *rsp)
 
 int main(void)
 {
-    cy_rslt_t rc = !CY_RSLT_SUCCESS;
     struct boot_rsp rsp ;
 
     init_cycfg_clocks();
@@ -76,6 +75,8 @@ int main(void)
     BOOT_LOG_INF("TEST: MCUBoot Bootloader Started");
 
 #ifdef CY_BOOT_USE_EXTERNAL_FLASH
+    cy_rslt_t rc = !CY_RSLT_SUCCESS;
+
     rc = qspi_init_sfdp();
 
     /* enable interrupts */

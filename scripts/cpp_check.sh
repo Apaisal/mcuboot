@@ -29,6 +29,17 @@
 
 
 config_file="$1"
+platfrom="$2"
+app_defines="$3"
+app_includes="$4"
+scope="$5"
+
+if [[ ${scope} != "" ]]; then
+SCOPE="--enable=${scope}"
+else
+SCOPE=""
+fi
+
 #Retrieve list of files need to be ignored and additional files need to be checked from config file
 while IFS= read -r line
 do
@@ -43,15 +54,41 @@ done < "$config_file"
 echo "Additional files:" "$CPP_CHECK_FILES"
 echo "Ignoring files:" "$CPP_CHECK_IGNORE_FILES"
 
-cppcheck --xml 2>cppcheck_report.xml CypressBootloader/source $CPP_CHECK_FILES $CPP_CHECK_IGNORE_FILES
+echo "-------------------------------------------"
+echo "CppCheck scope of messages defined with option " ${SCOPE}
+echo "-------------------------------------------"
+echo "Run CppCheck for platform" ${platfrom}
+echo "-------------------------------------------"
+echo "Defines passed to CppCheck:"
+echo ${app_defines}
+echo "-------------------------------------------"
+echo "Include dirs passed to CppCheck:"
+echo ${app_includes}
+echo "-------------------------------------------"
+
+cppcheck ${SCOPE} --suppress=unusedFunction \
+                  --suppress=variableScope \
+                  --suppress=constArgument \
+                  --suppress=unreadVariable \
+                  --suppress=missingInclude \
+                  --xml -D${platfrom} -DBOOT_IMG -DMCUBOOT_ENC_IMAGES "${app_defines}" "${app_includes}" CypressBootloader BlinkyApp SecureBlinkyApp MCUBootApp \
+                                                                libs/cy_secureboot_utils/cy_secure_utils \
+                                                                libs/cy_secureboot_utils/cy_cjson \
+                                                                libs/cy_secureboot_utils/cy_jwt \
+                                                                libs/cy_secureboot_utils/flashboot_psacrypto \
+                                                                libs/cy_secureboot_utils/memory_val \
+                                                                libs/cy_secureboot_utils/flashboot_psacrypto \
+                                                                libs/cy_secureboot_utils/protections \
+                                                                $CPP_CHECK_FILES $CPP_CHECK_IGNORE_FILES \
+                                                                2>cppcheck_report_${scope}_${platfrom}.xml
 
 echo
 echo "Cppcheck report in xml format"
 echo "-------------------------------------------"
-cat cppcheck_report.xml
+cat cppcheck_report_${scope}_${platfrom}.xml
 
 # Parse xml report and print number of errors
-errors=($(grep -oP '(?<=error )[^<]' "cppcheck_report.xml"))
+errors=($(grep -oP '(?<=error )[^<]' "cppcheck_report_${scope}_${platfrom}.xml"))
 
 ERROR_COUNT=0
 
