@@ -2055,7 +2055,9 @@ deploy_asset:
     - /^develop$/
     - /^cypress$/
     - /^integration/cy_bootloader$/
-    - /^feature/kosx-artifacts-zip$/ # TO DO delete this after test-deploy
+  only:
+    variables:
+      - $SCHEDULE == "true"
   script:
     - zip -rX deploy/cy_bootloader_artifacts_${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}.zip deploy
     - git clone git@git-ore.aus.cypress.com:devops/devops_scripts.git
