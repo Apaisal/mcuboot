@@ -72,23 +72,63 @@
 /* This is the board specific stuff that should align with your board.
  *
  * QSPI resources:
- * SS  - P11_2
+ *
+ * SS0  - P11_2
+ * SS1  - P11_1
+ * SS2  - P11_0
+ * SS3  - P12_4
+ *
  * D3  - P11_3
  * D2  - P11_4
  * D1  - P11_5
  * D0  - P11_6
+ *
  * SCK - P11_7
+ *
  * SMIF Block - SMIF0
  *
  */
 
-static GPIO_PRT_Type *SS0Port = GPIO_PRT11;
-static int SS0Pin = 2;
-static en_hsiom_sel_t SS0MuxPort = P11_2_SMIF_SPI_SELECT0;
+/* SMIF SlaveSelect Configurations */
+struct qspi_ss_config
+{
+    GPIO_PRT_Type* SS_Port;
+    int SS_Pin;
+    en_hsiom_sel_t SS_Mux;
+};
 
-static GPIO_PRT_Type *SS1Port = GPIO_PRT11;
-static int SS1Pin = 0;
-static en_hsiom_sel_t SS1MuxPort = P11_0_SMIF_SPI_SELECT2;
+#if (defined(PSOC_064_2M) || defined(PSOC_064_1M))
+    #define CY_BOOTLOADER_SMIF_SS_CFG_NUM 4
+#elif defined(PSOC_064_512K)
+    #define CY_BOOTLOADER_SMIF_SS_CFG_NUM 3
+#else
+#error "Platform device name is unsupported."
+#endif
+struct qspi_ss_config qspi_SS_Configuration[CY_BOOTLOADER_SMIF_SS_CFG_NUM] =
+{
+    {
+        .SS_Port = GPIO_PRT11,
+        .SS_Pin = 2,
+        .SS_Mux = P11_2_SMIF_SPI_SELECT0
+    },
+    {
+        .SS_Port = GPIO_PRT11,
+        .SS_Pin = 1,
+        .SS_Mux = P11_1_SMIF_SPI_SELECT1
+    },
+    {
+        .SS_Port = GPIO_PRT11,
+        .SS_Pin = 0,
+        .SS_Mux = P11_0_SMIF_SPI_SELECT2
+    },
+#if(CY_BOOTLOADER_SMIF_SS_CFG_NUM > 4)
+    {
+        .SS_Port = GPIO_PRT12,
+        .SS_Pin = 4,
+        .SS_Mux = P12_4_SMIF_SPI_SELECT3
+    }
+#endif
+};
 
 static GPIO_PRT_Type *D3Port = GPIO_PRT11;
 static int D3Pin = 3;
@@ -192,11 +232,11 @@ cy_stc_sysint_t smifIntConfig =
 };
 
 /* SMIF pinouts configurations */
-const cy_stc_gpio_pin_config_t QSPI_SS_config =
+static cy_stc_gpio_pin_config_t QSPI_SS_config =
 {
 	.outVal = 1,
 	.driveMode = CY_GPIO_DM_STRONG_IN_OFF,
-	.hsiom = P11_2_SMIF_SPI_SELECT0,
+	.hsiom = P11_2_SMIF_SPI_SELECT0, /* lets use SS0 by default */
 	.intEdge = CY_GPIO_INTR_DISABLE,
 	.intMask = 0UL,
 	.vtrip = CY_GPIO_VTRIP_CMOS,
@@ -298,11 +338,6 @@ cy_en_smif_status_t qspi_init_hardware()
 {
     cy_en_smif_status_t st;
 
-	Cy_GPIO_Pin_Init(SS0Port, SS0Pin, &QSPI_SS_config);
-    Cy_GPIO_SetHSIOM(SS0Port, SS0Pin, SS0MuxPort);
-
-	Cy_GPIO_Pin_Init(SS1Port, SS1Pin, &QSPI_SS_config);
-    Cy_GPIO_SetHSIOM(SS1Port, SS1Pin, SS1MuxPort);
 
     Cy_GPIO_Pin_Init(D3Port, D3Pin, &QSPI_DATA3_config);
     Cy_GPIO_SetHSIOM(D3Port, D3Pin, D3MuxPort);
@@ -375,6 +410,10 @@ cy_en_smif_status_t qspi_init_sfdp(uint32_t smif_id)
 
     cy_stc_smif_mem_config_t **memCfg = smifBlockConfig_sfdp.memConfig;
 
+    GPIO_PRT_Type *SS_Port;
+    int SS_Pin;
+    en_hsiom_sel_t SS_MuxPort;
+
     switch(smif_id)
     {
     case 1:
@@ -394,8 +433,17 @@ cy_en_smif_status_t qspi_init_sfdp(uint32_t smif_id)
         break;
     }
 
-    if (stat == CY_SMIF_SUCCESS)
+    if(CY_SMIF_SUCCESS == stat)
     {
+        SS_Port = qspi_SS_Configuration[smif_id-1].SS_Port;
+        SS_Pin = qspi_SS_Configuration[smif_id-1].SS_Pin;
+        SS_MuxPort = qspi_SS_Configuration[smif_id-1].SS_Mux;
+
+        QSPI_SS_config.hsiom = SS_MuxPort;
+
+        Cy_GPIO_Pin_Init(SS_Port, SS_Pin, &QSPI_SS_config);
+        Cy_GPIO_SetHSIOM(SS_Port, SS_Pin, SS_MuxPort);
+
         stat = qspi_init(&smifBlockConfig_sfdp);
     }
     return stat;
@@ -418,3 +466,4 @@ uint32_t qspi_get_mem_size(void)
     cy_stc_smif_mem_config_t **memCfg = smifBlockConfig_sfdp.memConfig;
     return (*memCfg)->deviceCfg->memSize;
 }
+
