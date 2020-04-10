@@ -192,6 +192,148 @@ mac_1M_SecureBlinkyApp:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
+.mac_1M_BlinkyApp_smif:
+  extends: .build_1M
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=0
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug        
+
+.mac_1M_Multi_BlinkyApp_smif:
+  extends: .build_1M
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=BlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=Multi_smif
+      PLATFORM=PSOC_064_1M
+      MULTI_IMAGE=1
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug       
+
+.mac_1M_SecureBlinkyApp_smif:
+  extends: .build_1M
+  tags:
+    - FWS_MAC_BUILD
+  script:
+    # BOOT
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=BOOT
+      BUILDCFG=Debug
+    # UPGRADE
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Release
+    - >
+      ci/build/build.sh
+      APP_NAME=SecureBlinkyApp
+      SMIF_UPGRADE=1
+      APP_SUFX=_smif
+      PLATFORM=PSOC_064_1M
+      MAKEINFO=0
+      IMG_TYPE=UPGRADE
+      BUILDCFG=Debug
+  
+
+
 mac_512K_Bootloader:
   extends: .build_512K
   tags:
@@ -474,6 +616,9 @@ mac_512K_SecureBlinkyApp_smif:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
+
+
+     
 .win_512K_Bootloader:
   extends: .build_512K
   tags:
@@ -1978,7 +2123,260 @@ mac_test_512K_smif_Debug:
       - deploy
 
 
-# static code analyzer with Cppcheck tool
+
+#######################################################################################################################################################
+##################------------------------------------------------- TESTS 1M ---------------------------------------------#############################
+#######################################################################################################################################################
+
+mac_test_1M_Release:
+  stage: tests
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  tags:
+    - MBED_TEST_MAC1014
+  needs:
+    - mac_1M_Bootloader
+    - mac_1M_Multi_BlinkyApp
+    - mac_1M_SecureBlinkyApp
+    - mac_1M_BlinkyApp
+  only:
+    variables:
+      - $SCHEDULE == "true"
+  script:
+    - export https_proxy=http://proxy.ua.cypress.com:8080
+    - python3 --version
+    - virtualenv venv
+    - source venv/bin/activate
+    - python3 -m pip install pyserial
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@${CY_SECURETOOLS_BRANCH}
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@${PYOCD_BRANCH}
+    - pwd
+    - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_Release
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.hex
+    - cp -r ./develop/PSOC_064_1M/CypressBootloader/Release/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/
+    - cp -r ./develop/PSOC_064_1M/CypressBootloader/Release/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/
+
+    - echo "[INFO] Start tests"
+
+
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    - cd tests
+    - mbedls -j > mbedls_data.json
+    - pwd
+    - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_1M_release_single_image
+    - cd ..
+    - rm -rf tests
+
+
+
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    - cd tests
+    - mbedls -j > mbedls_data.json
+    - pwd
+    - echo "[INFO] Test provisioning multi image, CyBootloader WithLogs"
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_1M_release_multi_image
+    - cd ..
+    - rm -rf tests
+
+
+
+    - deactivate
+
+  artifacts:
+    expire_in: 4 weeks
+    paths:
+      - deploy
+
+
+
+mac_test_1M_Debug:
+  stage: tests
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  tags:
+    - MBED_TEST_MAC1014
+  needs:
+    - mac_1M_Bootloader
+    - mac_1M_Multi_BlinkyApp
+    - mac_1M_SecureBlinkyApp
+    - mac_1M_BlinkyApp
+  script:
+    - export https_proxy=http://proxy.ua.cypress.com:8080
+    - python3 --version
+    - virtualenv venv
+    - source venv/bin/activate
+    - python3 -m pip install pyserial
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@${CY_SECURETOOLS_BRANCH}
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@${PYOCD_BRANCH}
+    - pwd
+    - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_Release
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.hex
+    - cp -r ./develop/PSOC_064_1M/CypressBootloader/Debug/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/
+    - cp -r ./develop/PSOC_064_1M/CypressBootloader/Debug/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/
+
+    - echo "[INFO] Start tests"
+
+
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    - cd tests
+    - mbedls -j > mbedls_data.json
+    - pwd
+    - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_1M_release_single_image
+    - cd ..
+    - rm -rf tests
+
+
+
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    - cd tests
+    - mbedls -j > mbedls_data.json
+    - pwd
+    - echo "[INFO] Test provisioning multi image, CyBootloader WithLogs"
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_1M_release_multi_image
+    - cd ..
+    - rm -rf tests
+
+
+
+    - deactivate
+
+  artifacts:
+    expire_in: 4 weeks
+    paths:
+      - deploy
+
+
+
+
+.mac_test_1M_smif_Release:
+  stage: tests
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  tags:
+    - MBED_TEST_MAC1014
+  needs:
+    - mac_1M_Bootloader
+    - mac_1M_Multi_BlinkyApp_smif
+    - mac_1M_SecureBlinkyApp_smif
+    - mac_1M_BlinkyApp_smif
+  only:
+    variables:
+      - $SCHEDULE == "true"
+  script:
+    - export https_proxy=http://proxy.ua.cypress.com:8080
+    - python3 --version
+    - virtualenv venv
+    - source venv/bin/activate
+    - python3 -m pip install pyserial
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@${CY_SECURETOOLS_BRANCH}
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@${PYOCD_BRANCH}
+    - pwd
+    - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_Release
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.hex
+    - cp -r ./develop/PSOC_064_1M/CypressBootloader/Release/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/
+    - cp -r ./develop/PSOC_064_1M/CypressBootloader/Release/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/
+
+    - echo "[INFO] Start tests"
+
+
+    - echo "[INFO] Start tests"
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    - cd tests
+    - mbedls -j > mbedls_data.json
+    - pwd
+    - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_1M_release_single_image_smif
+    - cd ..
+    - rm -rf tests
+
+
+
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    - cd tests
+    - mbedls -j > mbedls_data.json
+    - pwd
+    - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_1M_release_multi_image_smif
+    - cd ..
+    - rm -rf tests
+
+
+    - deactivate
+
+  artifacts:
+    expire_in: 4 weeks
+    paths:
+      - deploy
+
+
+
+.mac_test_1M_smif_Debug:
+  stage: tests
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  tags:
+    - MBED_TEST_MAC1014
+  needs:
+    - mac_1M_Bootloader
+    - mac_1M_Multi_BlinkyApp_smif
+    - mac_1M_SecureBlinkyApp_smif
+    - mac_1M_BlinkyApp_smif
+  script:
+    - export https_proxy=http://proxy.ua.cypress.com:8080
+    - python3 --version
+    - virtualenv venv
+    - source venv/bin/activate
+    - python3 -m pip install pyserial
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/cysecuretools.git@${CY_SECURETOOLS_BRANCH}
+    - python3 -m pip install --upgrade --force-reinstall git+http://git-ore.aus.cypress.com/repo/pyocd.git@${PYOCD_BRANCH}
+    - pwd
+    - rm -rf ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_Release
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.jwt
+    - rm ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/CypressBootloader_CM0p.hex
+    - cp -r ./develop/PSOC_064_1M/CypressBootloader/Debug/*.hex ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/
+    - cp -r ./develop/PSOC_064_1M/CypressBootloader/Debug/*.jwt ./venv/lib/python3.7/site-packages/cysecuretools/targets/cyb06xx7/prebuilt/CyBootloader_WithLogs/
+
+    - echo "[INFO] Start tests"
+
+
+    - echo "[INFO] Start tests"
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    - cd tests
+    - mbedls -j > mbedls_data.json
+    - pwd
+    - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_1M_release_single_image_smif
+    - cd ..
+    - rm -rf tests
+
+
+
+    - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
+    - cd tests
+    - mbedls -j > mbedls_data.json
+    - pwd
+    - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
+    - python3 -m unittest test_provisioning.TestProvisioning.test_provision_1M_release_multi_image_smif
+    - cd ..
+    - rm -rf tests
+
+
+    - deactivate
+
+  artifacts:
+    expire_in: 4 weeks
+    paths:
+      - deploy
+
+
+
+
+#static code analyzer with Cppcheck tool
 win_cpp_check:
   stage: cppcheck
   needs: []
