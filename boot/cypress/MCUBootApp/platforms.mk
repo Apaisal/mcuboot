@@ -23,7 +23,7 @@
 # limitations under the License.
 ################################################################################
 
-# Target platform MCUBootApp is built for. PSOC_064_2M is set by default# Supported:
+# Target platform MCUBootApp is built for. PSOC_062_2M is set by default# Supported:
 #   - PSOC_062_2M
 
 # default PLATFORM
@@ -45,17 +45,8 @@ DEVICE ?= CY8C624ABZI-D44
 PLATFORM_SUFFIX := 02
 endif
 
-# Additional components supported by the target
-
-#COMPONENTS+=COMPONENT_BSP_DESIGN_MODUS
-# Use CyHAL
-#DEFINES:=CY_USING_HAL
-
 # Collect C source files for PLATFORM
 SOURCES_PLATFORM += $(wildcard $(PLATFORM_PATH)/*.c)
-# SOURCES_PLATFORM += $(wildcard $(CUR_LIBS_PATH)/psoc6hal/COMPONENT_PSOC6HAL/source/triggers/*.c)
-# SOURCES_PLATFORM += $(wildcard $(CUR_LIBS_PATH)/psoc6hal/COMPONENT_PSOC6HAL/source/pin_packages/*.c)
-
 SOURCES_PLATFORM := $(filter-out %/system_psoc6_cm4.c, $(SOURCES_PLATFORM))
 
 # Collect dirrectories containing headers for PLATFORM
@@ -72,7 +63,6 @@ endif
 
 # Add device name from BSP makefile to defines
 DEFINES += $(DEVICE)
-# DEFINES += $(COMPONENTS)
 DEFINES += $(PLATFORM)
 
 # Get defines from BSP makefile and convert it to regular -DMY_NAME style
