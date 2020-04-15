@@ -33,7 +33,6 @@
 #include "bootutil/bootutil_log.h"
 
 /* Define pins for UART debug output */
-// TODO: give it better name, no mention of BSP
 #define CYBSP_UART_ENABLED 1U
 #define CYBSP_UART_HW SCB5
 #define CYBSP_UART_IRQ scb_5_interrupt_IRQn
@@ -61,7 +60,7 @@ int main(void)
 
     init_cycfg_clocks();
     init_cycfg_peripherals();
-//    init_cycfg_pins();
+    init_cycfg_pins();
     /* enable interrupts */
     __enable_irq();
 
