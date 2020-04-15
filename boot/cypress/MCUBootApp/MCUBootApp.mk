@@ -1,9 +1,9 @@
 ################################################################################
-# \file targets.mk
+# \file MCUBootApp.mk
 # \version 1.0
 #
 # \brief
-# Makefile to describe supported boards and platforms for Cypress MCUBoot based applications.
+# Makefile for Cypress MCUBoot-based application.
 #
 ################################################################################
 # \copyright
@@ -40,12 +40,13 @@ include $(CUR_APP_PATH)/platforms.mk
 include $(CUR_APP_PATH)/libs.mk
 include $(CUR_APP_PATH)/toolchains.mk
 
+$(info MCUBootApp.mk_INCLUDE_DIRS_PLATFORM: $(INCLUDE_DIRS_PLATFORM))
+
 # Application-specific DEFINES
 DEFINES_APP := -DMBEDTLS_CONFIG_FILE="\"mcuboot_crypto_config.h\""
 DEFINES_APP += -DECC256_KEY_FILE="\"keys/$(SIGN_KEY_FILE).pub\""
 DEFINES_APP += -DCORE=$(CORE)
 DEFINES_APP += -DMCUBOOT_IMAGE_NUMBER=$(MCUBOOT_IMAGE_NUMBER)
-
 
 ifeq ($(USE_CRYPTO_HW), 1)
 DEFINES_APP += -DMBEDTLS_USER_CONFIG_FILE="\"mcuboot_crypto_acc_config.h\""
@@ -61,8 +62,9 @@ SOURCES_APP := $(SOURCES_MCUBOOT)
 SOURCES_APP += $(SOURCES_APP_SRC)
 SOURCES_APP += $(SOURCES_FLASH_PORT)
 
-INCLUDES_DIRS_MCUBOOT := $(addprefix -I, $(CURDIR)/../bootutil/include)
-INCLUDES_DIRS_MCUBOOT += $(addprefix -I, $(CURDIR)/../bootutil/src)
+INCLUDE_DIRS_MCUBOOT := $(addprefix -I, $(CURDIR)/../bootutil/include)
+INCLUDE_DIRS_MCUBOOT += $(addprefix -I, $(CURDIR)/../bootutil/src)
+INCLUDE_DIRS_MCUBOOT += $(addprefix -I, $(CURDIR)/..)
 
 INCLUDE_DIRS_APP := $(addprefix -I, $(CURDIR))
 INCLUDE_DIRS_APP += $(addprefix -I, $(CURDIR)/cy_flash_pal/include)
