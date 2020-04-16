@@ -40,9 +40,9 @@
 #include <stdlib.h>
 #include "cy_image_utils.h"
 
-#define MBEDTLS_EC256_PUBKEY_SIZE (64)
-#define MBEDTLS_SHA256_DIGEST_SIZE (32)
-#define MBEDTLS_AES_KEY_SIZE (16)
+#define MBEDTLS_EC256_PUBKEY_SIZE   (64)
+#define MBEDTLS_SHA256_DIGEST_SIZE  (32)
+#define MBEDTLS_AES_KEY_SIZE        (16)
 
 #define CY_IMG_CRYPTO_BLK_SIZE      MBEDTLS_AES_KEY_SIZE
 #define CY_FB_AES128_KEY_LEN        MBEDTLS_AES_KEY_SIZE
@@ -53,7 +53,8 @@ const uint8_t key_salt[MBEDTLS_AES_KEY_SIZE] = { 0x0 };
 
 static fb_psa_key_handle_t aesHandle;
 static fb_psa_key_policy_t aesPolicy;
-static fb_psa_cipher_operation_t cipherOp;
+
+static fb_psa_cipher_operation_t cipherOp = { 0x0 };
 
 int
 boot_enc_set_key(struct enc_key_data *enc_state, uint8_t slot,
@@ -65,26 +66,26 @@ boot_enc_set_key(struct enc_key_data *enc_state, uint8_t slot,
     BOOT_LOG_DBG("> boot_enc_set_key") ;
 
     aesPolicy = fb_psa_key_policy_init();
-    fb_psa_key_policy_set_usage( &aesPolicy,
+    fb_psa_key_policy_set_usage(&aesPolicy,
                                 PSA_KEY_USAGE_DECRYPT,
                                 PSA_ALG_CTR);
 
     status = fb_psa_allocate_key(&aesHandle);
-    if (status == PSA_SUCCESS)
+    if (PSA_SUCCESS == status)
     {
         status = fb_psa_set_key_policy(aesHandle, &aesPolicy);
     }
 
     /* Import AES key  */
-    if (status == PSA_SUCCESS)
+    if (PSA_SUCCESS == status)
     {
-        status = fb_psa_import_key( aesHandle,
+        status = fb_psa_import_key(aesHandle,
                                 PSA_KEY_TYPE_AES,
                                 bs->enckey[slot],
                                 CY_FB_AES128_KEY_LEN);
     }
 
-    if (status == PSA_SUCCESS)
+    if (PSA_SUCCESS == status)
     {
         enc_state[slot].valid = 1;
     }
@@ -116,56 +117,73 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
     psa_status_t status = PSA_ERROR_GENERIC_ERROR;
 
     /* AES key length + IV length */
-    uint8_t aesKey[CY_FB_AES128_KEY_LEN + CY_FB_AES128_IV_LEN] = { 0x0U };
+    uint8_t derivedKey[CY_FB_AES128_KEY_LEN + MBEDTLS_SHA256_DIGEST_SIZE];
+    uint8_t aesIV[CY_FB_AES128_IV_LEN] = { 0x0U };
 
     fb_psa_key_handle_t privateKeyHandle;
     fb_psa_key_type_t   privateKeyType;
     fb_psa_key_type_t   publicKeyType;
+    fb_psa_algorithm_t  alg = 0U;
     size_t keyBits;
 
     uint8_t *publicKey = NULL;
-    size_t publicKeyLength;
-
-    fb_psa_crypto_generator_t generator = PSA_CRYPTO_GENERATOR_INIT;
-
-    fb_psa_algorithm_t alg = PSA_ALG_ECDH(PSA_ALG_HKDF(PSA_ALG_SHA_256));
-
-    /* AES key length + IV length */
-    uint32_t outSize = CY_FB_AES128_KEY_LEN;
+    size_t publicKeyLength = 0U;
 
     BOOT_LOG_DBG("> boot_enc_decrypt") ;
+
+    fb_psa_crypto_generator_t generator = { 0x0 };
+
+    status = fb_psa_generator_setup(&generator);
+
+    if (PSA_SUCCESS == status)
+    {
+        alg = PSA_ALG_ECDH(PSA_ALG_HKDF(PSA_ALG_SHA_256));
+    }
+
+    /* AES key length + IV length */
+    uint32_t outSize = CY_FB_AES128_KEY_LEN + MBEDTLS_SHA256_DIGEST_SIZE;
 
     /*
      * First "element" in the TLV is the curve point (public key)
      */
 
-    /* Check ASN tag to ensure that EC point is in uncompressed binary format */
-    if (buf[0] != 0x04) {
-        return -1;
-    }
-
-    BOOT_LOG_DBG(" * Open private key, id = %d ", key_id) ;
-
-    status = fb_keys_open_key(key_id, (fb_psa_key_handle_t*)&privateKeyHandle);
-    if(status == PSA_SUCCESS)
+    if (PSA_SUCCESS == status)
     {
-        status = fb_psa_get_key_information( privateKeyHandle, &privateKeyType, &keyBits );
+        BOOT_LOG_DBG(" * Open a private key, id = %d ", key_id) ;
+
+        status = fb_keys_open_key(key_id, (fb_psa_key_handle_t*)&privateKeyHandle);
+
+        if (PSA_SUCCESS == status)
+        {
+            status = fb_psa_get_key_information( privateKeyHandle, &privateKeyType, &keyBits );
+        }
     }
     /* Private key is successfully loaded now to d */
 
-    if(status == PSA_SUCCESS)
+    if (PSA_SUCCESS == status)
     {
-        publicKeyType = PSA_KEY_TYPE_PUBLIC_KEY_OF_KEYPAIR( privateKeyType );
-        publicKeyLength = PSA_KEY_EXPORT_MAX_SIZE( publicKeyType, keyBits );
+        BOOT_LOG_DBG(" * Load a public key") ;
 
-        publicKey = malloc(publicKeyLength);
-        if(publicKey == NULL)
+        status = PSA_ERROR_INVALID_ARGUMENT;
+
+        /* Check ASN tag to ensure that EC point is in uncompressed binary format */
+        if (0x04 == buf[0])
         {
-            status = PSA_ERROR_INSUFFICIENT_MEMORY;
-        }
-        else
-        {
-            memcpy(publicKey, buf, publicKeyLength);
+            publicKeyType = PSA_KEY_TYPE_PUBLIC_KEY_OF_KEYPAIR( privateKeyType );
+            publicKeyLength = PSA_KEY_EXPORT_MAX_SIZE( publicKeyType, keyBits );
+
+            publicKey = malloc(publicKeyLength);
+
+            if (publicKey == NULL)
+            {
+                status = PSA_ERROR_INSUFFICIENT_MEMORY;
+            }
+            else
+            {
+                memcpy(publicKey, buf, publicKeyLength);
+
+                status = PSA_SUCCESS;
+            }
         }
     }
     /* Public key is successfully loaded now to P */
@@ -173,8 +191,10 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
     /*
      * Expand shared secret to create keys for AES-128-CTR + HMAC-SHA256
      */
-    if(status == PSA_SUCCESS)
+    if (PSA_SUCCESS == status)
     {
+        BOOT_LOG_DBG(" * Expand a shared secret to create AES and HMAC keys") ;
+
         status = fb_psa_key_agreement_salt_label( &generator,
                                                   privateKeyHandle,
                                                   publicKey, publicKeyLength,
@@ -182,60 +202,114 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
                                                   key_salt,  CY_IMG_CRYPTO_BLK_SIZE,
                                                   key_label, CY_IMG_CRYPTO_BLK_SIZE
                                                 );
-    }
-    if(status == PSA_SUCCESS)
-    {
-        status = fb_psa_export_public_key(privateKeyHandle, publicKey, publicKeyLength, &publicKeyLength);
-    }
-    
-    memset( publicKey, 0, publicKeyLength);
-    free( publicKey );
 
-    if(status == PSA_SUCCESS)
-    {
-        status = fb_psa_generator_read( &generator, aesKey, outSize );
+        if (PSA_SUCCESS == status)
+        {
+            status = fb_psa_generator_read( &generator, derivedKey, outSize );
+        }
     }
+
     fb_psa_generator_abort( &generator );
+
+    if (publicKey != NULL)
+    {
+        memset( publicKey, 0, publicKeyLength);
+        free( publicKey );
+    }
+
+    /*
+     * HMAC the key and check that our received MAC matches the generated tag
+     */
+    if (PSA_SUCCESS == status)
+    {
+        BOOT_LOG_DBG(" * Check HMAC of the cipher key") ;
+
+        fb_psa_mac_operation_t macOper = { 0x0 };
+        fb_psa_key_handle_t macHandle;
+        fb_psa_key_policy_t macPolicy;
+
+        macPolicy = fb_psa_key_policy_init();
+        fb_psa_key_policy_set_usage(&macPolicy,
+                                    PSA_KEY_USAGE_VERIFY,
+                                    PSA_ALG_HMAC(PSA_ALG_SHA_256));
+
+        status = fb_psa_allocate_key(&macHandle);
+
+        if (PSA_SUCCESS == status)
+        {
+            status = fb_psa_set_key_policy(macHandle, &macPolicy);
+        }
+
+        /* Import HMAC key  */
+        if (PSA_SUCCESS == status)
+        {
+            status = fb_psa_import_key(macHandle,
+                                       PSA_KEY_TYPE_HMAC,
+                                       &derivedKey[CY_FB_AES128_KEY_LEN],
+                                       MBEDTLS_SHA256_DIGEST_SIZE);
+        }
+
+        if (PSA_SUCCESS == status)
+        {
+            status = fb_psa_mac_verify_setup(&macOper, macHandle, PSA_ALG_HMAC(PSA_ALG_SHA_256));
+        }
+
+        if (PSA_SUCCESS == status)
+        {
+            status = fb_psa_mac_update(&macOper, &buf[EC_CIPHERKEY_INDEX], BOOT_ENC_KEY_SIZE);
+        }
+
+        if (PSA_SUCCESS == status)
+        {
+            status = fb_psa_mac_verify_finish(&macOper, &buf[EC_TAG_INDEX], MBEDTLS_SHA256_DIGEST_SIZE);
+        }
+
+        if (PSA_SUCCESS == status)
+        {
+            status = fb_psa_destroy_key(macHandle);
+        }
+    }
 
     /*
      * Finally decrypt the received ciphered key
      */
-    if (status == PSA_SUCCESS)
+    if (PSA_SUCCESS == status)
     {
+        BOOT_LOG_DBG(" * Decrypt an image encrypting AES key") ;
+
         aesPolicy = fb_psa_key_policy_init();
         fb_psa_key_policy_set_usage( &aesPolicy,
                                     PSA_KEY_USAGE_DECRYPT,
                                     PSA_ALG_CTR);
 
         status = fb_psa_allocate_key(&aesHandle);
-        if (status == PSA_SUCCESS)
+        if (PSA_SUCCESS == status)
         {
             status = fb_psa_set_key_policy(aesHandle, &aesPolicy);
         }
 
         /* Import AES key  */
-        if (status == PSA_SUCCESS)
+        if (PSA_SUCCESS == status)
         {
             status = fb_psa_import_key(aesHandle,
                                        PSA_KEY_TYPE_AES,
-                                       aesKey,
+                                       derivedKey,
                                        CY_FB_AES128_KEY_LEN);
         }
 
-        if (status == PSA_SUCCESS)
+        if (PSA_SUCCESS == status)
         {
-            status = fb_psa_cipher_decrypt_setup(&cipherOp, aesHandle,
-                                                PSA_ALG_CTR);
+            status = fb_psa_cipher_decrypt_setup(&cipherOp, aesHandle, PSA_ALG_CTR);
         }
 
-        if (status == PSA_SUCCESS)
+        if (PSA_SUCCESS == status)
         {
-            status = fb_psa_cipher_set_iv(&cipherOp,                    /* operation, */
-                                aesKey + CY_FB_AES128_IV_LEN,           /* iv, */
-                                CY_FB_AES128_IV_LEN                     /* iv_length */ );
+            status = fb_psa_cipher_set_iv(&cipherOp,                   /* operation, */
+                                          aesIV,                       /* iv, */
+                                          CY_FB_AES128_IV_LEN          /* iv_length */ );
         }
 
-        if (status == PSA_SUCCESS)
+        if (PSA_SUCCESS == status)
         {
             /* Decrypt and Read decryption AES KEY */
             status = fb_psa_cipher_update(&cipherOp,                    /* operation, */
@@ -251,7 +325,7 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
             }
         }
 
-        if (status == PSA_SUCCESS)
+        if (PSA_SUCCESS == status)
         {
             /* Close decrypt operation  */
             status = fb_psa_cipher_finish(&cipherOp,                    /* operation, */
@@ -260,13 +334,13 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
                                         (size_t *)&outSize              /* output_length*/ );
         }
 
-        if (status == PSA_SUCCESS)
+        if (PSA_SUCCESS == status)
         {
-            status = fb_psa_destroy_key(aesHandle );
+            status = fb_psa_destroy_key(aesHandle);
         }
     }
 
-    BOOT_LOG_DBG("< boot_enc_decrypt") ;
+    BOOT_LOG_DBG("< boot_enc_decrypt, status = %08x", (int)status);
 
     return (int)status;
 }
@@ -341,8 +415,6 @@ boot_enc_load(struct enc_key_data *enc_state, int image_index,
         return -1;
     }
 
-    BOOT_LOG_DBG(" * boot_enc_load: call to boot_enc_decrypt(), key_id = %d", (int)key_id);
-
     rc = cy_boot_enc_decrypt(key_id, buf, bs->enckey[slot]);
 
     BOOT_LOG_DBG("< boot_enc_load, rc = %d", (int)rc);
@@ -367,9 +439,7 @@ boot_enc_valid(struct enc_key_data *enc_state, int image_index,
         return false;
     }
 
-    BOOT_LOG_DBG(" * boot_enc_valid: enc_state[rc].valid = %d", (int)enc_state[rc].valid);
-
-    BOOT_LOG_DBG("< boot_enc_valid");
+    BOOT_LOG_DBG("< boot_enc_valid: enc_state[rc].valid = %d", (int)enc_state[rc].valid);
 
     return enc_state[rc].valid;
 }
@@ -406,19 +476,19 @@ boot_encrypt(struct enc_key_data *enc_state, int image_index,
 
     assert(enc_state[rc].valid == 1);
 
-    if (status == PSA_SUCCESS)
+    if (PSA_SUCCESS == status)
     {
         status = fb_psa_cipher_decrypt_setup(&cipherOp, aesHandle, PSA_ALG_CTR);
     }
 
-    if (status == PSA_SUCCESS)
+    if (PSA_SUCCESS == status)
     {
         status = fb_psa_cipher_set_iv(&cipherOp,                    /* operation, */
                                     nonce,                          /* iv, */
                                     CY_FB_AES128_IV_LEN             /* iv_length */ );
     }
 
-    if (status == PSA_SUCCESS)
+    if (PSA_SUCCESS == status)
     {
         /* Decrypt and Read decryption AES KEY */
         status = fb_psa_cipher_update(&cipherOp,                    /* operation, */
@@ -428,19 +498,19 @@ boot_encrypt(struct enc_key_data *enc_state, int image_index,
                                       sz,                           /* output_size, */
                                       (size_t *)&outSize            /* output_length */ );
 
-        if(sz != outSize)
+        if (sz != outSize)
         {
             status = PSA_ERROR_GENERIC_ERROR;
         }
     }
 
-    if (status == PSA_SUCCESS)
+    if (PSA_SUCCESS == status)
     {
         /* Close decrypt operation  */
         status = fb_psa_cipher_finish(&cipherOp,                    /* operation, */
-                                    NULL,                           /* output, */
-                                    0,                              /* output_size, */
-                                    (size_t *)&outSize              /* output_length*/ );
+                                      NULL,                         /* output, */
+                                      0,                            /* output_size, */
+                                      (size_t *)&outSize            /* output_length*/ );
     }
 }
 

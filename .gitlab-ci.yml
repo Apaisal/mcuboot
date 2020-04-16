@@ -14,13 +14,13 @@ variables:
     CY_BOOTLOADER_MINOR: 1
     CY_BOOTLOADER_REV: 0
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
-    
+
     CY_SECURETOOLS_BRANCH: develop
     PYOCD_BRANCH: smif-support
-    
-    
+
+
 ##############################################################################
-# Build 
+# Build
 #
 
 .build_1M:
@@ -31,7 +31,7 @@ variables:
     paths:
       - deploy
       - develop
-      
+
 .build_512K:
   stage: Build_512K
   dependencies: []
@@ -63,14 +63,14 @@ mac_1M_Bootloader:
       BUILDCFG=Release
       MAKEINFO=0
       POST_BUILD=1
-    # (TO DO: "Result image does not fit into bootloader region") Build Debug 
+    # (TO DO: "Result image does not fit into bootloader region") Build Debug
     - >
       ./ci/build/build.sh
       APP_NAME=CypressBootloader
       PLATFORM=PSOC_064_1M
       BUILDCFG=Debug
       MAKEINFO=0
-      POST_BUILD=1 
+      POST_BUILD=1
 
 mac_1M_BlinkyApp:
   extends: .build_1M
@@ -110,7 +110,7 @@ mac_1M_BlinkyApp:
       MULTI_IMAGE=0
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug        
+      BUILDCFG=Debug
 
 mac_1M_Multi_BlinkyApp:
   extends: .build_1M
@@ -154,7 +154,7 @@ mac_1M_Multi_BlinkyApp:
       MULTI_IMAGE=1
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug       
+      BUILDCFG=Debug
 
 mac_1M_SecureBlinkyApp:
   extends: .build_1M
@@ -238,7 +238,7 @@ mac_1M_SecureBlinkyApp:
       MULTI_IMAGE=0
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug        
+      BUILDCFG=Debug
 
 .mac_1M_Multi_BlinkyApp_smif:
   extends: .build_1M
@@ -286,7 +286,7 @@ mac_1M_SecureBlinkyApp:
       MULTI_IMAGE=1
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug       
+      BUILDCFG=Debug
 
 .mac_1M_SecureBlinkyApp_smif:
   extends: .build_1M
@@ -331,7 +331,7 @@ mac_1M_SecureBlinkyApp:
       MAKEINFO=0
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
-  
+
 
 
 mac_512K_Bootloader:
@@ -347,7 +347,7 @@ mac_512K_Bootloader:
       BUILDCFG=Release
       MAKEINFO=0
       POST_BUILD=1
-# (TO DO: "Result image does not fit into bootloader region") Build Debug 
+# (TO DO: "Result image does not fit into bootloader region") Build Debug
     - >
       ./ci/build/build.sh
       APP_NAME=CypressBootloader
@@ -522,7 +522,7 @@ mac_512K_BlinkyApp_smif:
       MULTI_IMAGE=0
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug        
+      BUILDCFG=Debug
 
 mac_512K_Multi_BlinkyApp_smif:
   extends: .build_512K
@@ -570,7 +570,7 @@ mac_512K_Multi_BlinkyApp_smif:
       MULTI_IMAGE=1
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug       
+      BUILDCFG=Debug
 
 mac_512K_SecureBlinkyApp_smif:
   extends: .build_512K
@@ -618,7 +618,7 @@ mac_512K_SecureBlinkyApp_smif:
 
 
 
-     
+
 .win_512K_Bootloader:
   extends: .build_512K
   tags:
@@ -763,7 +763,7 @@ mac_512K_SecureBlinkyApp_smif:
       PLATFORM=PSOC_064_512K
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug      
+      BUILDCFG=Debug
 
 lin_1M_Bootloader:
   extends: .build_1M
@@ -778,7 +778,7 @@ lin_1M_Bootloader:
       BUILDCFG=Release
       MAKEINFO=0
       POST_BUILD=1
-    # (TO DO: "Result image does not fit into bootloader region") Build Debug 
+    # (TO DO: "Result image does not fit into bootloader region") Build Debug
     # - >
       # ./ci/build/build.sh
       # APP_NAME=CypressBootloader
@@ -825,7 +825,7 @@ lin_1M_BlinkyApp:
       MULTI_IMAGE=0
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug        
+      BUILDCFG=Debug
 
 lin_1M_Multi_BlinkyApp:
   extends: .build_1M
@@ -869,7 +869,7 @@ lin_1M_Multi_BlinkyApp:
       MULTI_IMAGE=1
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug       
+      BUILDCFG=Debug
 
 lin_1M_SecureBlinkyApp:
   extends: .build_1M
@@ -920,7 +920,7 @@ lin_512K_Bootloader:
       BUILDCFG=Release
       MAKEINFO=0
       POST_BUILD=1
-    #(TO DO: "Result image does not fit into bootloader region") Build Debug 
+    #(TO DO: "Result image does not fit into bootloader region") Build Debug
     # - >
       # ./ci/build/build.sh
       # APP_NAME=CypressBootloader
@@ -1062,7 +1062,7 @@ mac_2M_Bootloader:
       BUILDCFG=Release
       MAKEINFO=0
       POST_BUILD=1
-    #(TO DO: "Result image does not fit into bootloader region") Build Debug 
+    #(TO DO: "Result image does not fit into bootloader region") Build Debug
     - >
       ./ci/build/build.sh
       APP_NAME=CypressBootloader
@@ -1237,7 +1237,7 @@ mac_2M_BlinkyApp_smif:
       MULTI_IMAGE=0
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug        
+      BUILDCFG=Debug
 
 mac_2M_Multi_BlinkyApp_smif:
   extends: .build_2M
@@ -1285,7 +1285,7 @@ mac_2M_Multi_BlinkyApp_smif:
       MULTI_IMAGE=1
       MAKEINFO=0
       IMG_TYPE=UPGRADE
-      BUILDCFG=Debug       
+      BUILDCFG=Debug
 
 mac_2M_SecureBlinkyApp_smif:
   extends: .build_2M
@@ -1490,7 +1490,7 @@ lin_2M_Bootloader:
       BUILDCFG=Release
       MAKEINFO=0
       POST_BUILD=1
-    #(TO DO: "Result image does not fit into bootloader region") Build Debug 
+    #(TO DO: "Result image does not fit into bootloader region") Build Debug
     # - >
       # ./ci/build/build.sh
       # APP_NAME=CypressBootloader
@@ -1622,7 +1622,7 @@ lin_2M_SecureBlinkyApp:
 
 
 ##############################################################################
-# Run Test 
+# Run Test
 #
 
 
@@ -1630,12 +1630,12 @@ lin_2M_SecureBlinkyApp:
 ##################------------------------------------------------- TESTS 512K -------------------------------------------#############################
 #######################################################################################################################################################
 
-mac_test_512K_Release:
+.mac_test_512K_Release:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
   variables:
-    GIT_SUBMODULE_STRATEGY: none    
+    GIT_SUBMODULE_STRATEGY: none
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
@@ -1645,7 +1645,6 @@ mac_test_512K_Release:
     variables:
       - $SCHEDULE == "true"
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -1669,8 +1668,8 @@ mac_test_512K_Release:
     - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_single_image
     - cd ..
     - rm -rf tests
-    
-    
+
+
 
     - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
@@ -1691,19 +1690,18 @@ mac_test_512K_Release:
       - deploy
 
 
-mac_test_512K_Debug:
+.mac_test_512K_Debug:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
   variables:
-    GIT_SUBMODULE_STRATEGY: none    
+    GIT_SUBMODULE_STRATEGY: none
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
     - mac_512K_SecureBlinkyApp
     - mac_512K_BlinkyApp
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -1727,8 +1725,8 @@ mac_test_512K_Debug:
     - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_single_image
     - cd ..
     - rm -rf tests
-    
-    
+
+
 
     - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
@@ -1749,12 +1747,12 @@ mac_test_512K_Debug:
       - deploy
 
 
-mac_test_512K_smif_Release:
+.mac_test_512K_smif_Release:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
   variables:
-    GIT_SUBMODULE_STRATEGY: none    
+    GIT_SUBMODULE_STRATEGY: none
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp_smif
@@ -1764,7 +1762,6 @@ mac_test_512K_smif_Release:
     variables:
       - $SCHEDULE == "true"
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -1788,9 +1785,9 @@ mac_test_512K_smif_Release:
     - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
     - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_single_image_smif
     - cd ..
-    - rm -rf tests    
+    - rm -rf tests
 
-    
+
 
     - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
@@ -1800,7 +1797,7 @@ mac_test_512K_smif_Release:
     - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_multi_image_smif
     - cd ..
     - rm -rf tests
-    
+
 
 
     - deactivate
@@ -1813,19 +1810,18 @@ mac_test_512K_smif_Release:
 
 
 
-mac_test_512K_smif_Debug:
+.mac_test_512K_smif_Debug:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
   variables:
-    GIT_SUBMODULE_STRATEGY: none    
+    GIT_SUBMODULE_STRATEGY: none
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp_smif
     - mac_512K_SecureBlinkyApp_smif
     - mac_512K_BlinkyApp_smif
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -1849,9 +1845,9 @@ mac_test_512K_smif_Debug:
     - echo "[INFO] Test provisioning using single stage policy (CM4), CyBootloader WithLogs"
     - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_single_image_smif
     - cd ..
-    - rm -rf tests    
+    - rm -rf tests
 
-    
+
 
     - '[ -d tests ] && echo "[INFO] Directory tests exists." || echo "[INFO] Directory tests does not exists." && git clone http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_mcuboot.git tests && cd tests && git checkout tests_kosx_es100 && git branch && cd .. '
     - cd tests
@@ -1861,7 +1857,7 @@ mac_test_512K_smif_Debug:
     - python3 -m unittest test_provisioning.TestProvisioning.test_provision_512k_release_multi_image_smif
     - cd ..
     - rm -rf tests
-    
+
 
 
     - deactivate
@@ -1877,7 +1873,7 @@ mac_test_512K_smif_Debug:
 ##################------------------------------------------------- TESTS 2M ---------------------------------------------#############################
 #######################################################################################################################################################
 
-.mac_test_2M_Release:
+mac_test_2M_Release:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -1892,7 +1888,6 @@ mac_test_512K_smif_Debug:
     variables:
       - $SCHEDULE == "true"
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -1940,7 +1935,7 @@ mac_test_512K_smif_Debug:
 
 
 
-.mac_test_2M_Debug:
+mac_test_2M_Debug:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -1952,7 +1947,6 @@ mac_test_512K_smif_Debug:
     - mac_2M_SecureBlinkyApp
     - mac_2M_BlinkyApp
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -2001,7 +1995,7 @@ mac_test_512K_smif_Debug:
 
 
 
-.mac_test_2M_smif_Release:
+mac_test_2M_smif_Release:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -2016,7 +2010,6 @@ mac_test_512K_smif_Debug:
     variables:
       - $SCHEDULE == "true"
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -2064,7 +2057,7 @@ mac_test_512K_smif_Debug:
 
 
 
-.mac_test_2M_smif_Debug:
+mac_test_2M_smif_Debug:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -2076,7 +2069,6 @@ mac_test_512K_smif_Debug:
     - mac_2M_SecureBlinkyApp_smif
     - mac_2M_BlinkyApp_smif
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -2128,7 +2120,7 @@ mac_test_512K_smif_Debug:
 ##################------------------------------------------------- TESTS 1M ---------------------------------------------#############################
 #######################################################################################################################################################
 
-mac_test_1M_Release:
+.mac_test_1M_Release:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -2143,7 +2135,6 @@ mac_test_1M_Release:
     variables:
       - $SCHEDULE == "true"
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -2191,7 +2182,7 @@ mac_test_1M_Release:
 
 
 
-mac_test_1M_Debug:
+.mac_test_1M_Debug:
   stage: tests
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -2203,7 +2194,6 @@ mac_test_1M_Debug:
     - mac_1M_SecureBlinkyApp
     - mac_1M_BlinkyApp
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -2267,7 +2257,6 @@ mac_test_1M_Debug:
     variables:
       - $SCHEDULE == "true"
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -2327,7 +2316,6 @@ mac_test_1M_Debug:
     - mac_1M_SecureBlinkyApp_smif
     - mac_1M_BlinkyApp_smif
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - virtualenv venv
     - source venv/bin/activate
@@ -2397,7 +2385,6 @@ win_cpp_check:
     - FW_SECURITY_TEST_UBUNTU1804
   cache: {}
   script:
-    - export https_proxy=http://proxy.ua.cypress.com:8080
     - python3 --version
     - pwd
     - git submodule deinit --all -f
