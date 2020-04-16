@@ -109,7 +109,7 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
                   uint8_t *tmp_buf, uint32_t tmp_buf_sz, uint8_t *hash_result,
                   uint8_t *seed, int seed_len)
 {
-    bootutil_sha256_context sha256_ctx;
+    bootutil_sha256_context sha256_ctx = { 0x0 };
     uint32_t blk_sz;
     uint32_t size;
     uint16_t hdr_size;
@@ -139,6 +139,8 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
     }
 #endif
     psa_status_t psa_ret;
+
+    BOOT_LOG_DBG("> bootutil_img_hash, index = %d", (int)image_index);
 
     psa_ret = bootutil_sha256_init(&sha256_ctx);
 
@@ -381,6 +383,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     uint32_t security_cnt = IMAGE_CY_SEC_CNT_MAX_VALUE;
     uint32_t img_security_cnt = 0UL;
     int valid_security_counter = 0;
+    int slot_id = -1;
     int rc;
 
     uint8_t image_id = 0u;
@@ -391,12 +394,12 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     bool is_image_encrypted = (IS_ENCRYPTED(hdr) > 0);
 
     /* Check image encrypted status only for UPGRADE slots */
-    rc = cy_bootutil_get_slot_id(fap);
-    if (rc < 0) {
-        return rc;
+    slot_id = cy_bootutil_get_slot_id(fap);
+    if (slot_id < 0) {
+        return slot_id;
     }
     else
-    if (rc == 1)
+    if (slot_id == 1)
     {
         /* Check for upgrade is enabled in the policy */
         rc = cy_bootutil_check_upgrade(fap);

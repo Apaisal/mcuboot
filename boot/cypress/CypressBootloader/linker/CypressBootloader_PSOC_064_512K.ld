@@ -352,9 +352,9 @@ SECTIONS
     /* Check if code + data exceeds FLASH image limit */
     __FlashImageSize = SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.copy.table) + SIZEOF(.zero.table);
     ASSERT(__FlashImageSize <= CY_BOOTLOADER_SIZE, "Resulting image does not fit into bootloader region")
-    
+
     /* Comment this line for debug purposes*/
-    ASSERT(CY_BOOTLOADER_SIZE <= 0x10000 , "Resulting image does not fit 64kB region")
+    ASSERT((CY_BOOTLOADER_SIZE <= 0x10000) || (CY_BOOTLOADER_DBG_MARGIN > 0) , "Resulting image does not fit 64kB region")
 
     /* Emulated EEPROM Flash area */
     .cy_em_eeprom :
