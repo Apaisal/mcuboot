@@ -61,11 +61,11 @@ else
 $(error Only GCC ARM is supported at this moment)
 endif
 
-# Add device name from BSP makefile to defines
+# Add device name to defines
 DEFINES += $(DEVICE)
 DEFINES += $(PLATFORM)
 
-# Get defines from BSP makefile and convert it to regular -DMY_NAME style
+# Convert defines it to regular -DMY_NAME style
 ifneq ($(DEFINES),)
 	DEFINES_PLATFORM :=$(addprefix -D, $(subst -,_,$(DEFINES)))
 endif

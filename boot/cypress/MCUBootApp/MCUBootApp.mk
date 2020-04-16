@@ -40,8 +40,6 @@ include $(CUR_APP_PATH)/platforms.mk
 include $(CUR_APP_PATH)/libs.mk
 include $(CUR_APP_PATH)/toolchains.mk
 
-$(info MCUBootApp.mk_INCLUDE_DIRS_PLATFORM: $(INCLUDE_DIRS_PLATFORM))
-
 # Application-specific DEFINES
 DEFINES_APP := -DMBEDTLS_CONFIG_FILE="\"mcuboot_crypto_config.h\""
 DEFINES_APP += -DECC256_KEY_FILE="\"keys/$(SIGN_KEY_FILE).pub\""
@@ -82,7 +80,7 @@ OUT_TARGET := $(OUT)/$(PLATFORM)
 
 OUT_CFG := $(OUT_TARGET)/$(BUILDCFG)
 
-# Overwite path to linker script if custom is required, otherwise default from BSP is used
+# Overwite path to linker script if custom is required
 ifeq ($(COMPILER), GCC_ARM)
 LINKER_SCRIPT := $(subst /cygdrive/c,c:,$(CUR_APP_PATH)/$(APP_NAME).ld)
 else
