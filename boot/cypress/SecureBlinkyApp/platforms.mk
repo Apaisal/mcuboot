@@ -71,12 +71,14 @@ endif
 
 # Collect C source files for PLATFORM BSP
 SOURCES_PLATFORM += $(wildcard $(PLATFORMS_PATH)/*.c)
+SOURCES_PLATFORM += $(wildcard $(PLATFORMS_PATH)/retarget_io_pdl/*.c)
 SOURCES_PLATFORM += $(wildcard $(PLATFORM_PATH)/$(CORE)/*.c)
 # Exclude system file for cm4
 SOURCES_PLATFORM := $(filter-out %/system_psoc6_cm4.c, $(SOURCES_PLATFORM))
 
 # Collect dirrectories containing headers for PLATFORM BSP
 INCLUDE_DIRS_PLATFORM := $(PLATFORMS_PATH)
+INCLUDE_DIRS_PLATFORM += $(PLATFORMS_PATH)/retarget_io_pdl
 INCLUDE_DIRS_PLATFORM += $(PLATFORM_PATH)/$(CORE)
 
 # Collect Assembler files for PLATFORM BSP
