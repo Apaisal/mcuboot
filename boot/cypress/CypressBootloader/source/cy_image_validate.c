@@ -104,6 +104,62 @@
  * Compute SHA256 over the image.
  */
 static int
+bootutil_rawimg_hash(struct enc_key_data *enc_state, int image_index,
+                  struct image_header *hdr, const struct flash_area *fap,
+                  uint8_t *hash_result, uint8_t *seed, int seed_len)
+{
+    bootutil_sha256_context sha256_ctx = { 0x0 };
+    uint32_t size;
+
+    BOOT_LOG_DBG("> bootutil_rawimg_hash") ;
+
+    // TODO: run-time multi-image
+//#if (BOOT_IMAGE_NUMBER == 1) || !defined(MCUBOOT_ENC_IMAGES)
+    (void)enc_state;
+    (void)image_index;
+//#endif
+
+    psa_status_t psa_ret;
+
+    psa_ret = bootutil_sha256_init(&sha256_ctx);
+
+    if (0 == psa_ret)
+    {
+        /* in some cases (split image) the hash is seeded with data from
+         * the loader image */
+        if (seed && (seed_len > 0)) {
+            psa_ret = bootutil_sha256_update(&sha256_ctx, seed, seed_len);
+        }
+
+        if (0 == psa_ret)
+        {
+
+            /* Hash is computed over image header and image itself. */
+            size =  hdr->ih_hdr_size;
+            size += hdr->ih_img_size;
+
+            /* If protected TLVs are present they are also hashed. */
+            size += hdr->ih_protect_tlv_size;
+
+            psa_ret = bootutil_sha256_update(&sha256_ctx, (const void*)fap->fa_off, size);
+
+        }
+
+        if (0 == psa_ret)
+        {
+            psa_ret = bootutil_sha256_finish(&sha256_ctx, hash_result);
+        }
+    }
+
+    BOOT_LOG_DBG("< bootutil_rawimg_hash") ;
+
+    return (int)psa_ret;
+}
+
+/*
+ * Compute SHA256 over the image.
+ */
+static int
 bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
                   struct image_header *hdr, const struct flash_area *fap,
                   uint8_t *tmp_buf, uint32_t tmp_buf_sz, uint8_t *hash_result,
@@ -139,8 +195,6 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
     }
 #endif
     psa_status_t psa_ret;
-
-    BOOT_LOG_DBG("> bootutil_img_hash, index = %d", (int)image_index);
 
     psa_ret = bootutil_sha256_init(&sha256_ctx);
 
@@ -384,7 +438,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     uint32_t img_security_cnt = 0UL;
     int valid_security_counter = 0;
     int slot_id = -1;
-    int rc;
+    int rc = -1;
 
     uint8_t image_id = 0u;
 
@@ -396,10 +450,10 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     /* Check image encrypted status only for UPGRADE slots */
     slot_id = cy_bootutil_get_slot_id(fap);
     if (slot_id < 0) {
-        return slot_id;
+        return rc;
     }
     else
-    if (slot_id == 1)
+    if (slot_id > 0)
     {
         /* Check for upgrade is enabled in the policy */
         rc = cy_bootutil_check_upgrade(fap);
@@ -415,12 +469,24 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
             //TODO: Enchance a policy checking
             return -1;
         }
-    }
 
-    rc = bootutil_img_hash(enc_state, image_index, hdr, fap, tmp_buf,
-            tmp_buf_sz, hash, seed, seed_len);
-    if (rc) {
-        return rc;
+        BOOT_LOG_DBG(" * call bootutil_img_hash");
+
+        rc = bootutil_img_hash(enc_state, image_index, hdr, fap, tmp_buf, tmp_buf_sz, hash, seed, seed_len);
+        if (rc) {
+            return rc;
+        }
+
+    }
+    else
+    {
+        /* calculate the image hash in the boot slot */
+        BOOT_LOG_DBG(" * call bootutil_rawimg_hash");
+
+        rc = bootutil_rawimg_hash(enc_state, image_index, hdr, fap, hash, seed, seed_len);
+        if (rc) {
+            return rc;
+        }
     }
 
     if (out_hash) {
@@ -520,6 +586,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                     if (rc) {
                         return -1;
                     }
+
                     rc = bootutil_verify_sig(hash, sizeof(hash), buf, len, key_id);
                     if (rc == 0) {
                         valid_signature = 1;

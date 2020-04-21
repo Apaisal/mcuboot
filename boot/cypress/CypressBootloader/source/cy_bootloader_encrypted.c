@@ -39,6 +39,7 @@
 
 #include <stdlib.h>
 #include "cy_image_utils.h"
+#include "cy_secure_utils.h"
 
 #define MBEDTLS_EC256_PUBKEY_SIZE   (64)
 #define MBEDTLS_SHA256_DIGEST_SIZE  (32)
@@ -522,7 +523,7 @@ boot_enc_zeroize(struct enc_key_data *enc_state)
 {
     BOOT_LOG_DBG("> boot_enc_zeroize");
 
-    memset( enc_state, 0, sizeof(struct enc_key_data) * BOOT_NUM_SLOTS );
+    (void)Cy_Utils_Memset( enc_state, 0, sizeof(struct enc_key_data) * BOOT_NUM_SLOTS );
 
     BOOT_LOG_DBG("< boot_enc_zeroize");
 }
