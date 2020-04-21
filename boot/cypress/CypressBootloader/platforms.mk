@@ -64,6 +64,7 @@ COMPONENTS+=COMPONENT_BSP_DESIGN_MODUS
 
 # Collect C source files for PLATFORM BSP
 SOURCES_PLATFORM += $(wildcard $(PLATFORM_PATH)/*.c)
+SOURCES_PLATFORM += $(wildcard $(PLATFORM_PATH)/retarget_io_pdl/*.c)
 # SOURCES_PLATFORM += $(wildcard $(CUR_LIBS_PATH)/psoc6hal/COMPONENT_PSOC6HAL/source/*.c)
 # SOURCES_PLATFORM += $(wildcard $(CUR_LIBS_PATH)/psoc6hal/COMPONENT_PSOC6HAL/source/triggers/*.c)
 # SOURCES_PLATFORM += $(wildcard $(CUR_LIBS_PATH)/psoc6hal/COMPONENT_PSOC6HAL/source/pin_packages/*.c)
@@ -72,6 +73,7 @@ SOURCES_PLATFORM := $(filter-out %/system_psoc6_cm4.c, $(SOURCES_PLATFORM))
 
 # Collect dirrectories containing headers for PLATFORM BSP
 INCLUDE_DIRS_PLATFORM := $(PLATFORM_PATH)
+INCLUDE_DIRS_PLATFORM += $(PLATFORM_PATH)/retarget_io_pdl
 # INCLUDE_DIRS_PLATFORM += $(CUR_LIBS_PATH)/psoc6hal/include
 # INCLUDE_DIRS_PLATFORM += $(CUR_LIBS_PATH)/psoc6hal/COMPONENT_PSOC6HAL/include
 # INCLUDE_DIRS_PLATFORM += $(CUR_LIBS_PATH)/psoc6hal/COMPONENT_PSOC6HAL/include/pin_packages
