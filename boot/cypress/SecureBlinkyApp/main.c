@@ -101,7 +101,7 @@ const cy_stc_gpio_pin_config_t LED_config =
     #define BLINK_PERIOD          (100u)
     #define CM0_TIMEOUT           (30u)
     #define GREETING_MESSAGE_VER  "[SecureBlinkyApp] SecureBlinkyApp v2.0 [+]\r\n"
-    #define GREETING_MESSAGE_INFO "[SecureBlinkyApp] Red led blinks FAST for 3 sec\r\n \
+    #define GREETING_MESSAGE_INFO "[SecureBlinkyApp] Red led blinks FAST for 3 sec\r\n\
 [SecureBlinkyApp] Then CM4 app will be started\r\n"
 #else
     #error "[SecureBlinkyApp] Please specify type of image: -DBOOT_IMG or -DUPGRADE_IMG\r\n"
