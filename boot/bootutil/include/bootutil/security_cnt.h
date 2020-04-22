@@ -18,6 +18,11 @@
  *       status of the counters. If the counters have reached a stable status
  *       (every counter incrementation operation has finished), from that point
  *       their value cannot decrease due to any kind of power failure.
+ *
+ * @note A security counter might be implemented using non-volatile OTP memory
+ *       (i.e. fuses) in which case it is the responsibility of the platform
+ *       code to map each possible security counter values onto the fuse bits
+ *       as the direct usage of counter values can be costly / impractical.
  */
 
 #include <stdint.h>

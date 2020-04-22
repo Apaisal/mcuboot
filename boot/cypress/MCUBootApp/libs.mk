@@ -29,15 +29,22 @@
 PDL_VERSION = 121
 #
 CUR_LIBS_PATH = $(CURDIR)/libs
+MBEDTLS_PATH = $(CURDIR)/../../ext
 
 # Collect source files for PDL
 SOURCES_PDL := $(wildcard $(CUR_LIBS_PATH)/pdl/psoc6pdl/drivers/source/*.c)
+
+# Collect source files for Retarget-io
+SOURCES_RETARGET_IO := $(wildcard $(CUR_LIBS_PATH)/retarget-io/*.c)
 
 # PDL related include directories
 INCLUDE_DIRS_PDL := $(CUR_LIBS_PATH)/pdl/psoc6pdl/drivers/include
 INCLUDE_DIRS_PDL += $(CUR_LIBS_PATH)/pdl/psoc6pdl/devices/include/ip
 INCLUDE_DIRS_PDL += $(CUR_LIBS_PATH)/pdl/psoc6pdl/devices/include
 INCLUDE_DIRS_PDL += $(CUR_LIBS_PATH)/pdl/psoc6pdl/cmsis/include
+
+# Retarget-io related include directories
+INCLUDE_DIRS_RETARGET_IO := $(CUR_LIBS_PATH)/retarget-io
 
 # core-libs related include directories
 INCLUDE_DIRS_CORE_LIB := $(CUR_LIBS_PATH)/core-lib/include
@@ -59,15 +66,15 @@ INCLUDE_DIRS_LIBS += $(addprefix -I,$(INCLUDE_DIRS_HAL))
 # mbedTLS settings
 ################################################################################
 # MbedTLS related include directories
-INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/mbedtls/include
-INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/mbedtls/include/mbedtls
-INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/mbedtls/crypto/include
-INCLUDE_DIRS_MBEDTLS += $(CUR_LIBS_PATH)/mbedtls/crypto/include/mbedtls
+INCLUDE_DIRS_MBEDTLS += $(MBEDTLS_PATH)/mbedtls/include
+INCLUDE_DIRS_MBEDTLS += $(MBEDTLS_PATH)/mbedtls/include/mbedtls
+INCLUDE_DIRS_MBEDTLS += $(MBEDTLS_PATH)/mbedtls/crypto/include
+INCLUDE_DIRS_MBEDTLS += $(MBEDTLS_PATH)/mbedtls/crypto/include/mbedtls
 #
 INCLUDE_DIRS_LIBS += $(addprefix -I,$(INCLUDE_DIRS_MBEDTLS))
 # Collect source files for MbedTLS
-SOURCES_MBEDTLS := $(wildcard $(CUR_LIBS_PATH)/mbedtls/library/*.c)
-SOURCES_MBEDTLS += $(wildcard $(CUR_LIBS_PATH)/mbedtls/crypto/library/*.c)
+SOURCES_MBEDTLS := $(wildcard $(MBEDTLS_PATH)/mbedtls/library/*.c)
+SOURCES_MBEDTLS += $(wildcard $(MBEDTLS_PATH)/mbedtls/crypto/library/*.c)
 # Collected source files for libraries
 SOURCES_LIBS += $(SOURCES_MBEDTLS)
 ## mbedTLS settings

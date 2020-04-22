@@ -24,10 +24,10 @@
 ################################################################################
 
 # Compilers
-GCC_ARM   	:= 1
-IAR   		:= 2
-ARM   		:= 3
-OTHER 		:= 4
+GCC_ARM	:= 1
+IAR		:= 2
+ARM		:= 3
+OTHER 	:= 4
 
 ifeq ($(MAKEINFO), 1)
 $(info $(COMPILER))
@@ -53,15 +53,15 @@ ifeq ($(HOST_OS), win)
 		TOOLCHAIN_PATH := $(MY_TOOLCHAIN_PATH)
 		GCC_PATH := $(TOOLCHAIN_PATH)
 		# executables
-		CC       := "$(GCC_PATH)/bin/arm-none-eabi-gcc"
-		LD       := $(CC)
+		CC := "$(GCC_PATH)/bin/arm-none-eabi-gcc"
+		LD := $(CC)
 
 	else ifeq ($(COMPILER), IAR)
 		IAR_PATH := C:/Program Files (x86)/IAR Systems/Embedded Workbench 8.0/arm
 		# executables
-		CC       := "$(IAR_PATH)/bin/iccarm.exe"
-		AS       := "$(IAR_PATH)/bin/iasmarm.exe"
-		LD       := "$(IAR_PATH)/bin/ilinkarm.exe"
+		CC := "$(IAR_PATH)/bin/iccarm.exe"
+		AS := "$(IAR_PATH)/bin/iasmarm.exe"
+		LD := "$(IAR_PATH)/bin/ilinkarm.exe"
 	endif
 
 else ifeq ($(HOST_OS), osx)
@@ -99,8 +99,6 @@ ifeq ($(COMPILER), GCC_ARM)
 	CFLAGS := $(CFLAGS_COMMON) $(INCLUDES)
 	CC_DEPEND = -MD -MP -MF
 
-# TODO: create Application-Specific Linker
-
 	LDFLAGS_COMMON := -mcpu=cortex-m4 -mthumb -specs=nano.specs -ffunction-sections -fdata-sections  -Wl,--gc-sections -L "$(GCC_PATH)/lib/gcc/arm-none-eabi/7.2.1/thumb/v6-m" -ffat-lto-objects -g --enable-objc-gc
 	ifeq ($(BUILDCFG), Debug)
 		LDFLAGS_COMMON += -Og
@@ -110,14 +108,12 @@ ifeq ($(COMPILER), GCC_ARM)
 		$(error BUILDCFG : '$(BUILDCFG)' is not supported)
 	endif
 	LDFLAGS_NANO := -L "$(GCC_PATH)/arm-none-eabi/lib/thumb/v6-m"
-	# TODO: check .map name
 	LDFLAGS := $(LDFLAGS_COMMON) $(LDFLAGS_NANO)
 
 else ifeq ($(COMPILER), IAR)
 
 	CFLAGS := --debug --endian=little --cpu=Cortex-M4 -e --fpu=None --dlib_config "$(IAR_PATH)\INC\c\DLib_Config_Normal.h"
 	CFLAGS += -Ohz --silent
-#	CFLAGS += $(DEFINES) $(INCLUDES)
 	CFLAGS += $(INCLUDES)
 	CC_DEPEND = --dependencies
 

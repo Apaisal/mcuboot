@@ -24,10 +24,10 @@
 ################################################################################
 
 # Compilers
-GCC_ARM   	:= 1
-IAR   		:= 2
-ARM   		:= 3
-OTHER 		:= 4
+GCC_ARM     := 1
+IAR         := 2
+ARM         := 3
+OTHER       := 4
 
 ifeq ($(MAKEINFO), 1)
 $(info $(COMPILER))

@@ -1,9 +1,9 @@
 ################################################################################
-# \file targets.mk
+# \file BlinkyApp.mk
 # \version 1.0
 #
 # \brief
-# Makefile to describe supported boards and platforms for Cypress MCUBoot based applications.
+# Makefile to describe demo application BlinkyApp for Cypress MCUBoot based applications.
 #
 ################################################################################
 # \copyright
@@ -14,7 +14,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#	 http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,9 +25,9 @@
 
 # Cypress' MCUBoot Application supports GCC ARM only at this moment
 # Set defaults to:
-#   - compiler GCC
-#   - build configuration to Debug
-#   - image type to BOOT
+#     - compiler GCC
+#     - build configuration to Debug
+#     - image type to BOOT
 COMPILER ?= GCC_ARM
 IMG_TYPE ?= BOOT
 
@@ -174,9 +174,9 @@ INCLUDE_DIRS_APP += $(addprefix -I, $(CUR_APP_PATH))
 
 # Overwite path to linker script if custom is required, otherwise default from BSP is used
 ifeq ($(COMPILER), GCC_ARM)
-	LINKER_SCRIPT := $(subst /cygdrive/c,c:,$(CUR_APP_PATH)/linker/$(APP_NAME).ld)
+LINKER_SCRIPT := $(subst /cygdrive/c,c:,$(CUR_APP_PATH)/linker/$(APP_NAME).ld)
 else
-	$(error Only GCC ARM is supported at this moment)
+$(error Only GCC ARM is supported at this moment)
 endif
 
 ASM_FILES_APP :=

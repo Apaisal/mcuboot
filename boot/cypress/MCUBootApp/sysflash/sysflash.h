@@ -18,7 +18,7 @@
 /* use PDL-defined offset or one from SMFI config */
 #define CY_SMIF_BASE_MEM_OFFSET             (0x18000000)
 
-#define CY_FLASH_ALIGN                      (128) // TODO: will fix it to CY_FLASH_SIZEOF_ROW (512) in PSoC6
+#define CY_FLASH_ALIGN                      (CY_FLASH_SIZEOF_ROW)
 #define CY_FLASH_DEVICE_BASE                (CY_FLASH_BASE)
 
 #ifndef CY_BOOT_SCRATCH_SIZE

@@ -177,6 +177,7 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
 #endif
 
 #ifdef EXPECTED_SIG_TLV
+#if !defined(MCUBOOT_HW_KEY)
 static int
 bootutil_find_key(uint8_t *keyhash, uint8_t keyhash_len)
 {
@@ -200,8 +201,37 @@ bootutil_find_key(uint8_t *keyhash, uint8_t keyhash_len)
     }
     return -1;
 }
+#else
+extern unsigned int pub_key_len;
+static int
+bootutil_find_key(uint8_t image_index, uint8_t *key, uint16_t key_len)
+{
+    bootutil_sha256_context sha256_ctx;
+    uint8_t hash[32];
+    uint8_t key_hash[32];
+    size_t key_hash_size = sizeof(key_hash);
+    int rc;
+
+    bootutil_sha256_init(&sha256_ctx);
+    bootutil_sha256_update(&sha256_ctx, key, key_len);
+    bootutil_sha256_finish(&sha256_ctx, hash);
+
+    rc = boot_retrieve_public_key_hash(image_index, key_hash, &key_hash_size);
+    if (rc) {
+        return rc;
+    }
+
+    if (!memcmp(hash, key_hash, key_hash_size)) {
+        bootutil_keys[0].key = key;
+        pub_key_len = key_len;
+        return 0;
+    }
+    return -1;
+}
+#endif /* !MCUBOOT_HW_KEY */
 #endif
 
+#ifdef MCUBOOT_HW_ROLLBACK_PROT
 /**
  * Reads the value of an image's security counter.
  *
@@ -220,7 +250,6 @@ bootutil_get_img_security_cnt(struct image_header *hdr,
     struct image_tlv_iter it;
     uint32_t off;
     uint16_t len;
-    uint32_t found = 0;
     int32_t rc;
 
     if ((hdr == NULL) ||
@@ -243,35 +272,26 @@ bootutil_get_img_security_cnt(struct image_header *hdr,
     /* Traverse through the protected TLV area to find
      * the security counter TLV.
      */
-    while (true) {
-        rc = bootutil_tlv_iter_next(&it, &off, &len, NULL);
-        if (rc < 0) {
-            return -1;
-        } else if (rc > 0) {
-            break;
-        }
 
-        if (len != sizeof(*img_security_cnt)) {
-            /* Security counter is not valid. */
-            return BOOT_EBADIMAGE;
-        }
-
-        rc = flash_area_read(fap, off, img_security_cnt, len);
-        if (rc != 0) {
-            return BOOT_EFLASH;
-        }
-
-        /* Security counter has been found. */
-        found = 1;
-        break;
+    rc = bootutil_tlv_iter_next(&it, &off, &len, NULL);
+    if (rc != 0) {
+        /* Security counter TLV has not been found. */
+        return -1;
     }
 
-    if (found) {
-        return 0;
+    if (len != sizeof(*img_security_cnt)) {
+        /* Security counter is not valid. */
+        return BOOT_EBADIMAGE;
     }
 
-    return -1;
+    rc = flash_area_read(fap, off, img_security_cnt, len);
+    if (rc != 0) {
+        return BOOT_EFLASH;
+    }
+
+    return 0;
 }
+#endif /* MCUBOOT_HW_ROLLBACK_PROT */
 
 /*
  * Verify the integrity of the image.
@@ -290,14 +310,20 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
 #ifdef EXPECTED_SIG_TLV
     int valid_signature = 0;
     int key_id = -1;
+#ifdef MCUBOOT_HW_KEY
+    /* Few extra bytes for encoding and for public exponent. */
+    uint8_t key_buf[SIG_BUF_SIZE + 24];
 #endif
+#endif /* EXPECTED_SIG_TLV */
     struct image_tlv_iter it;
     uint8_t buf[SIG_BUF_SIZE];
     uint8_t hash[32];
+    int rc;
+#ifdef MCUBOOT_HW_ROLLBACK_PROT
     uint32_t security_cnt = UINT32_MAX;
     uint32_t img_security_cnt = 0;
     int32_t security_counter_valid = 0;
-    int rc;
+#endif
 
     rc = bootutil_img_hash(enc_state, image_index, hdr, fap, tmp_buf,
             tmp_buf_sz, hash, seed, seed_len);
@@ -344,6 +370,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
 
             sha256_valid = 1;
 #ifdef EXPECTED_SIG_TLV
+#ifndef MCUBOOT_HW_KEY
         } else if (type == IMAGE_TLV_KEYHASH) {
             /*
              * Determine which key we should be checking.
@@ -360,6 +387,24 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
              * The key may not be found, which is acceptable.  There
              * can be multiple signatures, each preceded by a key.
              */
+#else
+        } else if (type == IMAGE_TLV_PUBKEY) {
+            /*
+             * Determine which key we should be checking.
+             */
+            if (len > sizeof(key_buf)) {
+                return -1;
+            }
+            rc = flash_area_read(fap, off, key_buf, len);
+            if (rc) {
+                return rc;
+            }
+            key_id = bootutil_find_key(image_index, key_buf, len);
+            /*
+             * The key may not be found, which is acceptable.  There
+             * can be multiple signatures, each preceded by a key.
+             */
+#endif /* !MCUBOOT_HW_KEY */
         } else if (type == EXPECTED_SIG_TLV) {
             /* Ignore this signature if it is out of bounds. */
             if (key_id < 0 || key_id >= bootutil_key_cnt) {
@@ -378,7 +423,8 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                 valid_signature = 1;
             }
             key_id = -1;
-#endif
+#endif /* EXPECTED_SIG_TLV */
+#ifdef MCUBOOT_HW_ROLLBACK_PROT
         } else if (type == IMAGE_TLV_SEC_CNT) {
             /*
              * Verify the image's security counter.
@@ -409,18 +455,21 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
 
             /* The image's security counter has been successfully verified. */
             security_counter_valid = 1;
+#endif /* MCUBOOT_HW_ROLLBACK_PROT */
         }
     }
 
-    if (!sha256_valid || !security_counter_valid) {
+    if (!sha256_valid) {
         return -1;
-    }
-
 #ifdef EXPECTED_SIG_TLV
-    if (!valid_signature) {
+    } else if (!valid_signature) {
         return -1;
-    }
 #endif
+#ifdef MCUBOOT_HW_ROLLBACK_PROT
+    } else if (!security_counter_valid) {
+        return -1;
+#endif
+    }
 
     return 0;
 }

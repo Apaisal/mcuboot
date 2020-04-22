@@ -1,4 +1,9 @@
 /*
+ * This file has been copied from the cddl_gen submodule.
+ * Commit 9d911cf0c7c9f13b5a9fdd5ed6c1012df21e5576
+ */
+
+/*
  * Copyright (c) 2020 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0

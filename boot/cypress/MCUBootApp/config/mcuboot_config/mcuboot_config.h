@@ -22,7 +22,7 @@
 /* Default maximum number of flash sectors per image slot; change
  * as desirable. */
 #ifndef MCUBOOT_MAX_IMG_SECTORS
-#define MCUBOOT_MAX_IMG_SECTORS 2560 /* the sector is temporary 128 bytes now */
+#define MCUBOOT_MAX_IMG_SECTORS 2560
 #endif
 
 /*
@@ -134,7 +134,7 @@
  * NOTE: Each source file is still able to request its own logging level by
  * defining BOOT_LOG_LEVEL before #including `bootutil_log.h`
  */
-//#define MCUBOOT_HAVE_LOGGING 1
+#define MCUBOOT_HAVE_LOGGING 1
 
 /*
  * Assertions
