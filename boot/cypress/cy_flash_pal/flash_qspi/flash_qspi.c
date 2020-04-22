@@ -121,7 +121,7 @@ struct qspi_ss_config qspi_SS_Configuration[CY_BOOTLOADER_SMIF_SS_CFG_NUM] =
         .SS_Pin = 0,
         .SS_Mux = P11_0_SMIF_SPI_SELECT2
     },
-#if(CY_BOOTLOADER_SMIF_SS_CFG_NUM > 4)
+#if(CY_BOOTLOADER_SMIF_SS_CFG_NUM > 3)
     {
         .SS_Port = GPIO_PRT12,
         .SS_Pin = 4,
@@ -425,9 +425,11 @@ cy_en_smif_status_t qspi_init_sfdp(uint32_t smif_id)
     case 3:
         (*memCfg)->slaveSelect = CY_SMIF_SLAVE_SELECT_2;
         break;
+#if(CY_BOOTLOADER_SMIF_SS_CFG_NUM > 3)
     case 4:
         (*memCfg)->slaveSelect = CY_SMIF_SLAVE_SELECT_3;
         break;
+#endif
     default:
         stat = -1;
         break;
