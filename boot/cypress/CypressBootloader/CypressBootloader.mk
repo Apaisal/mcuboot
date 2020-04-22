@@ -85,6 +85,9 @@ endif
 # multi-image setup ?
 DEFINES_APP += -DMCUBOOT_IMAGE_NUMBER=2
 
+# Enabled hardware secure counter support
+DEFINES_APP += -DMCUBOOT_HW_ROLLBACK_PROT
+
 # Use external flash map descriptors since flash map is driven by policy
 DEFINES_APP += -DCY_FLASH_MAP_EXT_DESC
 DEFINES_APP += -DCY_BOOTLOADER_START=$(CY_BOOTLOADER_APP_START)

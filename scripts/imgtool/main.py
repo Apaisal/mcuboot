@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 #
-# Copyright 2017 Linaro Limited
+# Copyright 2017-2020 Linaro Limited
 # Copyright 2019-2020 Arm Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,13 +17,17 @@
 
 import re
 import click
-import struct
 import getpass
 import imgtool.keys as keys
 import sys
 from imgtool import image, imgtool_version
 from imgtool.version import decode_version
 from .keys import RSAUsageError, ECDSAUsageError, Ed25519UsageError
+
+MIN_PYTHON_VERSION = (3, 6)
+if sys.version_info < MIN_PYTHON_VERSION:
+    sys.exit("Python %s.%s or newer is required by imgtool."
+             % MIN_PYTHON_VERSION)
 
 
 def gen_rsa2048(keyfile, passwd):
@@ -155,6 +159,20 @@ def validate_version(ctx, param, value):
         raise click.BadParameter("{}".format(e))
 
 
+def validate_security_counter(ctx, param, value):
+    if value is not None:
+        if value.lower() == 'auto':
+            return 'auto'
+        else:
+            try:
+                return int(value, 0)
+            except ValueError:
+                raise click.BadParameter(
+                    "{} is not a valid integer. Please use code literals "
+                    "prefixed with 0b/0B, 0o/0O, or 0x/0X as necessary."
+                    .format(value))
+
+
 def validate_header_size(ctx, param, value):
     min_hdr_size = image.IMAGE_HEADER_SIZE
     if value < min_hdr_size:
@@ -191,13 +209,11 @@ class BasedIntParamType(click.ParamType):
 
     def convert(self, value, param, ctx):
         try:
-            if value[:2].lower() == '0x':
-                return int(value[2:], 16)
-            elif value[:1] == '0':
-                return int(value, 8)
-            return int(value, 10)
+            return int(value, 0)
         except ValueError:
-            self.fail('%s is not a valid integer' % value, param, ctx)
+            self.fail('%s is not a valid integer. Please use code literals '
+                      'prefixed with 0b/0B, 0o/0O, or 0x/0X as necessary.'
+                      % value, param, ctx)
 
 
 @click.argument('outfile')
@@ -219,9 +235,15 @@ class BasedIntParamType(click.ParamType):
               default='little', help="Select little or big endian")
 @click.option('--overwrite-only', default=False, is_flag=True,
               help='Use overwrite-only instead of swap upgrades')
+@click.option('--boot-record', metavar='sw_type', help='Create CBOR encoded '
+              'boot record TLV. The sw_type represents the role of the '
+              'software component (e.g. CoFM for coprocessor firmware). '
+              '[max. 12 characters]')
 @click.option('-M', '--max-sectors', type=int,
               help='When padding allow for this amount of sectors (defaults '
                    'to 128)')
+@click.option('--confirm', default=False, is_flag=True,
+              help='When padding the image, mark it as confirmed')
 @click.option('--pad', default=False, is_flag=True,
               help='Pad image to --slot-size bytes, adding trailer magic')
 @click.option('-S', '--slot-size', type=BasedIntParamType(), required=True,
@@ -231,29 +253,34 @@ class BasedIntParamType(click.ParamType):
                    'image')
 @click.option('-H', '--header-size', callback=validate_header_size,
               type=BasedIntParamType(), required=True)
+@click.option('--pad-sig', default=False, is_flag=True,
+              help='Add 0-2 bytes of padding to ECDSA signature '
+                   '(for mcuboot <1.5)')
 @click.option('-d', '--dependencies', callback=get_dependencies,
               required=False, help='''Add dependence on another image, format:
               "(<image_ID>,<image_version>), ... "''')
-@click.option('-s', '--security-counter', type=BasedIntParamType(),
-              help='Specify the security counter value')
+@click.option('-s', '--security-counter', callback=validate_security_counter,
+              help='Specify the value of security counter. Use the `auto` '
+              'keyword to automatically generate it from the image version.')
 @click.option('-v', '--version', callback=validate_version,  required=True)
 @click.option('--align', type=click.Choice(['1', '2', '4', '8']),
               required=True)
+@click.option('--public-key-format', type=click.Choice(['hash', 'full']),
+              default='hash', help='In what format to add the public key to '
+              'the image manifest: full key or hash of the key.')
 @click.option('-k', '--key', metavar='filename')
 @click.command(help='''Create a signed or unsigned image\n
                INFILE and OUTFILE are parsed as Intel HEX if the params have
-               .hex extension, otherwise binary format is used''',
-               context_settings=dict(ignore_unknown_options=True, allow_extra_args=True,))
-@click.pass_context
-def sign(ctx, key, align, version, header_size, pad_header, slot_size, pad,
-         max_sectors, overwrite_only, endian, encrypt, infile, outfile,
-         dependencies, load_addr, hex_addr, erased_val, save_enctlv,
-         security_counter):
+               .hex extension, otherwise binary format is used''')
+def sign(key, public_key_format, align, version, pad_sig, header_size,
+         pad_header, slot_size, pad, confirm, max_sectors, overwrite_only,
+         endian, encrypt, infile, outfile, dependencies, load_addr, hex_addr,
+         erased_val, save_enctlv, security_counter, boot_record):
     img = image.Image(version=decode_version(version), header_size=header_size,
-                      pad_header=pad_header, pad=pad, align=int(align),
-                      slot_size=slot_size, max_sectors=max_sectors,
-                      overwrite_only=overwrite_only, endian=endian,
-                      load_addr=load_addr, erased_val=erased_val,
+                      pad_header=pad_header, pad=pad, confirm=confirm,
+                      align=int(align), slot_size=slot_size,
+                      max_sectors=max_sectors, overwrite_only=overwrite_only,
+                      endian=endian, load_addr=load_addr, erased_val=erased_val,
                       save_enctlv=save_enctlv,
                       security_counter=security_counter)
     img.load(infile)
@@ -267,14 +294,11 @@ def sign(ctx, key, align, version, header_size, pad_header, slot_size, pad,
             # FIXME
             raise click.UsageError("Signing and encryption must use the same "
                                    "type of key")
-	# Find custom TLVs in the command-line arguments
-    custom_tlv = {}
-    for i in range(0, len(ctx.args), 3):
-        tag = ctx.args[i][2:].upper()
-        if tag in image.TLV_VALUES.keys():
-            custom_tlv[tag] = struct.pack(ctx.args[i + 1], int(ctx.args[i + 2]))
 
-    img.create(key, enckey, dependencies, custom_tlv)
+    if pad_sig and hasattr(key, 'pad_sig'):
+        key.pad_sig = True
+
+    img.create(key, public_key_format, enckey, dependencies, boot_record)
     img.save(outfile, hex_addr)
 
 

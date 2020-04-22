@@ -19,6 +19,7 @@ Image signing and management.
 """
 
 from . import version as versmod
+from .boot_record import create_sw_component_data
 import click
 from enum import Enum
 from intelhex import IntelHex
@@ -42,6 +43,7 @@ DEFAULT_MAX_SECTORS = 128
 MAX_ALIGN = 8
 DEP_IMAGES_KEY = "images"
 DEP_VERSIONS_KEY = "versions"
+MAX_SW_TYPE_LENGTH = 12  # Bytes
 
 # Image header flags.
 IMAGE_F = {
@@ -52,6 +54,7 @@ IMAGE_F = {
 
 TLV_VALUES = {
         'KEYHASH': 0x01,
+        'PUBKEY': 0x02,
         'SHA256': 0x10,
         'RSA2048': 0x20,
         'ECDSA224': 0x21,
@@ -62,9 +65,8 @@ TLV_VALUES = {
         'ENCKW128': 0x31,
         'ENCEC256': 0x32,
         'DEPENDENCY': 0x40,
-		'SEC_CNT': 0x50,
-        'IMAGEID': 0x81,
-        'ROLLBACKCOUNTER': 0x82,
+        'SEC_CNT': 0x50,
+        'BOOT_RECORD': 0x60,
 }
 
 TLV_SIZE = 4
@@ -119,14 +121,15 @@ class TLV():
 class Image():
 
     def __init__(self, version=None, header_size=IMAGE_HEADER_SIZE,
-                 pad_header=False, pad=False, align=1, slot_size=0,
-                 max_sectors=DEFAULT_MAX_SECTORS, overwrite_only=False,
-                 endian="little", load_addr=0, erased_val=None,
-                 save_enctlv=False, security_counter=None):
+                 pad_header=False, pad=False, confirm=False, align=1,
+                 slot_size=0, max_sectors=DEFAULT_MAX_SECTORS,
+                 overwrite_only=False, endian="little", load_addr=0,
+                 erased_val=None, save_enctlv=False, security_counter=None):
         self.version = version or versmod.decode_version("0")
         self.header_size = header_size
         self.pad_header = pad_header
         self.pad = pad
+        self.confirm = confirm
         self.align = align
         self.slot_size = slot_size
         self.max_sectors = max_sectors
@@ -140,7 +143,7 @@ class Image():
         self.save_enctlv = save_enctlv
         self.enctlv_len = 0
 
-        if security_counter is None:
+        if security_counter == 'auto':
             # Security counter has not been explicitly provided,
             # generate it from the version number
             self.security_counter = ((self.version.major << 24)
@@ -257,29 +260,61 @@ class Image():
             format=PublicFormat.UncompressedPoint)
         return cipherkey, ciphermac, pubk
 
-    def create(self, key, enckey, dependencies=None, custom_protected_tlv=None):
+    def create(self, key, public_key_format, enckey, dependencies=None,
+               sw_type=None):
         self.enckey = enckey
 
-        # Mandatory protected TLV area: TLV info header + security counter TLV
-        # Size of the security counter TLV: header ('HH') + payload ('I')
-        #                                   = 4 + 4 = 8 Bytes
-        protected_tlv_size = TLV_INFO_SIZE + TLV_SIZE + 4
-
-        if dependencies is None:
-            dependencies_num = 0
-            # protected_tlv_size = 0
+        # Calculate the hash of the public key
+        if key is not None:
+            pub = key.get_public_bytes()
+            sha = hashlib.sha256()
+            sha.update(pub)
+            pubbytes = sha.digest()
         else:
+            pubbytes = bytes(hashlib.sha256().digest_size)
+
+        protected_tlv_size = 0
+
+        if self.security_counter is not None:
+            # Size of the security counter TLV: header ('HH') + payload ('I')
+            #                                   = 4 + 4 = 8 Bytes
+            protected_tlv_size += TLV_SIZE + 4
+
+        if sw_type is not None:
+            if len(sw_type) > MAX_SW_TYPE_LENGTH:
+                msg = "'{}' is too long ({} characters) for sw_type. Its " \
+                      "maximum allowed length is 12 characters.".format(
+                       sw_type, len(sw_type))
+                raise click.UsageError(msg)
+
+            image_version = (str(self.version.major) + '.'
+                             + str(self.version.minor) + '.'
+                             + str(self.version.revision))
+
+            # The image hash is computed over the image header, the image
+            # itself and the protected TLV area. However, the boot record TLV
+            # (which is part of the protected area) should contain this hash
+            # before it is even calculated. For this reason the script fills
+            # this field with zeros and the bootloader will insert the right
+            # value later.
+            digest = bytes(hashlib.sha256().digest_size)
+
+            # Create CBOR encoded boot record
+            boot_record = create_sw_component_data(sw_type, image_version,
+                                                   "SHA256", digest,
+                                                   pubbytes)
+
+            protected_tlv_size += TLV_SIZE + len(boot_record)
+
+        if dependencies is not None:
             # Size of a Dependency TLV = Header ('HH') + Payload('IBBHI')
             # = 4 + 12 = 16 Bytes
             dependencies_num = len(dependencies[DEP_IMAGES_KEY])
-            # protected_tlv_size = (dependencies_num * 16) + TLV_INFO_SIZE
             protected_tlv_size += (dependencies_num * 16)
 
-        if custom_protected_tlv:
-            # if protected_tlv_size == 0:
-            #     protected_tlv_size = TLV_INFO_SIZE
-            for tag, value in custom_protected_tlv.items():
-                protected_tlv_size += TLV_SIZE + len(value)
+        if protected_tlv_size != 0:
+            # Add the size of the TLV info header
+            protected_tlv_size += TLV_INFO_SIZE
 
         # At this point the image is already on the payload, this adds
         # the header to the payload as well
@@ -289,26 +324,32 @@ class Image():
 
         # Protected TLVs must be added first, because they are also included
         # in the hash calculation
-        e = STRUCT_ENDIAN_DICT[self.endian]
-        payload = struct.pack(e + 'I', self.security_counter)
-        prot_tlv.add('SEC_CNT', payload)
+        protected_tlv_off = None
+        if protected_tlv_size != 0:
 
-        for i in range(dependencies_num):
-            payload = struct.pack(
-                            e + 'B3x'+'BBHI',
-                            int(dependencies[DEP_IMAGES_KEY][i]),
-                            dependencies[DEP_VERSIONS_KEY][i].major,
-                            dependencies[DEP_VERSIONS_KEY][i].minor,
-                            dependencies[DEP_VERSIONS_KEY][i].revision,
-                            dependencies[DEP_VERSIONS_KEY][i].build
-                            )
-            prot_tlv.add('DEPENDENCY', payload)
+            e = STRUCT_ENDIAN_DICT[self.endian]
 
-        for tag, value in custom_protected_tlv.items():
-            prot_tlv.add(tag, value)
+            if self.security_counter is not None:
+                payload = struct.pack(e + 'I', self.security_counter)
+                prot_tlv.add('SEC_CNT', payload)
 
-        protected_tlv_off = len(self.payload)
-        self.payload += prot_tlv.get()
+            if sw_type is not None:
+                prot_tlv.add('BOOT_RECORD', boot_record)
+
+            if dependencies is not None:
+                for i in range(dependencies_num):
+                    payload = struct.pack(
+                                    e + 'B3x'+'BBHI',
+                                    int(dependencies[DEP_IMAGES_KEY][i]),
+                                    dependencies[DEP_VERSIONS_KEY][i].major,
+                                    dependencies[DEP_VERSIONS_KEY][i].minor,
+                                    dependencies[DEP_VERSIONS_KEY][i].revision,
+                                    dependencies[DEP_VERSIONS_KEY][i].build
+                                    )
+                    prot_tlv.add('DEPENDENCY', payload)
+
+            protected_tlv_off = len(self.payload)
+            self.payload += prot_tlv.get()
 
         tlv = TLV(self.endian)
 
@@ -321,11 +362,10 @@ class Image():
         tlv.add('SHA256', digest)
 
         if key is not None:
-            pub = key.get_public_bytes()
-            sha = hashlib.sha256()
-            sha.update(pub)
-            pubbytes = sha.digest()
-            tlv.add('KEYHASH', pubbytes)
+            if public_key_format == 'hash':
+                tlv.add('KEYHASH', pubbytes)
+            else:
+                tlv.add('PUBKEY', pub)
 
             # `sign` expects the full image payload (sha256 done internally),
             # while `sign_digest` expects only the digest of the payload
@@ -435,8 +475,10 @@ class Image():
                                    self.overwrite_only, self.enckey,
                                    self.save_enctlv, self.enctlv_len)
         padding = size - (len(self.payload) + tsize)
-        pbytes = bytes([self.erased_val] * padding)
-        pbytes += bytes([self.erased_val] * (tsize - len(boot_magic)))
+        pbytes = bytearray([self.erased_val] * padding)
+        pbytes += bytearray([self.erased_val] * (tsize - len(boot_magic)))
+        if self.confirm and not self.overwrite_only:
+            pbytes[-MAX_ALIGN] = 0x01  # image_ok = 0x01
         pbytes += boot_magic
         self.payload += pbytes
 

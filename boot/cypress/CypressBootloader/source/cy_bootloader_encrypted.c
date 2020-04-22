@@ -209,9 +209,11 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
             status = fb_psa_generator_read( &generator, derivedKey, outSize );
         }
     }
-
-    fb_psa_generator_abort( &generator );
-
+    if(status == PSA_SUCCESS)
+    {
+        status = fb_psa_export_public_key(privateKeyHandle, publicKey, publicKeyLength, &publicKeyLength);
+    }
+    
     if (publicKey != NULL)
     {
         memset( publicKey, 0, publicKeyLength);

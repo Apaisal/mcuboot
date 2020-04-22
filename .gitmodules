@@ -37,3 +37,6 @@
 [submodule "boot/cypress/libs/cy_secureboot_utils"]
 	path = boot/cypress/libs/cy_secureboot_utils
 	url = http://git-ore.aus.cypress.com/repo/cy_mcuboot_project/cy_secureboot_utils.git
+	[submodule "boot/boot_serial/src/cddl_gen"]
+	path = ext/cddl_gen
+	url = https://github.com/oyvindronningstad/cddl_gen.git

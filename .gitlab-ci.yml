@@ -617,8 +617,6 @@ mac_512K_SecureBlinkyApp_smif:
       BUILDCFG=Debug
 
 
-
-
 .win_512K_Bootloader:
   extends: .build_512K
   tags:
@@ -1630,7 +1628,7 @@ lin_2M_SecureBlinkyApp:
 ##################------------------------------------------------- TESTS 512K -------------------------------------------#############################
 #######################################################################################################################################################
 
-.mac_test_512K_Release:
+mac_test_512K_Release:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
@@ -1690,7 +1688,7 @@ lin_2M_SecureBlinkyApp:
       - deploy
 
 
-.mac_test_512K_Debug:
+mac_test_512K_Debug:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
@@ -1747,7 +1745,7 @@ lin_2M_SecureBlinkyApp:
       - deploy
 
 
-.mac_test_512K_smif_Release:
+mac_test_512K_smif_Release:
   stage: tests
   tags:
     - MBED_TEST_MAC1014
@@ -1810,7 +1808,7 @@ lin_2M_SecureBlinkyApp:
 
 
 
-.mac_test_512K_smif_Debug:
+mac_test_512K_smif_Debug:
   stage: tests
   tags:
     - MBED_TEST_MAC1014

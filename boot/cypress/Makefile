@@ -129,7 +129,7 @@ OUT_FILE_NAME ?= $(OUT_APP)/$(APP_NAME)
 OUT_OBJ := $(OUT_CFG)/obj
 OUT_APP := $(OUT_CFG)
 
-.PHONY: all app build clean pre_build post_build load load_boot load_upgrade
+.PHONY: all app build clean pre_build post_build
 
 all: clean app
 
@@ -187,49 +187,24 @@ endif
 
 clean:
 	@echo "Cleanup out directory..."
-	rm -rf ./$(APP_NAME)/out
+	rm -rf $(OUT_APP)
 
 clean_boot:
 	@echo "Cleanup out BOOT directory of $(APP_NAME)..."
-	rm -rf $(OUT_TARGET)/$(BUILDCFG)/boot
+	rm -rf $(OUT_APP)/boot
 
 clean_upgrade:
 	@echo "Cleanup out UPGRADE directory of $(APP_NAME)..."
-	rm -rf $(OUT_TARGET)/$(BUILDCFG)/upgrade
+	rm -rf $(OUT_APP)/upgrade
 
 run_cppcheck:
 	@echo "Performing static code analysis with Cppcheck tool..."
 	../../scripts/cpp_check.sh ../../scripts/cpp_check.dat $(PLATFORM) "$(DEFINES)" "$(INCLUDE_DIRS)" $(CPP_CHECK_SCOPE)
 
-# TODO: update with generic solution
-load:
-ifeq ($(HOST_OS), win)
-	cp $(OUT)/$(TARGET)/$(BUILDCFG)/$(APP_NAME).hex /d/
-else
-	cp $(OUT)/$(TARGET)/$(BUILDCFG)/$(APP_NAME).hex /Volumes/DAPLINK
-endif
-
-load_boot:
-ifeq ($(HOST_OS), win)
-	cp $(OUT)/$(TARGET)/$(BUILDCFG)/boot/$(APP_NAME)_signed.hex /d/
-else
-	cp $(OUT)/$(TARGET)/$(BUILDCFG)/boot/$(APP_NAME)_signed.hex /Volumes/DAPLINK
-endif
-
-load_upgrade:
-ifeq ($(HOST_OS), win)
-	cp $(OUT)/$(TARGET)/$(BUILDCFG)/upgrade/$(APP_NAME)_signed_upgrade.hex /d/
-else
-	cp $(OUT)/$(TARGET)/$(BUILDCFG)/upgrade/$(APP_NAME)_signed_upgrade.hex /Volumes/DAPLINK
-endif
-
 gen_key_ecc256:
 	@echo Generate ECC256 keys: $(SIGN_KEY_FILE).pem and $(SIGN_KEY_FILE).pub
 	../../scripts/imgtool.py keygen -k keys/$(SIGN_KEY_FILE).pem -t ecdsa-p256
 	../../scripts/imgtool.py getpub -k keys/$(SIGN_KEY_FILE).pem > keys/$(SIGN_KEY_FILE).pub
-
-size:
-
 
 ifeq ($(MAKEINFO) , 1)
 $(info ASM_FILES: $(ASM_FILES))

@@ -18,7 +18,7 @@
 
 #ifndef USER_APP_START
 #define USER_APP_START 0x10000000
-#endif 
+#endif
 
 #ifndef USER_APP_SIZE
 #define USER_APP_SIZE  0x10000

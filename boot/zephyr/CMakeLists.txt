@@ -191,15 +191,12 @@ endif()
 if(CONFIG_MCUBOOT_SERIAL)
   zephyr_sources(${BOOT_DIR}/zephyr/serial_adapter.c)
   zephyr_sources(${BOOT_DIR}/boot_serial/src/boot_serial.c)
+  zephyr_sources(${BOOT_DIR}/boot_serial/src/serial_recovery_cbor.c)
+  zephyr_sources(${BOOT_DIR}/boot_serial/src/cbor_decode.c)
 
   zephyr_include_directories(${BOOT_DIR}/bootutil/include)
   zephyr_include_directories(${BOOT_DIR}/boot_serial/include)
   zephyr_include_directories(include)
-
-  zephyr_link_libraries_ifdef(
-    CONFIG_TINYCBOR
-    TINYCBOR
-    )
 
   zephyr_include_directories_ifdef(
     CONFIG_BOOT_ERASE_PROGRESSIVELY
@@ -228,3 +225,8 @@ if(NOT CONFIG_BOOT_SIGNATURE_KEY_FILE STREQUAL "")
   zephyr_library_sources(${GENERATED_PUBKEY})
 endif()
 
+if(CONFIG_MCUBOOT_CLEANUP_ARM_CORE)
+zephyr_library_sources(
+  ${BOOT_DIR}/zephyr/arm_cleanup.c
+)
+endif()

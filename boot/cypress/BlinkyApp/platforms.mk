@@ -25,7 +25,7 @@
 
 # Target PLATFORM BlinkyApp is built for. PSOC_064_2M is set as default
 # Supported:
-#   - PSOC_064_2M
+#	- PSOC_064_2M
 #	- PSOC_064_1M
 #	- PSOC_064_512K
 #	- PSOC_062_2M
@@ -90,7 +90,7 @@ endif
 # Add device name from PLATFORM makefile to defines
 DEFINES += $(DEVICE)
 
-# Get defines from PLATFORM makefile and convert it to regular -DMY_NAME style 
+# Get defines from PLATFORM makefile and convert it to regular -DMY_NAME style
 ifneq ($(DEFINES),)
 	DEFINES_PLATFORM :=$(addprefix -D, $(subst -,_,$(DEFINES)))
 endif

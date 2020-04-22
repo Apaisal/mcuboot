@@ -1,6 +1,10 @@
 /*
  * Copyright (c) 2018 Open Source Foundries Limited
- * Copyright (c) 2019 Arm Limited
+ * Copyright (c) 2019-2020 Arm Limited
+<<<<<<< HEAD
+=======
+ * Copyright (c) 2019-2020 Linaro Limited
+>>>>>>> master
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -42,6 +46,10 @@
 #ifdef CONFIG_BOOT_USE_NRF_CC310_BL
 #define MCUBOOT_USE_NRF_CC310_BL
 #endif
+#endif
+
+#ifdef CONFIG_BOOT_HW_KEY
+#define MCUBOOT_HW_KEY
 #endif
 
 #ifdef CONFIG_BOOT_VALIDATE_SLOT0
@@ -91,6 +99,18 @@
 
 #ifdef CONFIG_MCUBOOT_DOWNGRADE_PREVENTION
 #define MCUBOOT_DOWNGRADE_PREVENTION 1
+#endif
+
+#ifdef CONFIG_MCUBOOT_HW_DOWNGRADE_PREVENTION
+#define MCUBOOT_HW_ROLLBACK_PROT
+#endif
+
+#ifdef CONFIG_MEASURED_BOOT
+#define MCUBOOT_MEASURED_BOOT
+#endif
+
+#ifdef CONFIG_BOOT_SHARE_DATA
+#define MCUBOOT_DATA_SHARING
 #endif
 
 /*

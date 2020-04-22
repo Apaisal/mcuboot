@@ -8,9 +8,8 @@ Member = ("image" => int) /
 	("data" => bstr) /
 	("len" => int) /
 	("off" => int) /
-	("sha" => bstr) /
-	(tstr => any)
+	("sha" => bstr)
 
 Upload = {
-	3**8members: Member
+	3**5members: Member
 }

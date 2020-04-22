@@ -39,6 +39,7 @@
 #include "swap_priv.h"
 #include "bootutil/bootutil_log.h"
 #include "bootutil/security_cnt.h"
+#include "bootutil/boot_record.h"
 
 #ifdef MCUBOOT_ENC_IMAGES
 #include "bootutil/enc_key.h"
@@ -379,13 +380,17 @@ done:
 }
 
 /*
- * Validate image hash/signature and security counter in a slot.
+ * Validate image hash/signature and optionally the security counter in a slot.
  */
 static int
 boot_image_check(struct boot_loader_state *state, struct image_header *hdr,
                  const struct flash_area *fap, struct boot_status *bs)
 {
+#ifdef CypressBootloader
     TARGET_STATIC uint8_t tmpbuf[CY_BOOTLOADER_BUF_SZ];
+#else
+    TARGET_STATIC uint8_t tmpbuf[BOOT_TMPBUF_SZ];
+#endif
     uint8_t image_index;
     int rc;
     // TODO: run-time multi-image
@@ -655,6 +660,7 @@ boot_validated_swap_type(struct boot_loader_state *state,
     return swap_type;
 }
 
+#ifdef MCUBOOT_HW_ROLLBACK_PROT
 /**
  * Updates the stored security counter value with the image's security counter
  * value which resides in the given slot, only if it's greater than the stored
@@ -697,6 +703,7 @@ done:
     flash_area_close(fap);
     return rc;
 }
+#endif /* MCUBOOT_HW_ROLLBACK_PROT */
 
 /**
  * Erases a region of flash.
@@ -915,6 +922,7 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
                  size);
     rc = boot_copy_region(state, fap_secondary_slot, fap_primary_slot, 0, 0, size);
 
+#ifdef MCUBOOT_HW_ROLLBACK_PROT
     /* Update the stored security counter with the new image's security counter
      * value. Both slots hold the new image at this point, but the secondary
      * slot's image header must be passed since the image headers in the
@@ -926,6 +934,7 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
         BOOT_LOG_ERR("Security counter update failed after image upgrade.");
         return rc;
     }
+#endif /* MCUBOOT_HW_ROLLBACK_PROT */
 
     /*
      * Erases header and trailer. The trailer is erased because when a new
@@ -1108,8 +1117,8 @@ boot_verify_slot_dependency(struct boot_loader_state *state,
     /* Determine the source of the image which is the subject of
      * the dependency and get it's version. */
     swap_type = state->swap_type[dep->image_id];
-    dep_slot = (swap_type != BOOT_SWAP_TYPE_NONE) ?
-                BOOT_SECONDARY_SLOT : BOOT_PRIMARY_SLOT;
+    dep_slot = BOOT_IS_UPGRADE(swap_type) ? BOOT_SECONDARY_SLOT
+                                          : BOOT_PRIMARY_SLOT;
     dep_version = &state->imgs[dep->image_id][dep_slot].hdr.ih_ver;
 
     rc = boot_is_version_sufficient(&dep->image_min_version, dep_version);
@@ -1214,7 +1223,7 @@ done:
 static int
 boot_verify_dependencies(struct boot_loader_state *state)
 {
-    int rc;
+    int rc = -1;
     uint8_t slot;
 
     BOOT_CURR_IMG(state) = 0;
@@ -1299,6 +1308,7 @@ boot_perform_update(struct boot_loader_state *state, struct boot_status *bs)
         }
     }
 
+#ifdef MCUBOOT_HW_ROLLBACK_PROT
     if (swap_type == BOOT_SWAP_TYPE_PERM) {
         /* Update the stored security counter with the new image's security
          * counter value. The primary slot holds the new image at this point,
@@ -1319,6 +1329,7 @@ boot_perform_update(struct boot_loader_state *state, struct boot_status *bs)
             BOOT_SWAP_TYPE(state) = BOOT_SWAP_TYPE_PANIC;
         }
     }
+#endif /* MCUBOOT_HW_ROLLBACK_PROT */
 
     if (BOOT_IS_UPGRADE(swap_type)) {
         rc = swap_set_copy_done(BOOT_CURR_IMG(state));
@@ -1793,6 +1804,7 @@ context_boot_go(struct boot_loader_state *state, struct boot_rsp *rsp)
         }
 #endif /* MCUBOOT_VALIDATE_PRIMARY_SLOT */
 
+#ifdef MCUBOOT_HW_ROLLBACK_PROT
         /* Update the stored security counter with the active image's security
          * counter value. It will only be updated if the new security counter is
          * greater than the stored value.
@@ -1814,6 +1826,25 @@ context_boot_go(struct boot_loader_state *state, struct boot_rsp *rsp)
                 goto out;
             }
         }
+#endif /* MCUBOOT_HW_ROLLBACK_PROT */
+
+#ifdef MCUBOOT_MEASURED_BOOT
+        rc = boot_save_boot_status(BOOT_CURR_IMG(state),
+                                   boot_img_hdr(state, BOOT_PRIMARY_SLOT),
+                                   BOOT_IMG_AREA(state, BOOT_PRIMARY_SLOT));
+        if (rc != 0) {
+            BOOT_LOG_ERR("Failed to add Image %u data to shared memory area",
+                         BOOT_CURR_IMG(state));
+        }
+#endif /* MCUBOOT_MEASURED_BOOT */
+
+#ifdef MCUBOOT_DATA_SHARING
+        rc = boot_save_shared_data(boot_img_hdr(state, BOOT_PRIMARY_SLOT),
+                                   BOOT_IMG_AREA(state, BOOT_PRIMARY_SLOT));
+        if (rc != 0) {
+            BOOT_LOG_ERR("Failed to add data to shared memory area.");
+        }
+#endif /* MCUBOOT_DATA_SHARING */
     }
 
     // TODO: run-time multi-image

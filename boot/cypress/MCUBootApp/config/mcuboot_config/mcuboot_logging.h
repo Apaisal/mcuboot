@@ -1,5 +1,11 @@
-/* Copyright 2019 Cypress Semiconductor Corporation
+/*
+ * Copyright (c) 2018 Nordic Semiconductor ASA
+ * Copyright (c) 2015 Runtime Inc
+ * Copyright (c) 2020 Cypress Semiconductor Corporation
  *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+ /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,6 +23,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+ /*******************************************************************************/
 
 #ifndef MCUBOOT_LOGGING_H
 #define MCUBOOT_LOGGING_H

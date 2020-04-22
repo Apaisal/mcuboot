@@ -1,4 +1,11 @@
 /*
+ * Copyright (c) 2018 Nordic Semiconductor ASA
+ * Copyright (c) 2015 Runtime Inc
+ * Copyright (c) 2020 Cypress Semiconductor Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+ /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,22 +23,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+ /*******************************************************************************/
 
-#ifndef H_OS_HEAP_
-#define H_OS_HEAP_
+#ifndef CY_FLASH_PSOC6_H_
+#define CY_FLASH_PSOC6_H_
 
-#include <stddef.h>
+#include "stddef.h"
+#include "stdbool.h"
 
-#ifdef __cplusplus
-extern "C" {
+#ifndef off_t
+typedef long int off_t;
 #endif
 
-void *os_malloc(size_t size);
-void os_free(void *mem);
-void *os_realloc(void *ptr, size_t size);
+int psoc6_flash_read(off_t addr, void *data, size_t len);
+int psoc6_flash_write(off_t addr, const void *data, size_t len);
+int psoc6_flash_erase(off_t addr, size_t size);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+int psoc6_flash_write_hal(uint8_t data[],
+                            uint32_t address,
+                            uint32_t len);
+#endif /* CY_FLASH_PSOC6_H_ */
