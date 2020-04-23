@@ -403,7 +403,7 @@ function collect_common {
         
         # Collect Signed application for ${PLATFORM} deploy
         cmd_check cp -r ${ROOT_DIR}/boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/$HEX_NAME.hex ${ROOT_DIR}/deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
-        #cmd_check cp -r ${ROOT_DIR}/boot/cypress/signed/*.jwt ${ROOT_DIR}/deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
+        cmd_check cp -r ${ROOT_DIR}/boot/cypress/$APP_NAME/out/$PLATFORM/$BUILDCFG/*.jwt ${ROOT_DIR}/deploy/$PLATFORM/$APP_NAME/$BUILDCFG/
         
 
     else
