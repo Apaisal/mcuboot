@@ -44,9 +44,9 @@ boot_read_image_header(struct boot_loader_state *state, int slot,
     (void)state;
 // #endif
 
-    area_id = flash_area_id_from_multi_image_slot(BOOT_CURR_IMG(state), slot);
+    area_id = flash_area_id_from_multi_image_slot((int)BOOT_CURR_IMG(state), slot);
 
-    rc = flash_area_open(area_id, &fap);
+    rc = flash_area_open((uint8_t)area_id, &fap);
     if (rc != 0) {
         rc = BOOT_EFLASH;
         goto done;
@@ -59,7 +59,7 @@ boot_read_image_header(struct boot_loader_state *state, int slot,
         goto done;
     }
 
-    rc = flash_area_read(fap, 0, out_hdr, sizeof *out_hdr);
+    rc = flash_area_read(fap, 0, (uint8_t*)out_hdr, sizeof(*out_hdr));
     if (rc != 0) {
         rc = BOOT_EFLASH;
         goto done;
@@ -99,8 +99,8 @@ boot_slots_compatible(struct boot_loader_state *state)
 
     num_sectors_primary = boot_img_num_sectors(state, BOOT_PRIMARY_SLOT);
     num_sectors_secondary = boot_img_num_sectors(state, BOOT_SECONDARY_SLOT);
-    if ((num_sectors_primary > BOOT_MAX_IMG_SECTORS) ||
-        (num_sectors_secondary > BOOT_MAX_IMG_SECTORS)) {
+    if ((num_sectors_primary > (size_t)BOOT_MAX_IMG_SECTORS) ||
+        (num_sectors_secondary > (size_t)BOOT_MAX_IMG_SECTORS)) {
         BOOT_LOG_WRN("Cannot upgrade: more sectors than allowed");
         return 0;
     }
@@ -165,8 +165,11 @@ boot_slots_compatible(struct boot_loader_state *state)
     }
 
     if ((i != num_sectors_primary) ||
-        (j != num_sectors_secondary) ||
-        (primary_slot_sz != secondary_slot_sz)) {
+        (j != num_sectors_secondary)
+#ifndef MCUBOOT_OVERWRITE_ONLY
+        || (primary_slot_sz != secondary_slot_sz)
+#endif
+       ) {
         BOOT_LOG_WRN("Cannot upgrade: slots are not compatible");
         return 0;
     }

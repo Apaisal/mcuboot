@@ -3,14 +3,17 @@
 #ifndef __SYSFLASH_H__
 #define __SYSFLASH_H__
 
-#define FLASH_DEVICE_INTERNAL_FLASH        (0x7F)
+#include <stdint.h>
+#include "cy_syslib.h"
 
-#define FLASH_AREA_BOOTLOADER 0
-#define FLASH_AREA_IMAGE_0 1
-#define FLASH_AREA_IMAGE_1 2
-#define FLASH_AREA_IMAGE_SCRATCH 3
-#define FLASH_AREA_IMAGE_2 5
-#define FLASH_AREA_IMAGE_3 6
+#define FLASH_DEVICE_INTERNAL_FLASH         (0x7F)
+
+#define FLASH_AREA_BOOTLOADER               (0)
+#define FLASH_AREA_IMAGE_0                  (1)
+#define FLASH_AREA_IMAGE_1                  (2)
+#define FLASH_AREA_IMAGE_SCRATCH            (3)
+#define FLASH_AREA_IMAGE_2                  (5)
+#define FLASH_AREA_IMAGE_3                  (6)
 
 /* This defines if External Flash (SMIF) will be used for Upgrade Slots */
 /* #define CY_BOOT_USE_EXTERNAL_FLASH */
@@ -60,6 +63,8 @@
 
 //#elif (MCUBOOT_IMAGE_NUMBER == 2)
 
+
+/*
 #define FLASH_AREA_IMAGE_PRIMARY(x)    (((x) == 0) ?          \
                                          FLASH_AREA_IMAGE_0 : \
                                         ((x) == 1) ?          \
@@ -70,6 +75,49 @@
                                         ((x) == 1) ?          \
                                          FLASH_AREA_IMAGE_3 : \
                                          255)
+*/
+
+__STATIC_INLINE uint8_t FLASH_AREA_IMAGE_PRIMARY(uint32_t areaID)
+{
+    uint8_t result;
+
+    if (0U == areaID)
+    {
+        result = FLASH_AREA_IMAGE_0;
+    }
+    else
+    if (1U == areaID)
+    {
+        result = FLASH_AREA_IMAGE_2;
+    }
+    else
+    {
+        result = 0xFF;
+    }
+
+    return result;
+}
+
+__STATIC_INLINE uint8_t FLASH_AREA_IMAGE_SECONDARY(uint32_t areaID)
+{
+    uint8_t result;
+
+    if (0U == areaID)
+    {
+        result = FLASH_AREA_IMAGE_1;
+    }
+    else
+    if (1U == areaID)
+    {
+        result = FLASH_AREA_IMAGE_3;
+    }
+    else
+    {
+        result = 0xFF;
+    }
+
+    return result;
+}
 
 //#else
 //#warning "Image slot and flash area mapping is not defined"

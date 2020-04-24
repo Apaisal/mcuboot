@@ -44,3 +44,6 @@ cy_state_internal.json
 *.jwt
 BlinkyApp.ld
 SecureBlinkyApp.ld
+*.stamp
+qa-framework-app.xml
+**/MISRA_2012/output/*

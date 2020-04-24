@@ -17,7 +17,7 @@
 #ifndef SOURCE_CY_IMAGE_UTILS_H_
 #define SOURCE_CY_IMAGE_UTILS_H_
 
-#include <flash_map_backend/flash_map_backend.h>
+#include "flash_map_backend/flash_map_backend.h"
 
 int cy_bootutil_get_multi_idx(const struct flash_area *fap);
 

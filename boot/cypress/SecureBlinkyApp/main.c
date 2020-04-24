@@ -165,7 +165,7 @@ void test_app_init_hardware(void)
     printf("\n======================================\r\n");
     printf(GREETING_MESSAGE_VER);
     printf("======================================\r\n");
-    printf("\r[SecureBlinkyApp] GPIO initialized \r\n");
+    printf("[SecureBlinkyApp] GPIO initialized \r\n");
     printf("[SecureBlinkyApp] UART initialized \r\n");
     printf("[SecureBlinkyApp] Retarget I/O set to 115200 baudrate \r\n");
 }
@@ -209,7 +209,7 @@ int main(void)
     {
         if(0 != cy_bl_bnu_policy.prot_regions[i].start)
         {
-            printf("address: 0x%08x; size 0x%08x;\n\r",
+            printf("address: 0x%08x; size 0x%08x;\r\n",
                    (int)cy_bl_bnu_policy.prot_regions[i].start,
                    (int)(1 << (cy_bl_bnu_policy.prot_regions[i].size + 1)));
         }

@@ -76,24 +76,12 @@
 #include "flashboot_psacrypto/flashboot_psacrypto.h"
 #include "psa/crypto.h"
 
-#define PSACRYPTO_SIGN_R_OFFSET 	(4)
-#define PSACRYPTO_SIGN_RS_OFFSET 	(2)
-#define PSACRYPTO_SIGN_RS_SIZE 		(32)
+#define PSACRYPTO_SIGN_R_OFFSET         (4)
+#define PSACRYPTO_SIGN_RS_OFFSET        (2)
+#define PSACRYPTO_SIGN_RS_SIZE          (32)
 
-#define PSACRYPTO_SYSCALL_OPCODE        (0x35UL << 24UL)
-#define PSACRYPTO_SYSCALL_ASYM_VERIF    (0x00UL << 8UL)
-#define CY_FB_SYSCALL_SUCCESS           (0xA0000000UL)
-#define PSACRYPTO_SYSCALL_TIMEOUT_SHORT (15000UL)
-#define PSACRYPTO_SYSCALL_TIMEOUT_LONG  (2000000000UL)
-
-#define CY_SIG_DER_PREFIX (0x30)
-#define CY_SIG_DER_MARKER (0x02)
-
-/*
- * Declaring these like this adds NULL termination.
- */
-static const uint8_t ec_pubkey_oid[] = MBEDTLS_OID_EC_ALG_UNRESTRICTED;
-static const uint8_t ec_secp256r1_oid[] = MBEDTLS_OID_EC_GRP_SECP256R1;
+#define CY_SIG_DER_PREFIX               (0x30U)
+#define CY_SIG_DER_MARKER               (0x02U)
 
 /*
  * Parse the public key used for signing.
@@ -104,6 +92,12 @@ int bootutil_parse_eckey(mbedtls_ecdsa_context *ctx, uint8_t **p, uint8_t *end)
     mbedtls_asn1_buf alg;
     mbedtls_asn1_buf param;
 
+    /*
+     * Declaring these like this adds NULL termination.
+     */
+    const uint8_t ec_pubkey_oid[] = MBEDTLS_OID_EC_ALG_UNRESTRICTED;
+    const uint8_t ec_secp256r1_oid[] = MBEDTLS_OID_EC_GRP_SECP256R1;
+
     if (mbedtls_asn1_get_tag(p, end, &len,
         MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE)) {
         return -1;
@@ -113,12 +107,12 @@ int bootutil_parse_eckey(mbedtls_ecdsa_context *ctx, uint8_t **p, uint8_t *end)
     if (mbedtls_asn1_get_alg(p, end, &alg, &param)) {
         return -2;
     }
-    if (alg.len != sizeof(ec_pubkey_oid) - 1 ||
-      memcmp(alg.p, ec_pubkey_oid, sizeof(ec_pubkey_oid) - 1)) {
+    if (alg.len != sizeof(ec_pubkey_oid) - 1U ||
+      memcmp(alg.p, ec_pubkey_oid, sizeof(ec_pubkey_oid) - 1U) != 0) {
         return -3;
     }
-    if (param.len != sizeof(ec_secp256r1_oid) - 1||
-      memcmp(param.p, ec_secp256r1_oid, sizeof(ec_secp256r1_oid) - 1)) {
+    if (param.len != sizeof(ec_secp256r1_oid) - 1U ||
+      memcmp(param.p, ec_secp256r1_oid, sizeof(ec_secp256r1_oid) - 1U) != 0) {
         return -4;
     }
 
@@ -126,18 +120,18 @@ int bootutil_parse_eckey(mbedtls_ecdsa_context *ctx, uint8_t **p, uint8_t *end)
         return -5;
     }
 
-    if (mbedtls_asn1_get_bitstring_null(p, end, &len)) {
+    if (mbedtls_asn1_get_bitstring_null(p, end, &len) != 0) {
         return -6;
     }
-    if (*p + len != end) {
+    if ((*p + len) != end) {
         return -7;
     }
 
-    if (mbedtls_ecp_point_read_binary(&ctx->grp, &ctx->Q, *p, end - *p)) {
+    if (mbedtls_ecp_point_read_binary(&ctx->grp, &ctx->Q, *p, (size_t)(end - *p)) != 0) {
         return -8;
     }
 
-    if (mbedtls_ecp_check_pubkey(&ctx->grp, &ctx->Q)) {
+    if (mbedtls_ecp_check_pubkey(&ctx->grp, &ctx->Q) != 0) {
         return -9;
     }
     return 0;
@@ -164,78 +158,78 @@ static int Cy_SignatureDER2ASN1(uint8 *signIn, uint8 *signOut)
     /* check prefix */
     if(CY_SIG_DER_PREFIX != signIn[0])
     {
-    	psa_res = PSA_ERROR_INVALID_SIGNATURE;
+        psa_res = PSA_ERROR_INVALID_SIGNATURE;
     }
 
     if(PSA_SUCCESS == psa_res)
-    {  	/* check r-marker */
-    	if(CY_SIG_DER_MARKER != signIn[2])
+    {   /* check r-marker */
+        if(CY_SIG_DER_MARKER != signIn[2])
         {
-        	psa_res = PSA_ERROR_INVALID_SIGNATURE;
+            psa_res = PSA_ERROR_INVALID_SIGNATURE;
         }
     }
 
     if(PSA_SUCCESS == psa_res)
     {
-		memset(signOut, 0x00, PSACRYPTO_SIGN_RS_SIZE * 2);
+        (void)memset(signOut, 0x00, PSACRYPTO_SIGN_RS_SIZE * 2);
 
-		r_len = *(signIn+PSACRYPTO_SIGN_R_OFFSET-1);
-		s_len = *(signIn+PSACRYPTO_SIGN_R_OFFSET+r_len+1);
+        r_len = (int32_t)*(signIn+PSACRYPTO_SIGN_R_OFFSET-1);
+        s_len = (int32_t)*(signIn+PSACRYPTO_SIGN_R_OFFSET+r_len+1);
 
-		r_offset = PSACRYPTO_SIGN_R_OFFSET+r_len;
-		s_offset = r_offset + PSACRYPTO_SIGN_RS_OFFSET+s_len;
+        r_offset = PSACRYPTO_SIGN_R_OFFSET+r_len;
+        s_offset = r_offset + PSACRYPTO_SIGN_RS_OFFSET+s_len;
     }
 
     if(PSA_SUCCESS == psa_res)
-    {	/* check s-marker */
-    	if(CY_SIG_DER_MARKER != signIn[r_offset])
+    {   /* check s-marker */
+        if(CY_SIG_DER_MARKER != signIn[r_offset])
         {
-        	psa_res = PSA_ERROR_INVALID_SIGNATURE;
+            psa_res = PSA_ERROR_INVALID_SIGNATURE;
         }
     }
 
     if(PSA_SUCCESS == psa_res)
     {
-    	/* check TLV length :
-    	 * r_len - 1 byte
-    	 * s_len - 1 byte
-    	 * r-tag - 1 byte
-    	 * s-tag - 1 byte */
-    	if(signIn[1] != (r_len+s_len+4))
+        /* check TLV length :
+         * r_len - 1 byte
+         * s_len - 1 byte
+         * r-tag - 1 byte
+         * s-tag - 1 byte */
+        if((int32_t)signIn[1] != (r_len+s_len+4))
         {
-        	psa_res = PSA_ERROR_INVALID_SIGNATURE;
+            psa_res = PSA_ERROR_INVALID_SIGNATURE;
         }
     }
 
     if(PSA_SUCCESS == psa_res)
     {
-		if(r_len>PSACRYPTO_SIGN_RS_SIZE)
-		{
-			r_len = PSACRYPTO_SIGN_RS_SIZE;
-		}
-		if(s_len>PSACRYPTO_SIGN_RS_SIZE)
-		{
-			s_len = PSACRYPTO_SIGN_RS_SIZE;
-		}
+        if(r_len>PSACRYPTO_SIGN_RS_SIZE)
+        {
+            r_len = PSACRYPTO_SIGN_RS_SIZE;
+        }
+        if(s_len>PSACRYPTO_SIGN_RS_SIZE)
+        {
+            s_len = PSACRYPTO_SIGN_RS_SIZE;
+        }
 
-		while(r_len > 0)
-		{
-			signOut[PSACRYPTO_SIGN_RS_SIZE - r_len] = signIn[r_offset - r_len];
-			r_len--;
-		}
-		while(s_len > 0)
-		{
-			signOut[(PSACRYPTO_SIGN_RS_SIZE * 2) - s_len] = signIn[s_offset - s_len];
-			s_len--;
-		}
-		/* ASN.1 signature representation
-		 *
-		 * ECDSASignature ::= SEQUENCE
-		 * {
-		 *      r   INTEGER,
-		 *      s   INTEGER
-		 * }
-		 * */
+        while(r_len > 0)
+        {
+            signOut[PSACRYPTO_SIGN_RS_SIZE - r_len] = signIn[r_offset - r_len];
+            r_len--;
+        }
+        while(s_len > 0)
+        {
+            signOut[(PSACRYPTO_SIGN_RS_SIZE * 2) - s_len] = signIn[s_offset - s_len];
+            s_len--;
+        }
+        /* ASN.1 signature representation
+         *
+         * ECDSASignature ::= SEQUENCE
+         * {
+         *      r   INTEGER,
+         *      s   INTEGER
+         * }
+         * */
     }
     return psa_res;
 }
@@ -262,13 +256,13 @@ bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, size_t slen,
 
     if(PSA_SUCCESS == psa_res)
     {
-		psa_res = fb_psa_asymmetric_verify(key_handle,                  /* key_handle */
-										PSA_ALG_ECDSA(PSA_ALG_SHA_256), /* algorithm */
-										hash,                           /* hash[] */
-										32,                             /* hash_length */
-										(const uint8_t *)signature,     /* signature[]  */
-										PSACRYPTO_SIGN_RS_SIZE * 2      /* signature_length */
-										);
+        psa_res = fb_psa_asymmetric_verify(key_handle,                  /* key_handle */
+                                        PSA_ALG_ECDSA(PSA_ALG_SHA_256), /* algorithm */
+                                        hash,                           /* hash[] */
+                                        32,                             /* hash_length */
+                                        (const uint8_t *)signature,     /* signature[]  */
+                                        PSACRYPTO_SIGN_RS_SIZE * 2      /* signature_length */
+                                        );
     }
 
     return (int)psa_res;
@@ -285,7 +279,7 @@ bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, size_t slen,
 
     psa_key_policy_t policy;
     psa_status_t psa_res;
-    int key = key_id;
+    int key = (int)key_id;
 
     /* There is no key stored anywhere except key storage in SecureFlashBoot.
      * So need to extract key data from it via SysCall. */
@@ -293,12 +287,12 @@ bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, size_t slen,
 
     if(PSA_SUCCESS == psa_res)
     {
-		psa_crypto_init();
-		psa_key_policy_init( &policy );
-		psa_key_policy_set_usage( &policy,
-									PSA_KEY_USAGE_VERIFY,
-									PSA_ALG_ECDSA(PSA_ALG_SHA_256));
-		psa_res = psa_set_key_policy( key, &policy );
+        psa_crypto_init();
+        psa_key_policy_init( &policy );
+        psa_key_policy_set_usage( &policy,
+                                    PSA_KEY_USAGE_VERIFY,
+                                    PSA_ALG_ECDSA(PSA_ALG_SHA_256));
+        psa_res = psa_set_key_policy( key, &policy );
     }
 
     if(PSA_SUCCESS == psa_res)
@@ -311,14 +305,14 @@ bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, size_t slen,
         * \param[in] data    Buffer containing the key data.
         * \param data_length Size of the \p data buffer in bytes.
         */
-    	/* Re-import secure FlashBoot key into local storage */
+        /* Re-import secure FlashBoot key into local storage */
         psa_res = psa_import_key( key,
                                 PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_CURVE_SECP256R1),
-								key_data,
-								key_data_length);
+                                key_data,
+                                key_data_length);
 
-		/* Once imported - clean sensitive cryptographic data */
-		memset(key_data, 0x00, sizeof(key_data));
+        /* Once imported - clean sensitive cryptographic data */
+        memset(key_data, 0x00, sizeof(key_data));
     }
 
     if(PSA_SUCCESS == psa_res)
@@ -338,8 +332,8 @@ bootutil_verify_sig(uint8_t *hash, uint32_t hlen, uint8_t *sig, size_t slen,
                                         PSACRYPTO_SIGN_RS_SIZE * 2      /* signature_length */
                                         );
 
-		/* clean sensitive cryptographic data unconditionally */
-		(void)psa_destroy_key(key);
+        /* clean sensitive cryptographic data unconditionally */
+        (void)psa_destroy_key(key);
     }
     return (int)psa_res;
 }

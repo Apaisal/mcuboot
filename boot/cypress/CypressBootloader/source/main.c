@@ -91,18 +91,18 @@
 #define TOC_LISTEN_WINDOW_20MS_IDX       (0UL)
 #define TOC_LISTEN_WINDOW_100MS_IDX      (4UL)
 
-#define CY_BOOTLOADER_IMG_ID_CM0P        (0UL)
-#define CY_BOOTLOADER_IMG_ID_TEE_CM0P    (1UL)
-#define CY_BOOTLOADER_IMG_ID_CYTF_CM0P   (2UL)
-#define CY_BOOTLOADER_IMG_ID_OEMTF_CM0P  (3UL)
-#define CY_BOOTLOADER_IMG_ID_CM4         (4UL)
+#define CY_BOOTLOADER_IMG_ID_CM0P        (0U)
+#define CY_BOOTLOADER_IMG_ID_TEE_CM0P    (1U)
+#define CY_BOOTLOADER_IMG_ID_CYTF_CM0P   (2U)
+#define CY_BOOTLOADER_IMG_ID_OEMTF_CM0P  (3U)
+#define CY_BOOTLOADER_IMG_ID_CM4         (4U)
 
 #define CY_BOOTLOADER_MASTER_IMG_ID      CY_BOOTLOADER_IMG_ID_CM0P
 
 #define CY_BOOTLOADER_SCRATCH_SIZE       (0x1000)
 
-#define CY_BOOTLOADER_SMIF_SFDP_MAX      (0x4)
-#define CY_BOOTLOADER_SMIF_CFG           (0x2)
+#define CY_BOOTLOADER_SMIF_SFDP_MAX      (0x4U)
+#define CY_BOOTLOADER_SMIF_CFG           (0x2U)
 
 /** SecureBoot policies*/
 /** Boot & Upgrade policy structure */
@@ -166,8 +166,8 @@ static void do_boot(struct boot_rsp *rsp)
     application_start = (rsp->br_image_off + rsp->br_hdr->ih_hdr_size);
     BOOT_LOG_INF("Application at: 0x%08lx", application_start);
 
-    if((cy_bl_bnu_policy.bnu_img_policy[0].multi_image == 1) &&
-        (cy_bl_bnu_policy.bnu_img_policy[1].multi_image == 2))
+    if((cy_bl_bnu_policy.bnu_img_policy[0].multi_image == 1U) &&
+        (cy_bl_bnu_policy.bnu_img_policy[1].multi_image == 2U))
     {
         en_acq = 0;
         BOOT_LOG_INF("Acquiring is disabled");
@@ -183,12 +183,12 @@ static void do_boot(struct boot_rsp *rsp)
         case CY_BOOTLOADER_IMG_ID_CYTF_CM0P:
         case CY_BOOTLOADER_IMG_ID_OEMTF_CM0P:
             /* Set Protection Context 2 for CM0p trusted apps with IDs 2 and 3 */
-            Cy_Prot_SetActivePC(CPUSS_MS_ID_CM0, (uint32_t)CY_PROT_PC2);
+            (void)Cy_Prot_SetActivePC(CPUSS_MS_ID_CM0, (uint32_t)CY_PROT_PC2);
             Cy_Utils_StartAppCM0p(application_start, en_acq);
             break;
         case CY_BOOTLOADER_IMG_ID_CM4:
             /* Set Protection Context 6 for CM4 application */
-            Cy_Prot_SetActivePC(CPUSS_MS_ID_CM4, (uint32_t)CY_PROT_PC6);
+            (void)Cy_Prot_SetActivePC(CPUSS_MS_ID_CM4, (uint32_t)CY_PROT_PC6);
             Cy_Utils_CleanSecureAppRam(application_start, &app_addr);
             Cy_Utils_StartAppCM4(application_start, false);
             break;
@@ -196,15 +196,15 @@ static void do_boot(struct boot_rsp *rsp)
             BOOT_LOG_ERR("Unable to find bootable image");
             while (1)
             {
-                __WFI() ;
-            };
+                __ASM volatile ("wfi");
+            }
     }
 }
 
 /************************************
 * Apply Policies
 ***********************************/
-void Cy_Bl_ApplyPolicy(void)
+static void Cy_Bl_ApplyPolicy(void)
 {
     primary_1.fa_id = FLASH_AREA_IMAGE_PRIMARY(0);
     primary_1.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
@@ -216,7 +216,7 @@ void Cy_Bl_ApplyPolicy(void)
     secondary_1.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
 
 #if defined(MCUBOOT_ENC_IMAGES)
-    if(cy_bl_bnu_policy.bnu_img_policy[0].encrypt != 0)
+    if(cy_bl_bnu_policy.bnu_img_policy[0].encrypt != false)
     {
         BOOT_LOG_INF("Secondary Slot 1 will upgrade from encrypted image");
     }
@@ -233,8 +233,8 @@ void Cy_Bl_ApplyPolicy(void)
     secondary_1.fa_off = cy_bl_bnu_policy.bnu_img_policy[0].upgrade_area.start;
     secondary_1.fa_size = cy_bl_bnu_policy.bnu_img_policy[0].upgrade_area.size;
 
-    if((cy_bl_bnu_policy.bnu_img_policy[0].multi_image == 1) &&
-        (cy_bl_bnu_policy.bnu_img_policy[1].multi_image == 2))
+    if((cy_bl_bnu_policy.bnu_img_policy[0].multi_image == 1U) &&
+        (cy_bl_bnu_policy.bnu_img_policy[1].multi_image == 2U))
     {
         boot_img_number = 2;
 
@@ -248,7 +248,7 @@ void Cy_Bl_ApplyPolicy(void)
         secondary_2.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
 
 #if defined(MCUBOOT_ENC_IMAGES)
-        if(cy_bl_bnu_policy.bnu_img_policy[1].encrypt != 0)
+        if(cy_bl_bnu_policy.bnu_img_policy[1].encrypt != false)
         {
             BOOT_LOG_INF("Secondary Slot 2 will upgrade from encrypted image");
         }
@@ -281,17 +281,17 @@ int Cy_Bl_InitSMIF(void)
     uint32_t smif_id = 0;
 
         /* initialize SMIF if at least one secondary slot requires it */
-    if(cy_bl_bnu_policy.bnu_img_policy[0].smif_id != 0)
+    if(cy_bl_bnu_policy.bnu_img_policy[0].smif_id != 0U)
     {
         smif_id = cy_bl_bnu_policy.bnu_img_policy[0].smif_id;
     }
         /* OR */
-    if(cy_bl_bnu_policy.bnu_img_policy[1].smif_id != 0)
+    if(cy_bl_bnu_policy.bnu_img_policy[1].smif_id != 0U)
     {
         smif_id = cy_bl_bnu_policy.bnu_img_policy[1].smif_id;
     }
         /* if at least one secondary requires SMIF */
-    if(smif_id != 0)
+    if(smif_id != 0U)
     {
         /* if (SFDP) */
         if(smif_id <= CY_BOOTLOADER_SMIF_SFDP_MAX)
@@ -332,7 +332,7 @@ int Cy_Bl_InitSMIF(void)
 ************************************/
 int main(void)
 {
-    cy_rslt_t rc;
+    int rc;
     struct boot_rsp rsp ;
 
 #if defined(__NO_SYSTEM_INIT)
@@ -367,41 +367,6 @@ int main(void)
     }
     else /*    if(0 == rc) */
     {
-#if(0) /* Debug code for run-time multi-image */
-
-        /* assume it is single- or multi-image */
-        boot_img_number = 1;
-
-        primary_1.fa_id = FLASH_AREA_IMAGE_PRIMARY(0);
-        primary_1.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
-        primary_1.fa_off = 0x10020000;
-        primary_1.fa_size = 0x10000;
-
-        secondary_1.fa_id = FLASH_AREA_IMAGE_SECONDARY(0);
-        secondary_1.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
-        secondary_1.fa_off = 0x10030000;
-        secondary_1.fa_size = 0x10000;
-
-        primary_2.fa_id = FLASH_AREA_IMAGE_PRIMARY(1);
-        primary_2.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
-        primary_2.fa_off = 0x10040000;
-        primary_2.fa_size = 0x10000;
-
-        secondary_2.fa_id = FLASH_AREA_IMAGE_SECONDARY(1);
-        secondary_2.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
-        secondary_2.fa_off = 0x10050000;
-        secondary_2.fa_size = 0x10000;
-
-        bootloader.fa_id = FLASH_AREA_BOOTLOADER;
-        bootloader.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
-        bootloader.fa_off = 0x101D0000;
-        bootloader.fa_size = 0x10000;
-
-        scratch.fa_id = FLASH_AREA_IMAGE_SCRATCH;
-        scratch.fa_device_id = FLASH_DEVICE_INTERNAL_FLASH;
-        scratch.fa_off = 0x10060000;
-        scratch.fa_size = 0x1000;
-#else
             /* assume single-image is requested by policy */
         boot_img_number = 1;
             /* Apply policy data to flash map and external memory IF */
@@ -439,7 +404,6 @@ int main(void)
             BOOT_LOG_INF("CypressBootloader failed to apply protection settings, error = 0x%X", prot_ret_code) ;
             Cy_BLServ_Assert(0);
         }
-#endif
     }
 
     if(rc == 0)
@@ -452,10 +416,10 @@ int main(void)
         BOOT_LOG_INF("User Application validated successfully");
         do_boot(&rsp);
     }
-    else
-    {
-        BOOT_LOG_INF("CypressBootloader found none of bootable images") ;
-        Cy_BLServ_Assert(0 == rc);
-    }
+
+    BOOT_LOG_INF("CypressBootloader found none of bootable images") ;
+
+    Cy_BLServ_Assert(0 == rc);
+
     return 0;
 }

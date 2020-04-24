@@ -27,7 +27,6 @@
 #include "cy_bootloader_hw.h"
 #include "cy_jwt_policy.h"
 #include "cy_secure_utils.h"
-//#include "cyprotection.h"
 
 #ifdef MCUBOOT_HAVE_ASSERT_H
 #include "mcuboot_config/mcuboot_assert.h"
@@ -35,21 +34,8 @@
 #define ASSERT assert
 #endif
 
-#define TST_MODE_TEST_KEY_DFT_EN_MASK   (0x40000000UL)
 #define TST_MODE_TEST_MODE_MASK         (0x80000000UL)
-#define TST_MODE_ENTERED_MAGIC          (0x12344321UL)
-
 #define CY_SRSS_TST_MODE_ADDR           (SRSS_BASE | 0x0100UL)
-#define CY_SYS_CM4_PWR_CTL_KEY_OPEN     (0x05FAUL)
-
-/** DAPControl SysCall opcode */
-#define DAPCONTROL_SYSCALL_OPCODE       (0x3AUL << 24UL)
-
-/** PSA crypto SysCall return codes */
-#define CY_FB_SYSCALL_SUCCESS           (0xA0000000UL)
-
-/** SysCall timeout value */
-#define SYSCALL_TIMEOUT                 (15000UL)
 
 extern debug_policy_t debug_policy;
 
@@ -64,6 +50,9 @@ extern const volatile uint32_t __HeapLimit[];
 
 extern const volatile uint32_t __StackLimit[];
 extern const volatile uint32_t __StackTop[];
+
+extern void __set_MSP(uint32_t topOfMainStack);
+extern void __disable_irq(void);
 
 #if defined(CY_IPC_DEFAULT_CFG_DISABLE)
 void Cy_SysIpcPipeIsrCm0(void)
@@ -171,8 +160,8 @@ void Cy_BLServ_Assert(int expr)
 
     if(0 == expr)
     {
-        volatile uint32_t cm4ApPermission = debug_policy.m4_policy.permission;
-        volatile uint32_t sysApPermission = debug_policy.sys_policy.permission;
+        volatile perm_policy_t cm4ApPermission = debug_policy.m4_policy.permission;
+        volatile perm_policy_t sysApPermission = debug_policy.sys_policy.permission;
 
         BOOT_LOG_ERR("There is an error occurred during bootloader flow. MCU stopped.");
 

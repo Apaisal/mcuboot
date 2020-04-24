@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <flash_map_backend/flash_map_backend.h>
+#include "flash_map_backend/flash_map_backend.h"
 
 #include "flashboot_psacrypto/flashboot_psacrypto.h"
 
@@ -49,13 +49,12 @@
 #define CY_FB_AES128_KEY_LEN        MBEDTLS_AES_KEY_SIZE
 #define CY_FB_AES128_IV_LEN         MBEDTLS_AES_KEY_SIZE
 
-const uint8_t key_label[MBEDTLS_AES_KEY_SIZE] = "MCUBoot_ECIES_v1";
-const uint8_t key_salt[MBEDTLS_AES_KEY_SIZE] = { 0x0 };
-
 static fb_psa_key_handle_t aesHandle;
 static fb_psa_key_policy_t aesPolicy;
 
 static fb_psa_cipher_operation_t cipherOp = { 0x0 };
+
+static int cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey);
 
 int
 boot_enc_set_key(struct enc_key_data *enc_state, uint8_t slot,
@@ -88,7 +87,7 @@ boot_enc_set_key(struct enc_key_data *enc_state, uint8_t slot,
 
     if (PSA_SUCCESS == status)
     {
-        enc_state[slot].valid = 1;
+        enc_state[slot].valid = 1U;
     }
 
     BOOT_LOG_DBG("< boot_enc_set_key") ;
@@ -109,17 +108,20 @@ _Static_assert(EC_CIPHERKEY_INDEX + 16 == EXPECTED_ENC_LEN,
 /*
  * Decrypt an encryption key TLV.
  *
- * @param buf An encryption TLV read from flash (build time fixed length)
- * @param enckey An AES-128 key sized buffer to store to plain key.
+ * \param buf An encryption TLV read from flash (build time fixed length)
+ * \param enckey An AES-128 key sized buffer to store to plain key.
  */
 static int
 cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
 {
     psa_status_t status = PSA_ERROR_GENERIC_ERROR;
 
+    const uint8_t key_label[MBEDTLS_AES_KEY_SIZE] = "MCUBoot_ECIES_v1";
+    const uint8_t key_salt[MBEDTLS_AES_KEY_SIZE]  = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+
     /* AES key length + IV length */
     uint8_t derivedKey[CY_FB_AES128_KEY_LEN + MBEDTLS_SHA256_DIGEST_SIZE];
-    uint8_t aesIV[CY_FB_AES128_IV_LEN] = { 0x0U };
+    uint8_t const aesIV[CY_FB_AES128_IV_LEN] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
     fb_psa_key_handle_t privateKeyHandle;
     fb_psa_key_type_t   privateKeyType;
@@ -127,7 +129,7 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
     fb_psa_algorithm_t  alg = 0U;
     size_t keyBits;
 
-    uint8_t *publicKey = NULL;
+    uint8_t const *publicKey = NULL;
     size_t publicKeyLength = 0U;
 
     BOOT_LOG_DBG("> boot_enc_decrypt") ;
@@ -152,7 +154,7 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
     {
         BOOT_LOG_DBG(" * Open a private key, id = %d ", key_id) ;
 
-        status = fb_keys_open_key(key_id, (fb_psa_key_handle_t*)&privateKeyHandle);
+        status = fb_keys_open_key((fb_key_slot_t)key_id, (fb_psa_key_handle_t*)&privateKeyHandle);
 
         if (PSA_SUCCESS == status)
         {
@@ -168,12 +170,12 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
         status = PSA_ERROR_INVALID_ARGUMENT;
 
         /* Check ASN tag to ensure that EC point is in uncompressed binary format */
-        if (0x04 == buf[0])
+        if (0x04U == buf[0])
         {
             publicKeyType = PSA_KEY_TYPE_PUBLIC_KEY_OF_KEYPAIR( privateKeyType );
             publicKeyLength = PSA_KEY_EXPORT_MAX_SIZE( publicKeyType, keyBits );
 
-            publicKey = malloc(publicKeyLength);
+            publicKey = (uint8_t *)malloc(publicKeyLength);
 
             if (publicKey == NULL)
             {
@@ -181,7 +183,7 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
             }
             else
             {
-                memcpy(publicKey, buf, publicKeyLength);
+                (void)memcpy((uint8_t*)publicKey, (uint8_t*)buf, publicKeyLength);
 
                 status = PSA_SUCCESS;
             }
@@ -216,8 +218,8 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
     
     if (publicKey != NULL)
     {
-        memset( publicKey, 0, publicKeyLength);
-        free( publicKey );
+        memset((void*)publicKey, 0, publicKeyLength);
+        free((void*)publicKey);
     }
 
     /*
@@ -322,7 +324,7 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
                                           BOOT_ENC_KEY_SIZE,            /* output_size, */
                                           (size_t *)&outSize            /* output_length */ );
 
-            if(BOOT_ENC_KEY_SIZE != outSize)
+            if((uint32_t)BOOT_ENC_KEY_SIZE != outSize)
             {
                 status = PSA_ERROR_GENERIC_ERROR;
             }
@@ -380,7 +382,7 @@ boot_enc_load(struct enc_key_data *enc_state, int image_index,
     }
 
     /* Already loaded... */
-    if (enc_state[slot].valid) {
+    if (enc_state[slot].valid != 0U) {
         BOOT_LOG_DBG("< boot_enc_load: key already loaded, exit") ;
         return 1;
     }
@@ -397,13 +399,13 @@ boot_enc_load(struct enc_key_data *enc_state, int image_index,
         return rc;
     }
 
-    if (len != EXPECTED_ENC_LEN) {
+    if (len != (uint16_t)EXPECTED_ENC_LEN) {
         return -1;
     }
 
     BOOT_LOG_DBG(" * Load encrypted data from TLV(0x32)") ;
 
-    rc = flash_area_read(fap, off, buf, EXPECTED_ENC_LEN);
+    rc = flash_area_read(fap, off, (void*)buf, EXPECTED_ENC_LEN);
     if (rc != 0) {
         return -1;
     }
@@ -444,7 +446,7 @@ boot_enc_valid(struct enc_key_data *enc_state, int image_index,
 
     BOOT_LOG_DBG("< boot_enc_valid: enc_state[rc].valid = %d", (int)enc_state[rc].valid);
 
-    return enc_state[rc].valid;
+    return (enc_state[rc].valid != 0U);
 }
 
 /*
@@ -460,7 +462,7 @@ boot_encrypt(struct enc_key_data *enc_state, int image_index,
     (void)blk_off;
 
     uint8_t nonce[16];
-    size_t outSize;
+    uint32_t outSize;
     int rc;
     psa_status_t status = PSA_SUCCESS;
 
@@ -477,12 +479,9 @@ boot_encrypt(struct enc_key_data *enc_state, int image_index,
         return;
     }
 
-    assert(enc_state[rc].valid == 1);
+    assert(enc_state[rc].valid == 1U);
 
-    if (PSA_SUCCESS == status)
-    {
-        status = fb_psa_cipher_decrypt_setup(&cipherOp, aesHandle, PSA_ALG_CTR);
-    }
+    status = fb_psa_cipher_decrypt_setup(&cipherOp, aesHandle, PSA_ALG_CTR);
 
     if (PSA_SUCCESS == status)
     {
@@ -525,7 +524,7 @@ boot_enc_zeroize(struct enc_key_data *enc_state)
 {
     BOOT_LOG_DBG("> boot_enc_zeroize");
 
-    (void)Cy_Utils_Memset( enc_state, 0, sizeof(struct enc_key_data) * BOOT_NUM_SLOTS );
+    (void)Cy_Utils_Memset( enc_state, 0, sizeof(struct enc_key_data) * (uint32_t)BOOT_NUM_SLOTS );
 
     BOOT_LOG_DBG("< boot_enc_zeroize");
 }

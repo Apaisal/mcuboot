@@ -30,6 +30,8 @@
 #include "cy_scb_uart.h"
 #include "cy_sysclk.h"
 
+extern void __enable_irq();
+
 #if defined(CY_BOOTLOADER_DIAGNOSTIC_GPIO)
 #define LED_RED_NUM 5U
 #define LED_RED_DRIVEMODE CY_GPIO_DM_STRONG_IN_OFF

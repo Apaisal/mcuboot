@@ -69,7 +69,7 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include <flash_map_backend/flash_map_backend.h>
+#include "flash_map_backend/flash_map_backend.h"
 
 #include "bootutil/image.h"
 #include "bootutil/sha256.h"
@@ -127,8 +127,8 @@ bootutil_rawimg_hash(struct enc_key_data *enc_state, int image_index,
     {
         /* in some cases (split image) the hash is seeded with data from
          * the loader image */
-        if (seed && (seed_len > 0)) {
-            psa_ret = bootutil_sha256_update(&sha256_ctx, seed, seed_len);
+        if ((seed != NULL) && (seed_len > 0)) {
+            psa_ret = bootutil_sha256_update(&sha256_ctx, (const uint8_t*)seed, (uint32_t)seed_len);
         }
 
         if (0 == psa_ret)
@@ -141,7 +141,7 @@ bootutil_rawimg_hash(struct enc_key_data *enc_state, int image_index,
             /* If protected TLVs are present they are also hashed. */
             size += hdr->ih_protect_tlv_size;
 
-            psa_ret = bootutil_sha256_update(&sha256_ctx, (const void*)fap->fa_off, size);
+            psa_ret = bootutil_sha256_update(&sha256_ctx, (const uint8_t*)(fap->fa_off), size);
 
         }
 
@@ -178,11 +178,10 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
 
     // TODO: run-time multi-image
 //#if (BOOT_IMAGE_NUMBER == 1) || !defined(MCUBOOT_ENC_IMAGES)
-    (void)enc_state;
-    (void)image_index;
-    (void)hdr_size;
-    (void)blk_off;
-    (void)tlv_off;
+    // (void)enc_state;
+    // (void)image_index;
+    // (void)blk_off;
+    // (void)tlv_off;
 //#endif
 
 #ifdef MCUBOOT_ENC_IMAGES
@@ -202,8 +201,8 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
     {
         /* in some cases (split image) the hash is seeded with data from
          * the loader image */
-        if (seed && (seed_len > 0)) {
-        	psa_ret = bootutil_sha256_update(&sha256_ctx, seed, seed_len);
+        if ((seed != NULL) && (seed_len > 0)) {
+        	psa_ret = bootutil_sha256_update(&sha256_ctx, seed, (uint32_t)seed_len);
         }
 
         if(0 == psa_ret)
@@ -243,15 +242,15 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
                 if (MUST_DECRYPT(fap, image_index, hdr)) {
                     /* Only payload is encrypted (area between header and TLVs) */
                     if (off >= hdr_size && off < tlv_off) {
-                        blk_off = (off - hdr_size) & 0xf;
+                        blk_off = (off - hdr_size) & 0xfU;
                         boot_encrypt(enc_state, image_index, fap, off - hdr_size,
                                 blk_sz, blk_off, tmp_buf);
                     }
                 }
 #endif
-                psa_ret = bootutil_sha256_update(&sha256_ctx, tmp_buf, blk_sz);
+                psa_ret = bootutil_sha256_update(&sha256_ctx, (const uint8_t*)tmp_buf, blk_sz);
             }
-            if (psa_ret == PSA_SUCCESS)
+            if (PSA_SUCCESS == psa_ret)
             {
                 psa_ret = bootutil_sha256_finish(&sha256_ctx, hash_result);
             }
@@ -344,7 +343,7 @@ bootutil_get_tag_value(struct image_header *hdr,
     }
 
     /* The security counter TLV is in the protected part of the TLV area. */
-    if (hdr->ih_protect_tlv_size == 0) {
+    if (hdr->ih_protect_tlv_size == 0U) {
         return BOOT_EBADIMAGE;
     }
 
@@ -461,7 +460,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     BOOT_LOG_DBG("> Validate image, index = %d", (int)image_index);
 
     /* Get boolean image encrypted status from the header flags */
-    bool is_image_encrypted = (IS_ENCRYPTED(hdr) > 0);
+    bool is_image_encrypted = (IS_ENCRYPTED(hdr) > 0U);
 
     /* Check image encrypted status only for UPGRADE slots */
     slot_id = cy_bootutil_get_slot_id(fap);
@@ -480,7 +479,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
         /* Check if encrypted status in the image does match to the policy */
         if ( is_image_encrypted != (bool)cy_bootutil_get_image_encrypt(fap))
         {
-            BOOT_LOG_DBG(" * Image encryption (%d) does not match the policy (%d), index = %d", (int)IS_ENCRYPTED(hdr), cy_bootutil_get_image_encrypt(fap), (int)image_index);
+            BOOT_LOG_DBG(" * Image encryption (%d) does not match the policy (%d), index = %d", (int)IS_ENCRYPTED(hdr), (int)cy_bootutil_get_image_encrypt(fap), (int)image_index);
 
             //TODO: Enhance a policy checking
             return -1;
@@ -492,7 +491,6 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
         if (rc) {
             return rc;
         }
-
     }
     else
     {
@@ -537,8 +535,8 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
 
                 /* Check for image ID is equal to ID from the policy */
                 rc = cy_bootutil_check_image_id(fap, image_id);
-                if (rc) {
-                    return -1;
+                if (rc != 0) {
+                    return rc;
                 }
 
                 BOOT_LOG_DBG(" * Check image ID, index = %d, ID = %d", (int)image_index, (int)image_id);
@@ -594,7 +592,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                         return -1;
                     }
 
-                    rc = bootutil_verify_sig(hash, sizeof(hash), buf, len, key_id);
+                    rc = bootutil_verify_sig(hash, sizeof(hash), buf, len, (uint8_t)key_id);
                     if (rc == 0) {
                         valid_signature = 1;
                     }
@@ -627,7 +625,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                         return -1;
                     }
 
-                    rc = boot_nv_security_counter_get(image_index, &security_cnt);
+                    rc = boot_nv_security_counter_get((uint32_t)image_index, &security_cnt);
                     if (rc != 0) {
                         return rc;
                     }
