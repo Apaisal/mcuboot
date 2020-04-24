@@ -15,7 +15,7 @@ variables:
     CY_BOOTLOADER_REV: 0
     CY_BOOTLOADER_BUILD: $CI_PIPELINE_IID
 
-    CY_SECURETOOLS_BRANCH: develop
+    CY_SECURETOOLS_BRANCH: feature/bohd_977_boot_measure
     PYOCD_BRANCH: smif-support
 
 

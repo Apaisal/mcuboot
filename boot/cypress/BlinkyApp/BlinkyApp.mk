@@ -69,7 +69,7 @@ endif
 #2M devices case
 ifeq ($(PLATFORM), PSOC_064_2M)
 	# Set RAM start and size
-	DEFINES_APP += -DRAM_START=0x08000800
+	DEFINES_APP += -DRAM_START=0x08001800
 	DEFINES_APP += -DRAM_SIZE=0xDF800
 	CY_SEC_TOOLS_TARGET := cyb06xxa
 	# Set flash start and size
@@ -99,7 +99,7 @@ endif
 
 ifeq ($(PLATFORM), PSOC_064_1M)
 	# Set RAM start and size
-	DEFINES_APP += -DRAM_START=0x08000800
+	DEFINES_APP += -DRAM_START=0x08001800
 	DEFINES_APP += -DRAM_SIZE=0x1F800
 	CY_SEC_TOOLS_TARGET := cyb06xx7
 	# Set flash start and size
@@ -128,7 +128,7 @@ endif
 
 ifeq ($(PLATFORM), PSOC_064_512K)
 	# Set RAM start and size
-	DEFINES_APP += -DRAM_START=0x08000800
+	DEFINES_APP += -DRAM_START=0x08001800
 	DEFINES_APP += -DRAM_SIZE=0x1F800
 	CY_SEC_TOOLS_TARGET := cyb06xx5
 	# Set flash start and size

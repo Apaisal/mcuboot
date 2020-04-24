@@ -14,7 +14,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#	http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,7 @@
 COMPILER ?= GCC_ARM
 
 ifneq ($(COMPILER), GCC_ARM)
-    $(error Only GCC ARM is supported at this moment)
+	$(error Only GCC ARM is supported at this moment)
 endif
 
 CUR_APP_PATH = $(CURDIR)/$(APP_NAME)
@@ -42,8 +42,8 @@ CY_BOOTLOADER_BUILD ?= 111
 
 
 ifeq ($(BUILDCFG), Debug)
-    CFLAGS_SPECIAL = -Os -g3
-    LDFLAGS_SPECIAL = -Os
+	CFLAGS_SPECIAL = -Os -g3
+	LDFLAGS_SPECIAL = -Os
 endif
 
 include $(CUR_APP_PATH)/platforms.mk
@@ -62,31 +62,44 @@ DEFINES_APP += -DCORE=$(CORE)
 # slot in this case is located in External Memory
 CY_BOOTLOADER_APP_SIZE ?= 0x10000
 ifeq ($(PLATFORM), PSOC_064_2M)
-    CY_BOOTLOADER_APP_START ?= 0x101D0000
-    # 0x1D0000 max slot size
-    DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=3712
-    DEFINES_APP += -DCY_BOOTLOADER_BUF_SZ=0x40000
-    CY_SEC_TOOLS_TARGET := cyb06xxa
+	CY_BOOTLOADER_APP_START ?= 0x101D0000
+	# 0x1D0000 max slot size
+	DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=3712
+	DEFINES_APP += -DCY_BOOTLOADER_BUF_SZ=0x40000
+	CY_SEC_TOOLS_TARGET := cyb06xxa
 else ifeq ($(PLATFORM), PSOC_064_1M)
-    CY_BOOTLOADER_APP_START ?= 0x100D0000
-    # 0xD0000 max slot size
-    DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=1664
-    DEFINES_APP += -DCY_BOOTLOADER_BUF_SZ=0xE000
-    CY_SEC_TOOLS_TARGET := cyb06xx7
+	CY_BOOTLOADER_APP_START ?= 0x100D0000
+	# 0xD0000 max slot size
+	DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=1664
+	DEFINES_APP += -DCY_BOOTLOADER_BUF_SZ=0xE000
+	CY_SEC_TOOLS_TARGET := cyb06xx7
 else ifeq ($(PLATFORM), PSOC_064_512K)
-    CY_BOOTLOADER_APP_START ?= 0x10030000
-    # 0x30000 slot size
-    DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=384
-    DEFINES_APP += -DCY_BOOTLOADER_BUF_SZ=0xE000
-    CY_SEC_TOOLS_TARGET := cyb06xx5
+	CY_BOOTLOADER_APP_START ?= 0x10030000
+	# 0x30000 slot size
+	DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=384
+	DEFINES_APP += -DCY_BOOTLOADER_BUF_SZ=0xE000
+	CY_SEC_TOOLS_TARGET := cyb06xx5
 else
-    $(error "Not suppoted target name $(PLATFORM)")
+	$(error "Not suppoted target name $(PLATFORM)")
 endif
 # multi-image setup ?
 DEFINES_APP += -DMCUBOOT_IMAGE_NUMBER=2
 
 # Enabled hardware secure counter support
+DEFINES_APP += -DMCUBOOT_HW_KEY
 DEFINES_APP += -DMCUBOOT_HW_ROLLBACK_PROT
+DEFINES_APP += -DMCUBOOT_MEASURED_BOOT
+# DEFINES_APP += -DMCUBOOT_DATA_SHARING
+DEFINES_APP += -DMAX_BOOT_RECORD_SZ=0x100
+
+# it should be aligned w/ Linker
+CY_BOOTLOADER_SHARED_DATA_SIZE = 0x1000
+CY_BOOTLOADER_SHARED_DATA_OFFSET = 0x800
+CY_BOOTLOADER_SHARED_DATA_BASE = 0x08000000+$(CY_BOOTLOADER_SHARED_DATA_OFFSET)
+
+DEFINES_APP += -DMCUBOOT_SHARED_DATA_SIZE=$(CY_BOOTLOADER_SHARED_DATA_SIZE)
+DEFINES_APP += -DMCUBOOT_SHARED_DATA_OFFSET=$(CY_BOOTLOADER_SHARED_DATA_OFFSET)
+DEFINES_APP += -DMCUBOOT_SHARED_DATA_BASE=$(CY_BOOTLOADER_SHARED_DATA_BASE)
 
 # Use external flash map descriptors since flash map is driven by policy
 DEFINES_APP += -DCY_FLASH_MAP_EXT_DESC
@@ -102,21 +115,21 @@ DEFINES_APP += -D$(APP_NAME)
 DEFINES_APP += -DCY_BOOT_USE_EXTERNAL_FLASH
 
 ifeq ($(BUILDCFG), Debug)
-    DEFINES_APP += -DMCUBOOT_LOG_LEVEL=$(CY_BOOTLOADER_LOG_LEVEL)
-    DEFINES_APP += -DMCUBOOT_HAVE_LOGGING
-    DEFINES_APP += -DCY_SECURE_UTILS_LOG
+	DEFINES_APP += -DMCUBOOT_LOG_LEVEL=$(CY_BOOTLOADER_LOG_LEVEL)
+	DEFINES_APP += -DMCUBOOT_HAVE_LOGGING
+	DEFINES_APP += -DCY_SECURE_UTILS_LOG
 else
-    ifeq ($(BUILDCFG), Release)
-        DEFINES_APP += -DMCUBOOT_LOG_LEVEL=MCUBOOT_LOG_LEVEL_OFF
-        # DEFINES_APP += -DNDEBUG
+	ifeq ($(BUILDCFG), Release)
+		DEFINES_APP += -DMCUBOOT_LOG_LEVEL=MCUBOOT_LOG_LEVEL_OFF
+		# DEFINES_APP += -DNDEBUG
 	else
-        $(error "Not supported build configuration : $(BUILDCFG)")
-    endif
+		$(error "Not supported build configuration : $(BUILDCFG)")
+	endif
 endif
 
 # TODO: MCUBoot library
 # Collect MCUBoot sourses
-SRC_FILES_MCUBOOT := bootutil_misc.c caps.c loader.c tlv.c
+SRC_FILES_MCUBOOT := bootutil_misc.c caps.c loader.c tlv.c boot_record.c
 SOURCES_MCUBOOT := $(addprefix $(CURDIR)/../bootutil/src/, $(SRC_FILES_MCUBOOT))
 
 # Collect CypresBootloader Application sources
