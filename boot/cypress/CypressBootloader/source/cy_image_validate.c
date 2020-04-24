@@ -293,7 +293,19 @@ bootutil_img_hash(struct enc_key_data *enc_state, int image_index,
 #elif defined(MCUBOOT_SIGN_EC256)
 #    define EXPECTED_SIG_TLV IMAGE_TLV_ECDSA256
 #    define SIG_BUF_SIZE 128
-#    define EXPECTED_SIG_LEN(x) ((x) >= 72) /* oids + 2 * 32 bytes */
+/* DER signature representation
+ *
+ * 0x30 - DER prefix
+ * 0x45 - Length of rest of Signature
+ * 0x02 - Marker for r value
+ * 0x21 - Length of r value (0x20 or 0x21)
+ * 00ed...8f - r value, Big Endian
+ * 0x02 - Marker for s value
+ * 0x21 - Length of s value (0x20 or 0x21)
+ * 7a98...ed - s value, Big Endian
+ * len = [70..72]
+ * */
+#    define EXPECTED_SIG_LEN(x) ((x) >= 70) /* oids + 2 * 32 bytes */
 #elif defined(MCUBOOT_SIGN_ED25519)
 #    define EXPECTED_SIG_TLV IMAGE_TLV_ED25519
 #    define SIG_BUF_SIZE 64
@@ -374,6 +386,7 @@ bootutil_get_tag_value(struct image_header *hdr,
     return -1;
 }
 
+#ifdef MCUBOOT_HW_ROLLBACK_PROT
 /**
  * Reads the value of an image's security counter.
  *
@@ -411,6 +424,7 @@ bootutil_get_img_security_cnt(struct image_header *hdr,
 
     return rc;
 }
+#endif /* MCUBOOT_HW_ROLLBACK_PROT */
 
 /*
  * Verify the integrity of the image.
@@ -434,9 +448,11 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
     struct image_tlv_iter it;
     uint8_t buf[SIG_BUF_SIZE];
     uint8_t hash[32];
+#ifdef MCUBOOT_HW_ROLLBACK_PROT
     uint32_t security_cnt = IMAGE_CY_SEC_CNT_MAX_VALUE;
     uint32_t img_security_cnt = 0UL;
     int valid_security_counter = 0;
+#endif
     int slot_id = -1;
     int rc = -1;
 
@@ -466,7 +482,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
         {
             BOOT_LOG_DBG(" * Image encryption (%d) does not match the policy (%d), index = %d", (int)IS_ENCRYPTED(hdr), cy_bootutil_get_image_encrypt(fap), (int)image_index);
 
-            //TODO: Enchance a policy checking
+            //TODO: Enhance a policy checking
             return -1;
         }
 
@@ -552,28 +568,19 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                 break;
         #ifdef EXPECTED_SIG_TLV
             case IMAGE_TLV_KEYHASH:
-                {
-                    /*
-                     * Determine which key we should be checking.
-                     */
-                    if (len > 32) {
-                        return -1;
-                    }
-                    rc = flash_area_read(fap, off, buf, len);
-                    if (rc) {
-                        return rc;
-                    }
-
-                    key_id = cy_bootutil_get_image_sign_key(fap);
-
-                    /*
-                     * The key may not be found, which is acceptable.  There
-                     * can be multiple signatures, each preceded by a key.
-                     */
-                }
+                /*
+                * Not used in CypressBootloader because 
+                * it has keys stored in isolated key 
+                * storage (HW Key).
+                */
                 break;
             case EXPECTED_SIG_TLV:
                 {
+#ifdef MCUBOOT_HW_KEY
+                    key_id = cy_bootutil_get_image_sign_key(fap);
+#else
+#error "Only HW KEY is supported by CypressBootloader."
+#endif
                     /* Ignore this signature if it is out of bounds. */
                     if (key_id <= 0 || key_id > (int)CY_FB_MAX_KEY_COUNT) {
                         key_id = -1;
@@ -595,6 +602,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                 }
                 break;
         #endif /* EXPECTED_SIG_TLV */
+        #ifdef MCUBOOT_HW_ROLLBACK_PROT
             case IMAGE_TLV_SEC_CNT:
                 {
                     /*
@@ -643,6 +651,7 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
                     }
                 }
                 break;
+#endif /* MCUBOOT_HW_ROLLBACK_PROT */
             default:
                 break;
         }
@@ -657,12 +666,13 @@ bootutil_img_validate(struct enc_key_data *enc_state, int image_index,
         BOOT_LOG_DBG(" * Invalid image ID of bootable image, ID = %d", (int)image_id);
         return -1;
     }
-
+#ifdef MCUBOOT_HW_ROLLBACK_PROT
     if (!valid_security_counter) {
         /* The image's security counter is not accepted. */
         BOOT_LOG_DBG(" * Invalid secure counter of bootable image, ID = %d, image cnt(%d) < stored cnt(%d)", (int)image_id, (int)img_security_cnt, (int)security_cnt);
         return -1;
     }
+#endif
 
 #ifdef EXPECTED_SIG_TLV
     if (!valid_signature) {

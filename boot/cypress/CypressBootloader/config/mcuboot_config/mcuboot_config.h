@@ -148,9 +148,17 @@
         /* TODO: to be implemented */   \
     } while (0)
 
-
+/* Cryptographic-related defines */
 #define MCUBOOT_USE_FLASHBOOT_CRYPTO
 #define MCUBOOT_ENC_IMAGES
 #define MCUBOOT_ENCRYPT_EC256
+
+/* INFO: Misc functionality defines */
+/*
+#define MCUBOOT_HW_KEY
+#define MCUBOOT_HW_ROLLBACK_PROT
+#define MCUBOOT_MEASURED_BOOT
+#define MCUBOOT_DATA_SHARING
+*/
 
 #endif /* MCUBOOT_CONFIG_H */
