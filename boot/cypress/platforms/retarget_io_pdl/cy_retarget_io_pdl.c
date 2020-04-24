@@ -207,7 +207,7 @@ static cy_rslt_t cy_retarget_io_pdl_setbaud(CySCB_Type *base, uint32_t baudrate)
 
     Cy_SysClk_PeriphDisableDivider(CY_SYSCLK_DIV_16_BIT, 0);
 
-    divider = ((Cy_SysClk_ClkPeriGetFrequency() * (1 << frac_bits)) + ((baudrate * oversample_value) / 2)) / (baudrate * oversample_value) - 1;
+    divider = ((Cy_SysClk_ClkPeriGetFrequency() * (1u << frac_bits)) + ((baudrate * oversample_value) / 2u)) / (baudrate * oversample_value) - 1u;
 
     status = (cy_rslt_t) Cy_SysClk_PeriphSetDivider(CY_SYSCLK_DIV_16_BIT, 0u, divider);
 
