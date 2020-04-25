@@ -70,7 +70,7 @@ endif
 ifeq ($(PLATFORM), PSOC_064_2M)
 	# Set RAM start and size
 	DEFINES_APP += -DRAM_START=0x08001800
-	DEFINES_APP += -DRAM_SIZE=0xDF800
+	DEFINES_APP += -DRAM_SIZE=0xDE800
 	CY_SEC_TOOLS_TARGET := cyb06xxa
 	# Set flash start and size
 	ifeq ($(MULTI_IMAGE), 0)
@@ -100,7 +100,7 @@ endif
 ifeq ($(PLATFORM), PSOC_064_1M)
 	# Set RAM start and size
 	DEFINES_APP += -DRAM_START=0x08001800
-	DEFINES_APP += -DRAM_SIZE=0x1F800
+	DEFINES_APP += -DRAM_SIZE=0x1E800
 	CY_SEC_TOOLS_TARGET := cyb06xx7
 	# Set flash start and size
 	ifeq ($(MULTI_IMAGE), 0)
@@ -129,7 +129,7 @@ endif
 ifeq ($(PLATFORM), PSOC_064_512K)
 	# Set RAM start and size
 	DEFINES_APP += -DRAM_START=0x08001800
-	DEFINES_APP += -DRAM_SIZE=0x1F800
+	DEFINES_APP += -DRAM_SIZE=0x1E800
 	CY_SEC_TOOLS_TARGET := cyb06xx5
 	# Set flash start and size
 	ifeq ($(MULTI_IMAGE), 0)
