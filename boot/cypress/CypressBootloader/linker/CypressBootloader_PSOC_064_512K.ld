@@ -43,12 +43,13 @@ ENTRY(Reset_Handler)
 /* set it to 0 if everything fits 64k */
 CY_BOOTLOADER_DBG_MARGIN = 0x0;
 
-CY_PROTECTED_DATA_START = 0x10040000; /* DO NOT CHANGE THIS NUMBER */
+/* The point to SecureFlashboot code */
+CY_PROTECTED_DATA_START = 0x10070000; /* DO NOT CHANGE THIS NUMBER */
 
 /* CypressBootloader start address */
-CY_BOOTLOADER_START = 0x10030000 - CY_BOOTLOADER_DBG_MARGIN;
+CY_BOOTLOADER_START = 0x10060000 - CY_BOOTLOADER_DBG_MARGIN;
 
-/* CypressBootloader occupies a 64k flash region before other firmware slots */
+/* CypressBootloader occupies a 64k flash region before SecureFlashboot */
 CY_BOOTLOADER_SIZE = CY_PROTECTED_DATA_START - CY_BOOTLOADER_START + CY_BOOTLOADER_DBG_MARGIN;
 
 /* Force symbol to be entered in the output file as an undefined symbol. Doing

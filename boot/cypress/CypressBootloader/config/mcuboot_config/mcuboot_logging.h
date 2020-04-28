@@ -23,6 +23,8 @@
 
 #include <stdio.h>
 
+#define MCUBOOT_LOG_MODULE_DECLARE(...)
+
 #define MCUBOOT_LOG_LEVEL_OFF      0
 #define MCUBOOT_LOG_LEVEL_ERROR    1
 #define MCUBOOT_LOG_LEVEL_WARNING  2

@@ -14,7 +14,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#	 http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,9 +25,9 @@
 
 # Cypress' MCUBoot Application supports GCC ARM only at this moment
 # Set defaults to:
-#     - compiler GCC
-#     - build configuration to Debug
-#     - image type to BOOT
+#	 - compiler GCC
+#	 - build configuration to Debug
+#	 - image type to BOOT
 COMPILER ?= GCC_ARM
 IMG_TYPE ?= BOOT
 
@@ -40,7 +40,7 @@ MULTI_IMAGE ?= 1
 # UPGRADE slots may be located in SMIF area, corresponding policy will be used
 SMIF_UPGRADE ?= 0
 
-# CypressBootloader Image ID to use for signing, defualt is ID for multi image
+# CypressBootloader Image ID to use for signing, default is ID for multi image
 CYB_IMG_ID ?= 16
 
 # Default secure counter value
@@ -135,21 +135,23 @@ ifeq ($(PLATFORM), PSOC_064_512K)
 	ifeq ($(MULTI_IMAGE), 0)
 		CYB_IMG_ID := 4
 		USER_APP_START ?= 0x10000000
-		SLOT_SIZE ?= 0x20000
 		ifeq ($(SMIF_UPGRADE), 0)
+			SLOT_SIZE ?= 0x30000
 			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_single_stage_CM4.json
 		else ifeq ($(SMIF_UPGRADE), 1)
+			SLOT_SIZE ?= 0x60000
 			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_single_stage_CM4_smif.json
 		endif
 	else
+		USER_APP_START ?= 0x10020000
 		ifeq ($(SMIF_UPGRADE), 0)
+			SLOT_SIZE ?= 0x20000
 			# Determine path to multi image policy file
 			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
 		else ifeq ($(SMIF_UPGRADE), 1)
+			SLOT_SIZE ?= 0x40000
 			IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
 		endif
-		USER_APP_START ?= 0x10040000
-		SLOT_SIZE ?= 0x10000
 	endif
 endif
 
