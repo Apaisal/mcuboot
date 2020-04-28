@@ -14,7 +14,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#	 http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -60,7 +60,6 @@ endif
 # Define start of application unconditionally,
 # as it only can be built for multiimage case now
 SECURE_APP_START ?= 0x10000000
-SLOT_SIZE ?= 0x10000
 
 # Define RAM regions for targets, since they differ
 ifeq ($(PLATFORM), PSOC_064_2M)
@@ -94,10 +93,14 @@ else ifeq ($(PLATFORM), PSOC_064_512K)
 	ifeq ($(SMIF_UPGRADE), 0)
 		# Determine path to multi image policy file
 		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
+		SLOT_SIZE ?= 0x10000
 	else ifeq ($(SMIF_UPGRADE), 1)
 		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4_smif.json
+		SLOT_SIZE ?= 0x20000
 	endif
 endif
+
+SLOT_SIZE ?= 0x10000
 
 DEFINES_APP += -DSECURE_APP_START=$(SECURE_APP_START)
 DEFINES_APP += -DSECURE_APP_SIZE=$(SLOT_SIZE)

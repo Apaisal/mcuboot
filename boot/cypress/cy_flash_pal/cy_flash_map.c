@@ -41,6 +41,10 @@
 
 #include "cy_pdl.h"
 
+#ifdef CY_BOOT_USE_EXTERNAL_FLASH
+#include "cy_smif_psoc6.h"
+#endif
+
 #ifdef CypressBootloader
 #include "cy_memory_val.h"
 #endif
@@ -140,11 +144,12 @@ static struct flash_area scratch =
     .fa_id = FLASH_AREA_IMAGE_SCRATCH,
     .fa_device_id = FLASH_DEVICE_INTERNAL_FLASH,
 //#if (MCUBOOT_IMAGE_NUMBER == 1) /* if single-image */
-//     .fa_off = CY_FLASH_BASE +\
-//                CY_BOOT_BOOTLOADER_SIZE +\
-//                CY_BOOT_PRIMARY_1_SIZE +\
-//                CY_BOOT_SECONDARY_1_SIZE,
-//#elif (MCUBOOT_IMAGE_NUMBER == 2) /* if dual-image */
+    /*
+     .fa_off = CY_FLASH_BASE +\
+                CY_BOOT_BOOTLOADER_SIZE +\
+                CY_BOOT_PRIMARY_1_SIZE +\
+                CY_BOOT_SECONDARY_1_SIZE,
+#elif (MCUBOOT_IMAGE_NUMBER == 2) */ /* if dual-image */
     .fa_off = CY_FLASH_BASE +\
                 CY_BOOT_BOOTLOADER_SIZE +\
                 CY_BOOT_PRIMARY_1_SIZE +\
@@ -312,7 +317,7 @@ int flash_area_write(const struct flash_area *fa, uint32_t off,
 #ifdef CY_BOOT_USE_EXTERNAL_FLASH
     else if ((fa->fa_device_id & FLASH_DEVICE_EXTERNAL_FLAG) == FLASH_DEVICE_EXTERNAL_FLAG)
     {
-        rc = psoc6_smif_write(fa, write_start_addr, len);
+        rc = psoc6_smif_write(fa, write_start_addr, src, len);
     }
 #endif
     else
@@ -395,21 +400,21 @@ size_t flash_area_align(const struct flash_area *fa)
     return ret;
 }
 
-#ifdef MCUBOOT_USE_FLASH_AREA_GET_SECTORS
+
 /*< Initializes an array of flash_area elements for the slot's sectors */
 int     flash_area_to_sectors(int idx, int *cnt, struct flash_area *fa)
 {
     int rc = 0;
 
     if (fa->fa_device_id == FLASH_DEVICE_INTERNAL_FLASH)
-    {   // TODO: ?
+    {
         (void)idx;
         (void)cnt;
         rc = 0;
     }
 #ifdef CY_BOOT_USE_EXTERNAL_FLASH
     else if ((fa->fa_device_id & FLASH_DEVICE_EXTERNAL_FLAG) == FLASH_DEVICE_EXTERNAL_FLAG)
-    {   // TODO: ?
+    {
         (void)idx;
         (void)cnt;
         rc = 0;
@@ -422,7 +427,6 @@ int     flash_area_to_sectors(int idx, int *cnt, struct flash_area *fa)
     }
     return rc;
 }
-#endif
 
 /*
  * This depends on the mappings defined in sysflash.h.
@@ -504,6 +508,7 @@ int flash_area_read_is_empty(const struct flash_area *fa, uint32_t off,
     return 1;
 }
 
+#ifdef MCUBOOT_USE_FLASH_AREA_GET_SECTORS
 int flash_area_get_sectors(int idx, uint32_t *cnt, struct flash_sector *ret)
 {
     int rc = 0;
@@ -531,8 +536,8 @@ int flash_area_get_sectors(int idx, uint32_t *cnt, struct flash_sector *ret)
 #ifdef CY_BOOT_USE_EXTERNAL_FLASH
         else if((fa->fa_device_id & FLASH_DEVICE_EXTERNAL_FLAG) == FLASH_DEVICE_EXTERNAL_FLAG)
         {
-            // TODO: implement for SMIF
-            // TODO: lets assume they are equal
+            /* implement for SMIF */
+            /* lets assume they are equal */
             sector_size = CY_FLASH_SIZEOF_ROW;
         }
 #endif
@@ -567,3 +572,5 @@ int flash_area_get_sectors(int idx, uint32_t *cnt, struct flash_sector *ret)
 
     return rc;
 }
+#endif
+
