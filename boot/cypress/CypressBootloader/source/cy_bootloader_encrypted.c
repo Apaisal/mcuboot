@@ -129,7 +129,7 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
     fb_psa_algorithm_t  alg = 0U;
     size_t keyBits;
 
-    uint8_t const *publicKey = NULL;
+    uint8_t *publicKey = NULL;
     size_t publicKeyLength = 0U;
 
     BOOT_LOG_DBG("> boot_enc_decrypt") ;
@@ -215,7 +215,7 @@ cy_boot_enc_decrypt(int key_id, const uint8_t *buf, uint8_t *enckey)
     {
         status = fb_psa_export_public_key(privateKeyHandle, publicKey, publicKeyLength, &publicKeyLength);
     }
-    
+
     if (publicKey != NULL)
     {
         memset((void*)publicKey, 0, publicKeyLength);
