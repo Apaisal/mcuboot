@@ -74,7 +74,6 @@
 
 #include "cy_secure_utils.h"
 #include "cy_bootloader_hw.h"
-#include "cy_bootloader_version.h"
 #include "cy_bootloader_services.h"
 
 /************************************
@@ -342,18 +341,26 @@ int main(void)
     /* Initialize PSOC6 specific */
     Cy_InitPSoC6_HW();
 
-    BOOT_LOG_INF(" ");
-    BOOT_LOG_INF("/******************************************************/");
-    BOOT_LOG_INF(" PSoC6 CyBootloader Application %u.%u.%u.%u ",
-                   CY_BOOTLOADER_MAJOR, CY_BOOTLOADER_MINOR,
-                   CY_BOOTLOADER_REV, CY_BOOTLOADER_BUILD);
-    BOOT_LOG_INF("/******************************************************/");
-    BOOT_LOG_INF(" ");
-    BOOT_LOG_INF("CypressBootloader Started");
-
     /* Processing of policy in JWT format */
     uint32_t jwtLen;
     char *jwt;
+
+#if (MCUBOOT_LOG_LEVEL != MCUBOOT_LOG_LEVEL_OFF)
+    char cybootVersion[32] = "** unknown version **\0";
+
+    rc = Cy_JWT_GetProvisioningDetails(FB_POLICY_IMG_CERTIFICATE, &jwt, &jwtLen);
+    if(0 == rc)
+    {
+        (void)Cy_JWT_ParseImageVersion(jwt, cybootVersion);
+    }
+    BOOT_LOG_INF(" ");
+    BOOT_LOG_INF("/******************************************************/");
+    BOOT_LOG_INF(" PSoC6 CyBootloader Application %s", cybootVersion);
+    BOOT_LOG_INF("/******************************************************/");
+    BOOT_LOG_INF(" ");
+    BOOT_LOG_INF("CypressBootloader Started");
+#endif /* (MCUBOOT_LOG_LEVEL != MCUBOOT_LOG_LEVEL_OFF) */
+
     rc = Cy_JWT_GetProvisioningDetails(FB_POLICY_JWT, &jwt, &jwtLen);
     if(0 == rc)
     {
