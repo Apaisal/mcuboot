@@ -7,6 +7,16 @@ stages:
   - deploy
 
 variables:
+    
+    #Set TESTS to "1" || "0" to Enable or Disable tests
+    TESTS: "1"
+
+    TESTS_512K: "1"
+    TESTS_1M: "1"
+    TESTS_2M: "1"
+    
+
+
     GIT_CLEAN_FLAGS: -ffdx -e boot/cypress/libs -e venv
     GIT_SUBMODULE_STRATEGY: recursive
 
@@ -17,8 +27,6 @@ variables:
 
     CY_SECURETOOLS_BRANCH: cy_auth-2.0
     PYOCD_BRANCH: smif-support
-
-
 ##############################################################################
 # Build
 #
@@ -52,6 +60,7 @@ variables:
 
 mac_1M_Bootloader:
   extends: .build_1M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -74,6 +83,7 @@ mac_1M_Bootloader:
 
 mac_1M_BlinkyApp:
   extends: .build_1M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -114,6 +124,7 @@ mac_1M_BlinkyApp:
 
 mac_1M_Multi_BlinkyApp:
   extends: .build_1M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -158,6 +169,7 @@ mac_1M_Multi_BlinkyApp:
 
 mac_1M_SecureBlinkyApp:
   extends: .build_1M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -194,6 +206,7 @@ mac_1M_SecureBlinkyApp:
 
 .mac_1M_BlinkyApp_smif:
   extends: .build_1M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -242,6 +255,7 @@ mac_1M_SecureBlinkyApp:
 
 .mac_1M_Multi_BlinkyApp_smif:
   extends: .build_1M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -290,6 +304,7 @@ mac_1M_SecureBlinkyApp:
 
 .mac_1M_SecureBlinkyApp_smif:
   extends: .build_1M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -336,6 +351,7 @@ mac_1M_SecureBlinkyApp:
 
 mac_512K_Bootloader:
   extends: .build_512K
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -358,6 +374,7 @@ mac_512K_Bootloader:
 
 mac_512K_BlinkyApp:
   extends: .build_512K
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -398,6 +415,7 @@ mac_512K_BlinkyApp:
 
 mac_512K_Multi_BlinkyApp:
   extends: .build_512K
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -442,6 +460,7 @@ mac_512K_Multi_BlinkyApp:
 
 mac_512K_SecureBlinkyApp:
   extends: .build_512K
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -478,6 +497,7 @@ mac_512K_SecureBlinkyApp:
 
 mac_512K_BlinkyApp_smif:
   extends: .build_512K
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -526,6 +546,7 @@ mac_512K_BlinkyApp_smif:
 
 mac_512K_Multi_BlinkyApp_smif:
   extends: .build_512K
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -574,6 +595,7 @@ mac_512K_Multi_BlinkyApp_smif:
 
 mac_512K_SecureBlinkyApp_smif:
   extends: .build_512K
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -619,6 +641,7 @@ mac_512K_SecureBlinkyApp_smif:
 
 .win_512K_Bootloader:
   extends: .build_512K
+
   tags:
     - FWS_WIN_BUILD
   script:
@@ -642,6 +665,7 @@ mac_512K_SecureBlinkyApp_smif:
 
 .win_512K_BlinkyApp:
   extends: .build_512K
+
   tags:
     - FWS_WIN_BUILD
   script:
@@ -683,6 +707,7 @@ mac_512K_SecureBlinkyApp_smif:
 
 .win_512K_Multi_BlinkyApp:
   extends: .build_512K
+
   tags:
     - FWS_WIN_BUILD
   script:
@@ -728,6 +753,7 @@ mac_512K_SecureBlinkyApp_smif:
 
 .win_512K_SecureBlinkyApp:
   extends: .build_512K
+
   tags:
     - FWS_WIN_BUILD
   script:
@@ -765,6 +791,7 @@ mac_512K_SecureBlinkyApp_smif:
 
 lin_1M_Bootloader:
   extends: .build_1M
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -787,6 +814,7 @@ lin_1M_Bootloader:
 
 lin_1M_BlinkyApp:
   extends: .build_1M
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -827,6 +855,7 @@ lin_1M_BlinkyApp:
 
 lin_1M_Multi_BlinkyApp:
   extends: .build_1M
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -871,6 +900,7 @@ lin_1M_Multi_BlinkyApp:
 
 lin_1M_SecureBlinkyApp:
   extends: .build_1M
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -907,6 +937,7 @@ lin_1M_SecureBlinkyApp:
 
 lin_512K_Bootloader:
   extends: .build_512K
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -929,6 +960,7 @@ lin_512K_Bootloader:
 
 lin_512K_BlinkyApp:
   extends: .build_512K
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -969,6 +1001,7 @@ lin_512K_BlinkyApp:
 
 lin_512K_Multi_BlinkyApp:
   extends: .build_512K
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -1013,6 +1046,7 @@ lin_512K_Multi_BlinkyApp:
 
 lin_512K_SecureBlinkyApp:
   extends: .build_512K
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -1049,6 +1083,7 @@ lin_512K_SecureBlinkyApp:
 
 mac_2M_Bootloader:
   extends: .build_2M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -1071,6 +1106,7 @@ mac_2M_Bootloader:
 
 mac_2M_BlinkyApp:
   extends: .build_2M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -1111,6 +1147,7 @@ mac_2M_BlinkyApp:
 
 mac_2M_Multi_BlinkyApp:
   extends: .build_2M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -1155,6 +1192,7 @@ mac_2M_Multi_BlinkyApp:
 
 mac_2M_SecureBlinkyApp:
   extends: .build_2M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -1191,6 +1229,7 @@ mac_2M_SecureBlinkyApp:
 
 mac_2M_BlinkyApp_smif:
   extends: .build_2M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -1239,6 +1278,7 @@ mac_2M_BlinkyApp_smif:
 
 mac_2M_Multi_BlinkyApp_smif:
   extends: .build_2M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -1287,6 +1327,7 @@ mac_2M_Multi_BlinkyApp_smif:
 
 mac_2M_SecureBlinkyApp_smif:
   extends: .build_2M
+
   tags:
     - FWS_MAC_BUILD
   script:
@@ -1331,6 +1372,7 @@ mac_2M_SecureBlinkyApp_smif:
 
 .win_2M_Bootloader:
   extends: .build_2M
+
   tags:
     - FWS_WIN_BUILD
   script:
@@ -1354,6 +1396,7 @@ mac_2M_SecureBlinkyApp_smif:
 
 .win_2M_BlinkyApp:
   extends: .build_2M
+
   tags:
     - FWS_WIN_BUILD
   script:
@@ -1395,6 +1438,7 @@ mac_2M_SecureBlinkyApp_smif:
 
 .win_2M_Multi_BlinkyApp:
   extends: .build_2M
+
   tags:
     - FWS_WIN_BUILD
   script:
@@ -1440,6 +1484,7 @@ mac_2M_SecureBlinkyApp_smif:
 
 .win_2M_SecureBlinkyApp:
   extends: .build_2M
+
   tags:
     - FWS_WIN_BUILD
   script:
@@ -1477,6 +1522,7 @@ mac_2M_SecureBlinkyApp_smif:
 
 lin_2M_Bootloader:
   extends: .build_2M
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -1499,6 +1545,7 @@ lin_2M_Bootloader:
 
 lin_2M_BlinkyApp:
   extends: .build_2M
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -1539,6 +1586,7 @@ lin_2M_BlinkyApp:
 
 lin_2M_Multi_BlinkyApp:
   extends: .build_2M
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -1583,6 +1631,7 @@ lin_2M_Multi_BlinkyApp:
 
 lin_2M_SecureBlinkyApp:
   extends: .build_2M
+
   tags:
     - FWS_LIN_BUILD
   script:
@@ -1636,14 +1685,19 @@ mac_test_512K_encrypted_Release:
     - MBED_TEST_MAC1014
   variables:
     GIT_SUBMODULE_STRATEGY: none
+  only:
+    variables:
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_512K == "0"
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
     - mac_512K_SecureBlinkyApp
     - mac_512K_BlinkyApp
-  only:
-    variables:
-      - $SCHEDULE == "true"
+
   script:
     - python3 --version
     - virtualenv venv
@@ -1693,11 +1747,16 @@ mac_test_512K_encrypted_Debug:
     - MBED_TEST_MAC1014
   variables:
     GIT_SUBMODULE_STRATEGY: none
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_512K == "0"
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
     - mac_512K_SecureBlinkyApp
     - mac_512K_BlinkyApp
+
   script:
     - python3 --version
     - virtualenv venv
@@ -1754,14 +1813,19 @@ mac_test_512K_Release:
     - MBED_TEST_MAC1014
   variables:
     GIT_SUBMODULE_STRATEGY: none
+  only:
+    variables:
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_512K == "0"
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
     - mac_512K_SecureBlinkyApp
     - mac_512K_BlinkyApp
-  only:
-    variables:
-      - $SCHEDULE == "true"
+
   script:
     - python3 --version
     - virtualenv venv
@@ -1814,11 +1878,16 @@ mac_test_512K_Debug:
     - MBED_TEST_MAC1014
   variables:
     GIT_SUBMODULE_STRATEGY: none
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_512K == "0"
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp
     - mac_512K_SecureBlinkyApp
     - mac_512K_BlinkyApp
+
   script:
     - python3 --version
     - virtualenv venv
@@ -1871,14 +1940,19 @@ mac_test_512K_smif_Release:
     - MBED_TEST_MAC1014
   variables:
     GIT_SUBMODULE_STRATEGY: none
+  only:
+    variables:
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_512K == "0"
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp_smif
     - mac_512K_SecureBlinkyApp_smif
     - mac_512K_BlinkyApp_smif
-  only:
-    variables:
-      - $SCHEDULE == "true"
+
   script:
     - python3 --version
     - virtualenv venv
@@ -1934,11 +2008,16 @@ mac_test_512K_smif_Debug:
     - MBED_TEST_MAC1014
   variables:
     GIT_SUBMODULE_STRATEGY: none
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_512K == "0"
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp_smif
     - mac_512K_SecureBlinkyApp_smif
     - mac_512K_BlinkyApp_smif
+
   script:
     - python3 --version
     - virtualenv venv
@@ -1994,14 +2073,18 @@ mac_test_512K_encrypted_smif_Release:
     - MBED_TEST_MAC1014
   variables:
     GIT_SUBMODULE_STRATEGY: none
+  only:
+    variables:
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_512K == "0"
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp_smif
     - mac_512K_SecureBlinkyApp_smif
-    - mac_512K_BlinkyApp_smif
-  only:
-    variables:
-      - $SCHEDULE == "true"
+
   script:
     - python3 --version
     - virtualenv venv
@@ -2044,14 +2127,19 @@ mac_test_512K_encrypted_smif_Debug:
     - MBED_TEST_MAC1014
   variables:
     GIT_SUBMODULE_STRATEGY: none
+  only:
+    variables:
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_512K == "0"
   needs:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp_smif
     - mac_512K_SecureBlinkyApp_smif
     - mac_512K_BlinkyApp_smif
-  only:
-    variables:
-      - $SCHEDULE == "true"
+
   script:
     - python3 --version
     - virtualenv venv
@@ -2105,7 +2193,11 @@ mac_test_2M_encrypted_Release:
     - mac_2M_BlinkyApp
   only:
     variables:
-      - $SCHEDULE == "true"
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_2M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2162,7 +2254,11 @@ mac_test_2M_encrypted_Debug:
     - mac_2M_BlinkyApp
   only:
     variables:
-      - $SCHEDULE == "true"
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_2M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2226,7 +2322,11 @@ mac_test_2M_Release:
     - mac_2M_BlinkyApp
   only:
     variables:
-      - $SCHEDULE == "true"
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_2M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2286,6 +2386,10 @@ mac_test_2M_Debug:
     - mac_2M_Multi_BlinkyApp
     - mac_2M_SecureBlinkyApp
     - mac_2M_BlinkyApp
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_2M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2348,7 +2452,11 @@ mac_test_2M_smif_Release:
     - mac_2M_BlinkyApp_smif
   only:
     variables:
-      - $SCHEDULE == "true"
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_2M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2408,6 +2516,10 @@ mac_test_2M_smif_Debug:
     - mac_2M_Multi_BlinkyApp_smif
     - mac_2M_SecureBlinkyApp_smif
     - mac_2M_BlinkyApp_smif
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_2M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2469,7 +2581,11 @@ mac_test_2M_encrypted_smif_Release:
     - mac_2M_BlinkyApp_smif
   only:
     variables:
-      - $SCHEDULE == "true"
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_2M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2519,7 +2635,11 @@ mac_test_2M_encrypted_smif_Debug:
     - mac_2M_BlinkyApp_smif
   only:
     variables:
-      - $SCHEDULE == "true"
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_2M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2572,7 +2692,11 @@ mac_test_1M_encrypted_Release:
     - mac_1M_BlinkyApp
   only:
     variables:
-      - $SCHEDULE == "true"
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_1M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2629,7 +2753,11 @@ mac_test_1M_encrypted_Debug:
     - mac_1M_BlinkyApp
   only:
     variables:
-      - $SCHEDULE == "true"
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_1M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2693,7 +2821,11 @@ mac_test_1M_Release:
     - mac_1M_BlinkyApp
   only:
     variables:
-      - $SCHEDULE == "true"
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_1M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2753,6 +2885,10 @@ mac_test_1M_Debug:
     - mac_1M_Multi_BlinkyApp
     - mac_1M_SecureBlinkyApp
     - mac_1M_BlinkyApp
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_1M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2815,7 +2951,11 @@ mac_test_1M_Debug:
     - mac_1M_BlinkyApp_smif
   only:
     variables:
-      - $SCHEDULE == "true"
+      - $SCHEDULE == "True"
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_1M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2875,6 +3015,10 @@ mac_test_1M_Debug:
     - mac_1M_Multi_BlinkyApp_smif
     - mac_1M_SecureBlinkyApp_smif
     - mac_1M_BlinkyApp_smif
+  except:
+    variables:
+      - $TESTS == "0"
+      - $TESTS_1M == "0"
   script:
     - python3 --version
     - virtualenv venv
@@ -2969,7 +3113,7 @@ deploy_asset:
     - /^integration/cy_bootloader$/
   only:
     variables:
-      - $SCHEDULE == "true"
+      - $SCHEDULE == "True"
   script:
     - zip -rX deploy/cy_bootloader_artifacts_${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}.zip deploy
     - git clone git@git-ore.aus.cypress.com:devops/devops_scripts.git
