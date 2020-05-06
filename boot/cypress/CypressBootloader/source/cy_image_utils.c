@@ -113,27 +113,13 @@ int cy_bootutil_get_image_sign_key(const struct flash_area *fap)
 {
     int key = 0;
     int multi_idx = -1;
-    int slot_id = -1;
 
     /* find out if it is some of multi-image */
     multi_idx = cy_bootutil_get_multi_idx(fap);
 
     if ((multi_idx >= 0) && (multi_idx < POLICY_MAX_N_OF_MULTI_IMGAGE))
     {
-        /* find out if it is slot_0 or slot_1*/
-        slot_id = cy_bootutil_get_slot_id(fap);
-
-        if (slot_id >= 0)
-        {
-            if (slot_id > 0)
-            {
-                key = (int)cy_bl_bnu_policy.bnu_img_policy[multi_idx].upgrade_auth[0];
-            }
-            else
-            {
-                key = (int)cy_bl_bnu_policy.bnu_img_policy[multi_idx].boot_auth[0];
-            }
-        }
+        key = (int)cy_bl_bnu_policy.bnu_img_policy[multi_idx].boot_auth[0];
     }
 
     return key;
