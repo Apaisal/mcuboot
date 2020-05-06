@@ -72,6 +72,8 @@
 #include "cy_jwt_policy.h"
 #include "cy_jwt_bnu_policy.h"
 
+#include "cyprotection.h"
+
 #include "cy_secure_utils.h"
 #include "cy_bootloader_hw.h"
 #include "cy_bootloader_services.h"
@@ -80,16 +82,6 @@
  * CypressBootloader global defines
  * and variables.
  ************************************/
-#define TOC_FREQ_8MHZ_IDX                (1UL)
-#define TOC_FREQ_25MHZ_IDX               (0UL)
-#define TOC_FREQ_50MHZ_IDX               (2UL)
-
-#define TOC_LISTEN_WINDOW_0MS_IDX        (3UL)
-#define TOC_LISTEN_WINDOW_1MS_IDX        (2UL)
-#define TOC_LISTEN_WINDOW_10MS_IDX       (1UL)
-#define TOC_LISTEN_WINDOW_20MS_IDX       (0UL)
-#define TOC_LISTEN_WINDOW_100MS_IDX      (4UL)
-
 #define CY_BOOTLOADER_IMG_ID_CM0P        (0U)
 #define CY_BOOTLOADER_IMG_ID_TEE_CM0P    (1U)
 #define CY_BOOTLOADER_IMG_ID_CYTF_CM0P   (2U)
@@ -153,9 +145,12 @@ void AppSystemInit(void)
 /* Next image runner API */
 static void do_boot(struct boot_rsp *rsp)
 {
-    static uint32_t app_addr = 0;
+    static uint32_t windowTime = 0u;
+    static uint32_t application_start = 0u;
     uint32_t en_acq = 1;
-    register uint32_t application_start;
+
+    windowTime = cy_bl_bnu_policy.bnu_img_policy[0].acq_win;
+    BOOT_LOG_DBG(" * windowTime[0] = %d", (int)cy_bl_bnu_policy.bnu_img_policy[0].acq_win);
 
     /* The beginning of the image is the ARM vector table, containing
      * the initial stack pointer address and the reset vector
@@ -188,8 +183,8 @@ static void do_boot(struct boot_rsp *rsp)
         case CY_BOOTLOADER_IMG_ID_CM4:
             /* Set Protection Context 6 for CM4 application */
             (void)Cy_Prot_SetActivePC(CPUSS_MS_ID_CM4, (uint32_t)CY_PROT_PC6);
-            Cy_Utils_CleanSecureAppRam(application_start, &app_addr);
-            Cy_Utils_StartAppCM4(application_start, false);
+            Cy_Utils_CleanSecureAppRam(&application_start, &windowTime);
+            Cy_Utils_StartAppCM4(application_start, false, windowTime);
             break;
         default:
             BOOT_LOG_ERR("Unable to find bootable image");
