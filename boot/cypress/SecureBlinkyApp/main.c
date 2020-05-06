@@ -39,8 +39,6 @@
 #include "cy_jwt_policy.h"
 #include "cy_jwt_bnu_policy.h"
 
-#include "cyprotection.h"
-
 #define CY_SRSS_TST_MODE_ADDR           (SRSS_BASE | 0x0100UL)
 #define TST_MODE_TEST_MODE_MASK         (0x80000000UL)
 #define TST_MODE_ENTERED_MAGIC          (0x12344321UL)
@@ -173,6 +171,7 @@ void test_app_init_hardware(void)
 int main(void)
 {
     uint32_t blinky_period = BLINK_PERIOD;
+    uint32_t windowTime;
     uint32_t i;
     uint32_t jwtLen;
     char *jwt;
@@ -197,6 +196,11 @@ int main(void)
     {
         printf("%s Policy parsing failed with code 0x%08x\n\r", GREETING_MESSAGE, rc);
     }
+#endif
+
+    windowTime = cy_bl_bnu_policy.bnu_img_policy[1].acq_win;
+#if defined(DEBUG)
+    printf("%s Acquire window time = %d ms\n\r", GREETING_MESSAGE, (int)windowTime);
 #endif
 
     app_addr = cy_bl_bnu_policy.bnu_img_policy[1].boot_area.start + CM4_APP_HEADER_SIZE;
@@ -233,7 +237,7 @@ int main(void)
         Cy_GPIO_Inv(LED_PORT, LED_PIN);
 #endif
     }
-    Cy_Utils_StartAppCM4(app_addr, true);
+    Cy_Utils_StartAppCM4(app_addr, true, windowTime);
 
     return 0;
 }

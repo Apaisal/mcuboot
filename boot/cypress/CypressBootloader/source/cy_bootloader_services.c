@@ -27,6 +27,7 @@
 #include "cy_bootloader_hw.h"
 #include "cy_jwt_policy.h"
 #include "cy_secure_utils.h"
+#include "cyprotection.h"
 
 #ifdef MCUBOOT_HAVE_ASSERT_H
 #include "mcuboot_config/mcuboot_assert.h"
@@ -37,6 +38,7 @@
 #define TST_MODE_TEST_MODE_MASK         (0x80000000UL)
 #define CY_SRSS_TST_MODE_ADDR           (SRSS_BASE | 0x0100UL)
 
+extern bnu_policy_t   cy_bl_bnu_policy;
 extern debug_policy_t debug_policy;
 
 extern const volatile uint32_t __sdata_start__[];
@@ -162,6 +164,7 @@ void Cy_BLServ_Assert(int expr)
     {
         volatile perm_policy_t cm4ApPermission = debug_policy.m4_policy.permission;
         volatile perm_policy_t sysApPermission = debug_policy.sys_policy.permission;
+        volatile uint32_t windowTime = cy_bl_bnu_policy.bnu_img_policy[0].acq_win;
 
         BOOT_LOG_ERR("There is an error occurred during bootloader flow. MCU stopped.");
 
@@ -173,6 +176,7 @@ void Cy_BLServ_Assert(int expr)
 
         debug_policy.m4_policy.permission = cm4ApPermission;
         debug_policy.sys_policy.permission = sysApPermission;
+        cy_bl_bnu_policy.bnu_img_policy[0].acq_win = windowTime;
 
         __set_MSP((uint32_t)__HeapBase);
         memset((void*)__StackLimit,  0, ((size_t)__StackTop - (size_t)__StackLimit));
@@ -184,7 +188,7 @@ void Cy_BLServ_Assert(int expr)
         /* System initialization after .bss section was cleared */
         Cy_BLServ_SystemInit();
 
-        rc = Cy_Utils_EnableAccessPorts();
+        rc = Cy_Utils_EnableAccessPorts(windowTime);
         if(0 != rc)
         {
             BOOT_LOG_ERR("Error %x while enabling access ports", rc);
