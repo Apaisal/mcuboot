@@ -16,7 +16,6 @@ variables:
     TESTS_2M: "1"
     
 
-
     GIT_CLEAN_FLAGS: -ffdx -e boot/cypress/libs -e venv
     GIT_SUBMODULE_STRATEGY: recursive
 
@@ -1686,8 +1685,8 @@ mac_test_512K_encrypted_Release:
   variables:
     GIT_SUBMODULE_STRATEGY: none
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -1814,8 +1813,8 @@ mac_test_512K_Release:
   variables:
     GIT_SUBMODULE_STRATEGY: none
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -1941,8 +1940,8 @@ mac_test_512K_smif_Release:
   variables:
     GIT_SUBMODULE_STRATEGY: none
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -2074,8 +2073,8 @@ mac_test_512K_encrypted_smif_Release:
   variables:
     GIT_SUBMODULE_STRATEGY: none
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -2128,8 +2127,8 @@ mac_test_512K_encrypted_smif_Debug:
   variables:
     GIT_SUBMODULE_STRATEGY: none
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -2191,13 +2190,14 @@ mac_test_2M_encrypted_Release:
     - mac_2M_Multi_BlinkyApp
     - mac_2M_SecureBlinkyApp
     - mac_2M_BlinkyApp
-  only:
-    variables:
-      - $SCHEDULE == "True"
   except:
     variables:
       - $TESTS == "0"
       - $TESTS_2M == "0"
+  only:
+    - schedules
+
+
   script:
     - python3 --version
     - virtualenv venv
@@ -2253,8 +2253,8 @@ mac_test_2M_encrypted_Debug:
     - mac_2M_SecureBlinkyApp
     - mac_2M_BlinkyApp
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -2321,8 +2321,8 @@ mac_test_2M_Release:
     - mac_2M_SecureBlinkyApp
     - mac_2M_BlinkyApp
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -2451,8 +2451,8 @@ mac_test_2M_smif_Release:
     - mac_2M_SecureBlinkyApp_smif
     - mac_2M_BlinkyApp_smif
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -2580,8 +2580,8 @@ mac_test_2M_encrypted_smif_Release:
     - mac_2M_SecureBlinkyApp_smif
     - mac_2M_BlinkyApp_smif
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -2634,8 +2634,8 @@ mac_test_2M_encrypted_smif_Debug:
     - mac_2M_SecureBlinkyApp_smif
     - mac_2M_BlinkyApp_smif
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -2691,8 +2691,8 @@ mac_test_1M_encrypted_Release:
     - mac_1M_SecureBlinkyApp
     - mac_1M_BlinkyApp
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -2752,8 +2752,8 @@ mac_test_1M_encrypted_Debug:
     - mac_1M_SecureBlinkyApp
     - mac_1M_BlinkyApp
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -2820,8 +2820,8 @@ mac_test_1M_Release:
     - mac_1M_SecureBlinkyApp
     - mac_1M_BlinkyApp
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -2950,8 +2950,8 @@ mac_test_1M_Debug:
     - mac_1M_SecureBlinkyApp_smif
     - mac_1M_BlinkyApp_smif
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   except:
     variables:
       - $TESTS == "0"
@@ -3112,8 +3112,8 @@ deploy_asset:
     - /^cypress$/
     - /^integration/cy_bootloader$/
   only:
-    variables:
-      - $SCHEDULE == "True"
+    - schedules
+
   script:
     - zip -rX deploy/cy_bootloader_artifacts_${CY_BOOTLOADER_MAJOR}.${CY_BOOTLOADER_MINOR}.${CY_BOOTLOADER_REV}.${CY_BOOTLOADER_BUILD}.zip deploy
     - git clone git@git-ore.aus.cypress.com:devops/devops_scripts.git
