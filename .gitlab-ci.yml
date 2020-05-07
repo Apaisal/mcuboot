@@ -2083,7 +2083,7 @@ mac_test_512K_encrypted_smif_Release:
     - mac_512K_Bootloader
     - mac_512K_Multi_BlinkyApp_smif
     - mac_512K_SecureBlinkyApp_smif
-
+    - mac_512K_BlinkyApp_smif
   script:
     - python3 --version
     - virtualenv venv
