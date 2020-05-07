@@ -63,26 +63,26 @@ boot_add_data_to_shared_area(uint8_t        major_type,
                              const uint8_t *data)
 {
     struct shared_data_tlv_entry tlv_entry = {0};
-    struct shared_boot_data *boot_data;
+    struct shared_boot_data *sh_boot_data;
     uint16_t boot_data_size;
     uintptr_t tlv_end, offset;
 
-    boot_data = (struct shared_boot_data *)MCUBOOT_SHARED_DATA_BASE;
+    sh_boot_data = (struct shared_boot_data *)(MCUBOOT_SHARED_DATA_BASE);
 
     /* Check whether first time to call this function. If does then initialise
      * shared data area.
      */
     if (!shared_memory_init_done) {
         memset((void *)MCUBOOT_SHARED_DATA_BASE, 0, MCUBOOT_SHARED_DATA_SIZE);
-        boot_data->header.tlv_magic   = SHARED_DATA_TLV_INFO_MAGIC;
-        boot_data->header.tlv_tot_len = SHARED_DATA_HEADER_SIZE;
+        sh_boot_data->header.tlv_magic   = SHARED_DATA_TLV_INFO_MAGIC;
+        sh_boot_data->header.tlv_tot_len = SHARED_DATA_HEADER_SIZE;
         shared_memory_init_done = true;
     }
 
     /* Check whether TLV entry is already added.
      * Get the boundaries of TLV section
      */
-    tlv_end = MCUBOOT_SHARED_DATA_BASE + boot_data->header.tlv_tot_len;
+    tlv_end = MCUBOOT_SHARED_DATA_BASE + sh_boot_data->header.tlv_tot_len;
     offset  = MCUBOOT_SHARED_DATA_BASE + SHARED_DATA_HEADER_SIZE;
 
     /* Iterates over the TLV section looks for the same entry if found then
@@ -103,7 +103,7 @@ boot_add_data_to_shared_area(uint8_t        major_type,
     tlv_entry.tlv_type = SET_TLV_TYPE(major_type, minor_type);
     tlv_entry.tlv_len  = size;
 
-    if (!boot_u16_safe_add(&boot_data_size, boot_data->header.tlv_tot_len,
+    if (!boot_u16_safe_add(&boot_data_size, sh_boot_data->header.tlv_tot_len,
                            SHARED_DATA_ENTRY_SIZE(size))) {
         return SHARED_MEMORY_GEN_ERROR;
     }
@@ -119,7 +119,7 @@ boot_add_data_to_shared_area(uint8_t        major_type,
     offset += SHARED_DATA_ENTRY_HEADER_SIZE;
     memcpy((void *)offset, data, size);
 
-    boot_data->header.tlv_tot_len += SHARED_DATA_ENTRY_SIZE(size);
+    sh_boot_data->header.tlv_tot_len += SHARED_DATA_ENTRY_SIZE(size);
 
     return SHARED_MEMORY_OK;
 }
