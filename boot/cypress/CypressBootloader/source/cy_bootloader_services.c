@@ -188,7 +188,7 @@ void Cy_BLServ_Assert(int expr)
         /* System initialization after .bss section was cleared */
         Cy_BLServ_SystemInit();
 
-        rc = Cy_Utils_EnableAccessPorts(windowTime);
+        rc = Cy_Utils_EnableAccessPorts(cy_bl_bnu_policy.bnu_img_policy[0].acq_win);
         if(0 != rc)
         {
             BOOT_LOG_ERR("Error %x while enabling access ports", rc);
