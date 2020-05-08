@@ -194,11 +194,10 @@ void Cy_BLServ_Assert(int expr)
             BOOT_LOG_ERR("Error %x while enabling access ports", rc);
         }
 
+        /* Make sure that no interrupts can be issued while this code is running */
         if((CY_GET_REG32(CY_SRSS_TST_MODE_ADDR) & TST_MODE_TEST_MODE_MASK) != 0UL)
         {
             Cy_Utils_AcquireWindow();
-
-            __disable_irq();
         }
 
         Cy_SysEnableCM4(CY_BL_CM4_ROM_LOOP_ADDR);
