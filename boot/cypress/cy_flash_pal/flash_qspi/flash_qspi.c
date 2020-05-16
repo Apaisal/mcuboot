@@ -69,6 +69,10 @@
 
 #define CY_SMIF_SYSCLK_HFCLK_DIVIDER     CY_SYSCLK_CLKHF_DIVIDE_BY_4
 
+#define SMIF_TRANSFER_TIMEOUT       (1000UL) /* The timeout (microseconds) to use in polling of
+                                             * the transfer status of the SMIF block
+                                             */
+
 /* This is the board specific stuff that should align with your board.
  *
  * QSPI resources:
@@ -329,6 +333,13 @@ const cy_stc_gpio_pin_config_t QSPI_SCK_config =
 	.vohSel = 0UL,
 };
 
+static bool qspi_is_semper_flash(void);
+static cy_en_smif_status_t qspi_read_memory_id(uint8_t *id, uint16_t length);
+static cy_en_smif_status_t qspi_read_register(void);
+static cy_en_smif_status_t qspi_write_register(void);
+static cy_en_smif_status_t PollTransferStatus(SMIF_Type const *base, cy_en_smif_txfr_status_t transferStatus,
+                                              cy_stc_smif_context_t const *context);
+
 void Isr_SMIF(void)
 {
     Cy_SMIF_Interrupt(QSPIPort, &QSPI_context);
@@ -400,8 +411,238 @@ cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config)
     {
         smif_blk_config = blk_config;
         st = Cy_SMIF_MemInit(QSPIPort, smif_blk_config, &QSPI_context);
+
+        if(qspi_is_semper_flash() == true)
+        {
+            printf("It is Semper Flash!\n\r");
+            // st = qspi_write_register();
+            // Cy_SysLib_DelayCycles(1000u);
+            uint8_t regVal = 0;
+            uint8_t data[2] = {0x00, 0x00};
+            st = Cy_SMIF_MemCmdWriteStatus(QSPIPort,
+                                          smif_blk_config->memConfig[0],
+                                          data,
+                                          0x01u,
+                                          &QSPI_context);
+            // st = Cy_SMIF_MemCmdReadStatus(QSPIPort,
+                                          // smif_blk_config->memConfig[0],
+                                          // &regVal,
+                                          // 0x05u,
+                                          // &QSPI_context);
+            // printf(">%x\n\r", regVal);
+            st = qspi_read_register();
+            if(st == CY_SMIF_SUCCESS)
+            {
+                printf("OK\n\r");
+            }
+            else
+            {
+                printf("Fail\n\r");
+            }
+        }
     }
     return st;
+}
+
+#define SEMPER_ID_LENGTH    (6u)
+
+#define SEMPER_ID_MANUF     (0x34)
+#define SEMPER_ID_DEV_MSB1  (0x2A)
+#define SEMPER_ID_DEV_MSB2  (0x2B)
+#define SEMPER_ID_DEV_LSB1  (0x19)
+#define SEMPER_ID_DEV_LSB2  (0x1A)
+#define SEMPER_ID_DEV_LSB3  (0x1B)
+#define SEMPER_ID_LEN       (0x0F)
+#define SEMPER_ID_SECTARCH  (0x03)
+#define SEMPER_ID_FAMILY    (0x90)
+
+static bool qspi_is_semper_flash(void)
+{
+    bool isSemper = false;
+    cy_en_smif_status_t status;
+    uint8_t buff[SEMPER_ID_LENGTH];
+
+    status = qspi_read_memory_id(buff, SEMPER_ID_LENGTH);
+
+    if(CY_SMIF_SUCCESS == status)
+    {
+        isSemper = true;
+
+        /* Check Manufacturer and Device ID if it is Semper flash */
+        if(buff[0] != SEMPER_ID_MANUF)
+        {
+            isSemper = false;
+        }
+
+        if(isSemper && ((buff[1] != SEMPER_ID_DEV_MSB1) &&
+                        (buff[1] != SEMPER_ID_DEV_MSB2)))
+        {
+            isSemper = false;
+        }
+
+        if(isSemper && ((buff[2] != SEMPER_ID_DEV_LSB1) &&
+                        (buff[2] != SEMPER_ID_DEV_LSB2) &&
+                        (buff[2] != SEMPER_ID_DEV_LSB3)))
+        {
+            isSemper = false;
+        }
+
+        if(isSemper && (buff[3] != SEMPER_ID_LEN))
+        {
+            isSemper = false;
+        }
+
+        if(isSemper && (buff[4] != SEMPER_ID_SECTARCH))
+        {
+            isSemper = false;
+        }
+
+        if(isSemper && (buff[5] != SEMPER_ID_FAMILY))
+        {
+            isSemper = false;
+        }
+    }
+
+    return isSemper;
+}
+
+/* Read 6 bytes of Manufacturer and Device ID */
+static cy_en_smif_status_t qspi_read_memory_id(uint8_t *id, uint16_t length)
+{
+    cy_en_smif_status_t status;
+    cy_stc_smif_mem_config_t *memCfg;
+    uint8_t command = 0x9Fu;
+    uint16_t dummyCycles = 64u;
+
+    memCfg = qspi_get_memory_config(0);
+
+    status = Cy_SMIF_TransmitCommand(QSPIPort,
+                                    command,
+                                    CY_SMIF_WIDTH_SINGLE,
+                                    0u,
+                                    0u,
+                                    CY_SMIF_WIDTH_SINGLE,
+                                    memCfg->slaveSelect,
+                                    CY_SMIF_TX_NOT_LAST_BYTE,
+                                    &QSPI_context);
+
+    if(CY_SMIF_SUCCESS == status)
+    {
+        status = Cy_SMIF_SendDummyCycles(QSPIPort, dummyCycles);
+    }
+
+    if(CY_SMIF_SUCCESS == status)
+    {
+        status = Cy_SMIF_ReceiveData(QSPIPort, id, length,
+                                    CY_SMIF_WIDTH_SINGLE,
+                                    NULL, /* Callback function is not used */
+                                    &QSPI_context);
+    }
+
+    /* Wait until the SMIF block completes receiving data */
+    if(CY_SMIF_SUCCESS == status)
+    {
+        while(Cy_SMIF_GetTransferStatus(QSPIPort, &QSPI_context) == CY_SMIF_RX_BUSY);
+        // status = PollTransferStatus(QSPIPort, CY_SMIF_REC_CMPLT, &QSPI_context);
+    }
+
+    return status;
+}
+
+static cy_en_smif_status_t qspi_read_register(void)
+{
+    cy_en_smif_status_t status;
+    cy_stc_smif_mem_config_t *memCfg;
+    const uint8_t address[4] = {0x00, 0x80, 0x00, 0x00};
+    uint8_t command = 0x65u; //0x05u;
+    uint16_t dummyCycles = 8u;
+    uint8_t regVal = 0;
+
+    printf("Start, %x, %i\n\r", command, dummyCycles);
+
+    memCfg = qspi_get_memory_config(0);
+
+    status = Cy_SMIF_TransmitCommand(QSPIPort,
+                                    command,
+                                    CY_SMIF_WIDTH_SINGLE,
+                                    address,
+                                    sizeof(address),
+                                    CY_SMIF_WIDTH_SINGLE,
+                                    memCfg->slaveSelect,
+                                    CY_SMIF_TX_NOT_LAST_BYTE,
+                                    &QSPI_context);
+
+    // printf("%x\n\r", status);
+
+    // status = Cy_SMIF_SendDummyCycles(QSPIPort, dummyCycles);
+
+    // printf("%x\n\r", status);
+
+    // status = Cy_SMIF_ReceiveData(QSPIPort, &regVal, CY_SMIF_READ_ONE_BYTE,
+                                // CY_SMIF_WIDTH_SINGLE,
+                                // NULL, /* Callback function is not used */
+                                // &QSPI_context);
+
+    // printf("%x\n\r", status);
+
+    status = Cy_SMIF_ReceiveDataBlocking(QSPIPort, &regVal,
+                    CY_SMIF_READ_ONE_BYTE, CY_SMIF_WIDTH_SINGLE, &QSPI_context);
+
+    /* Wait until the SMIF block completes receiving data */
+    // status = PollTransferStatus(QSPIPort, CY_SMIF_REC_CMPLT, &QSPI_context);
+    while(Cy_SMIF_GetTransferStatus(QSPIPort, &QSPI_context) == CY_SMIF_RX_BUSY);
+
+    printf("%x, %x\n\r", status, regVal);
+
+    return status;
+}
+
+static cy_en_smif_status_t qspi_write_register(void)
+{
+    cy_en_smif_status_t status;
+    cy_stc_smif_mem_config_t *memCfg;
+
+    /* Write Register 0x01 */
+    // uint8_t command = 0x01u;
+    // uint8_t data[5] = {0x00, 0x00, 0x08, 0x08, 0x08};
+
+    /* Write Any Register 0x71 */
+    uint8_t command = 0x71u;
+    uint8_t data[5] = {0x00, 0x00, 0x00, 0x04, 0x08};
+
+    memCfg = qspi_get_memory_config(0);
+
+    status = Cy_SMIF_MemCmdWriteEnable(QSPIPort, memCfg, &QSPI_context);
+
+    status = Cy_SMIF_TransmitCommand(QSPIPort, command,
+                                     CY_SMIF_WIDTH_SINGLE,
+                                     data, sizeof(data),
+                                     CY_SMIF_WIDTH_SINGLE,
+                                     memCfg->slaveSelect,
+                                     CY_SMIF_TX_LAST_BYTE,
+                                     &QSPI_context);
+
+    return status;
+}
+
+static cy_en_smif_status_t PollTransferStatus(SMIF_Type const *base, cy_en_smif_txfr_status_t transferStatus,
+                                              cy_stc_smif_context_t const *context)
+{
+    cy_en_smif_status_t status = CY_SMIF_SUCCESS;
+    uint32_t transferTimeout = SMIF_TRANSFER_TIMEOUT;
+
+    while (((uint32_t)transferStatus != Cy_SMIF_GetTransferStatus(base, context)) && (transferTimeout > 0UL))
+    {
+        Cy_SysLib_DelayUs(CY_SMIF_WAIT_1_UNIT);
+        transferTimeout--;
+    }
+
+    if((uint32_t)transferStatus != Cy_SMIF_GetTransferStatus(base, context))
+    {
+        status = CY_SMIF_EXCEED_TIMEOUT;
+    }
+
+    return status;
 }
 
 cy_en_smif_status_t qspi_init_sfdp(uint32_t smif_id)
