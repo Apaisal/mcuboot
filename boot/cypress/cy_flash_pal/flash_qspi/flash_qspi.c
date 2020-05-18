@@ -334,11 +334,15 @@ const cy_stc_gpio_pin_config_t QSPI_SCK_config =
 };
 
 static bool qspi_is_semper_flash(void);
+static int32_t qspi_configure_semper_flash(void);
 static cy_en_smif_status_t qspi_read_memory_id(uint8_t *id, uint16_t length);
-static cy_en_smif_status_t qspi_read_register(void);
-static cy_en_smif_status_t qspi_write_register(void);
-static cy_en_smif_status_t PollTransferStatus(SMIF_Type const *base, cy_en_smif_txfr_status_t transferStatus,
-                                              cy_stc_smif_context_t const *context);
+static cy_en_smif_status_t qspi_read_register(uint32_t address, uint8_t *value);
+static cy_en_smif_status_t qspi_write_register(uint32_t address, uint8_t value);
+static void value_to_byte_array(uint32_t value, uint8_t *byteArray,
+                                uint32_t startPos, uint32_t size);
+static cy_en_smif_status_t poll_transfer_status(SMIF_Type const *base,
+                                                cy_en_smif_txfr_status_t transferStatus,
+                                                cy_stc_smif_context_t const *context);
 
 void Isr_SMIF(void)
 {
@@ -402,6 +406,36 @@ cy_stc_smif_context_t *qspi_get_context()
     return &QSPI_context;
 }
 
+#define SEMPER_ID_LENGTH        (6U)
+
+#define SEMPER_ID_MANUF         (0x34)
+#define SEMPER_ID_DEV_MSB1      (0x2A)
+#define SEMPER_ID_DEV_MSB2      (0x2B)
+#define SEMPER_ID_DEV_LSB1      (0x19)
+#define SEMPER_ID_DEV_LSB2      (0x1A)
+#define SEMPER_ID_DEV_LSB3      (0x1B)
+#define SEMPER_ID_LEN           (0x0F)
+#define SEMPER_ID_SECTARCH      (0x03)
+#define SEMPER_ID_FAMILY        (0x90)
+
+#define SEMPER_WRARG_CMD        (0x71U) /* Write Any Register command */
+#define SEMPER_RDARG_CMD        (0x65U) /* Read Any Register command */
+
+#define SEMPER_CFR2N_ADDR       (0x00000003UL) /* Non-volatile Configuration Register 2 address */
+#define SEMPER_CFR3N_ADDR       (0x00000004UL) /* Non-volatile Configuration Register 3 address */
+
+#define SEMPER_CFR2N_ADRBYT     (1U << 7U) /* Address Byte Length selection bit offset in CFR2N register */
+#define SEMPER_CFR3N_UNHYSA     (1U << 3U) /* Uniform or Hybrid Sector Architecture selection bit offset in CFR3N register */
+
+#define SEMPER_WRARG_DATA_INDEX (4U) /* Input data index for WRARG command */
+
+#define SEMPER_WR_NV_TIMEOUT    (500000U) /* Nonvolatile Register Write operation timeout */
+
+#define SEMPER_ADDR_LEN         (4U)
+
+#define PARAM_ID_MSB_OFFSET     (0x08U)  /* The offset of Parameter ID MSB */
+#define PARAM_ID_LSB_MASK       (0xFFUL) /* The mask of Parameter ID LSB */
+
 cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config)
 {
     cy_en_smif_status_t st;
@@ -414,24 +448,9 @@ cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config)
 
         if(qspi_is_semper_flash() == true)
         {
-            printf("It is Semper Flash!\n\r");
-            // st = qspi_write_register();
-            // Cy_SysLib_DelayCycles(1000u);
-            uint8_t regVal = 0;
-            uint8_t data[2] = {0x00, 0x00};
-            st = Cy_SMIF_MemCmdWriteStatus(QSPIPort,
-                                          smif_blk_config->memConfig[0],
-                                          data,
-                                          0x01u,
-                                          &QSPI_context);
-            // st = Cy_SMIF_MemCmdReadStatus(QSPIPort,
-                                          // smif_blk_config->memConfig[0],
-                                          // &regVal,
-                                          // 0x05u,
-                                          // &QSPI_context);
-            // printf(">%x\n\r", regVal);
-            st = qspi_read_register();
-            if(st == CY_SMIF_SUCCESS)
+            printf("Semper\n\r");
+
+            if(qspi_configure_semper_flash() == 0)
             {
                 printf("OK\n\r");
             }
@@ -443,18 +462,6 @@ cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config)
     }
     return st;
 }
-
-#define SEMPER_ID_LENGTH    (6u)
-
-#define SEMPER_ID_MANUF     (0x34)
-#define SEMPER_ID_DEV_MSB1  (0x2A)
-#define SEMPER_ID_DEV_MSB2  (0x2B)
-#define SEMPER_ID_DEV_LSB1  (0x19)
-#define SEMPER_ID_DEV_LSB2  (0x1A)
-#define SEMPER_ID_DEV_LSB3  (0x1B)
-#define SEMPER_ID_LEN       (0x0F)
-#define SEMPER_ID_SECTARCH  (0x03)
-#define SEMPER_ID_FAMILY    (0x90)
 
 static bool qspi_is_semper_flash(void)
 {
@@ -474,36 +481,75 @@ static bool qspi_is_semper_flash(void)
             isSemper = false;
         }
 
-        if(isSemper && ((buff[1] != SEMPER_ID_DEV_MSB1) &&
-                        (buff[1] != SEMPER_ID_DEV_MSB2)))
+        if(isSemper && ((buff[1u] != SEMPER_ID_DEV_MSB1) &&
+                        (buff[1u] != SEMPER_ID_DEV_MSB2)))
         {
             isSemper = false;
         }
 
-        if(isSemper && ((buff[2] != SEMPER_ID_DEV_LSB1) &&
-                        (buff[2] != SEMPER_ID_DEV_LSB2) &&
-                        (buff[2] != SEMPER_ID_DEV_LSB3)))
+        if(isSemper && ((buff[2u] != SEMPER_ID_DEV_LSB1) &&
+                        (buff[2u] != SEMPER_ID_DEV_LSB2) &&
+                        (buff[2u] != SEMPER_ID_DEV_LSB3)))
         {
             isSemper = false;
         }
 
-        if(isSemper && (buff[3] != SEMPER_ID_LEN))
+        if(isSemper && (buff[3u] != SEMPER_ID_LEN))
         {
             isSemper = false;
         }
 
-        if(isSemper && (buff[4] != SEMPER_ID_SECTARCH))
+        if(isSemper && (buff[4u] != SEMPER_ID_SECTARCH))
         {
             isSemper = false;
         }
 
-        if(isSemper && (buff[5] != SEMPER_ID_FAMILY))
+        if(isSemper && (buff[5u] != SEMPER_ID_FAMILY))
         {
             isSemper = false;
         }
     }
 
     return isSemper;
+}
+
+static int32_t qspi_configure_semper_flash(void)
+{
+    int32_t rc = 0;
+    cy_en_smif_status_t status;
+    uint8_t regVal;
+
+    // /* Set Address Byte Length selection to 4 bytes for instructions */
+    // status = qspi_read_register(SEMPER_CFR2N_ADDR, &regVal);
+    // if((CY_SMIF_SUCCESS == status) &&
+       // ((regVal & SEMPER_CFR2N_ADRBYT) == 0))
+    // {
+        // regVal |= SEMPER_CFR2N_ADRBYT;
+        // status = qspi_write_register(SEMPER_CFR2N_ADDR, regVal);
+
+        // if(CY_SMIF_SUCCESS == status)
+        // {
+            // regVal = 0;
+            // status = qspi_read_register(SEMPER_CFR2N_ADDR, &regVal);
+            // if((CY_SMIF_SUCCESS == status) &&
+               // ((regVal & SEMPER_CFR2N_ADRBYT) == 0))
+            // {
+                // rc = -1;
+            // }
+        // }
+    // }
+
+    // printf(">%x\n\r", regVal);
+
+    regVal = 0x08u;
+    status = qspi_write_register(SEMPER_CFR3N_ADDR, regVal);
+
+    regVal = 0;
+    status = qspi_read_register(SEMPER_CFR3N_ADDR, &regVal);
+
+    printf(">%x\n\r", regVal);
+
+    return rc;
 }
 
 /* Read 6 bytes of Manufacturer and Device ID */
@@ -514,7 +560,7 @@ static cy_en_smif_status_t qspi_read_memory_id(uint8_t *id, uint16_t length)
     uint8_t command = 0x9Fu;
     uint16_t dummyCycles = 64u;
 
-    memCfg = qspi_get_memory_config(0);
+    memCfg = qspi_get_memory_config(0u);
 
     status = Cy_SMIF_TransmitCommand(QSPIPort,
                                     command,
@@ -542,90 +588,92 @@ static cy_en_smif_status_t qspi_read_memory_id(uint8_t *id, uint16_t length)
     /* Wait until the SMIF block completes receiving data */
     if(CY_SMIF_SUCCESS == status)
     {
-        while(Cy_SMIF_GetTransferStatus(QSPIPort, &QSPI_context) == CY_SMIF_RX_BUSY);
-        // status = PollTransferStatus(QSPIPort, CY_SMIF_REC_CMPLT, &QSPI_context);
+        status = poll_transfer_status(QSPIPort, CY_SMIF_REC_CMPLT, &QSPI_context);
     }
 
     return status;
 }
 
-static cy_en_smif_status_t qspi_read_register(void)
+static cy_en_smif_status_t qspi_read_register(uint32_t address, uint8_t *value)
 {
     cy_en_smif_status_t status;
     cy_stc_smif_mem_config_t *memCfg;
-    const uint8_t address[4] = {0x00, 0x80, 0x00, 0x00};
-    uint8_t command = 0x65u; //0x05u;
+    uint8_t addressArray[SEMPER_ADDR_LEN];
     uint16_t dummyCycles = 8u;
-    uint8_t regVal = 0;
 
-    printf("Start, %x, %i\n\r", command, dummyCycles);
+    value_to_byte_array(address, addressArray, 0u, sizeof(addressArray));
 
-    memCfg = qspi_get_memory_config(0);
+    memCfg = qspi_get_memory_config(0u);
 
     status = Cy_SMIF_TransmitCommand(QSPIPort,
-                                    command,
+                                    SEMPER_RDARG_CMD,
                                     CY_SMIF_WIDTH_SINGLE,
-                                    address,
-                                    sizeof(address),
+                                    addressArray,
+                                    sizeof(addressArray),
                                     CY_SMIF_WIDTH_SINGLE,
                                     memCfg->slaveSelect,
                                     CY_SMIF_TX_NOT_LAST_BYTE,
                                     &QSPI_context);
 
-    // printf("%x\n\r", status);
+    if(CY_SMIF_SUCCESS == status)
+    {
+        status = Cy_SMIF_SendDummyCycles(QSPIPort, dummyCycles);
+    }
 
-    // status = Cy_SMIF_SendDummyCycles(QSPIPort, dummyCycles);
-
-    // printf("%x\n\r", status);
-
-    // status = Cy_SMIF_ReceiveData(QSPIPort, &regVal, CY_SMIF_READ_ONE_BYTE,
-                                // CY_SMIF_WIDTH_SINGLE,
-                                // NULL, /* Callback function is not used */
-                                // &QSPI_context);
-
-    // printf("%x\n\r", status);
-
-    status = Cy_SMIF_ReceiveDataBlocking(QSPIPort, &regVal,
+    if(CY_SMIF_SUCCESS == status)
+    {
+        status = Cy_SMIF_ReceiveDataBlocking(QSPIPort, value,
                     CY_SMIF_READ_ONE_BYTE, CY_SMIF_WIDTH_SINGLE, &QSPI_context);
-
-    /* Wait until the SMIF block completes receiving data */
-    // status = PollTransferStatus(QSPIPort, CY_SMIF_REC_CMPLT, &QSPI_context);
-    while(Cy_SMIF_GetTransferStatus(QSPIPort, &QSPI_context) == CY_SMIF_RX_BUSY);
-
-    printf("%x, %x\n\r", status, regVal);
+    }
 
     return status;
 }
 
-static cy_en_smif_status_t qspi_write_register(void)
+static cy_en_smif_status_t qspi_write_register(uint32_t address, uint8_t value)
 {
     cy_en_smif_status_t status;
     cy_stc_smif_mem_config_t *memCfg;
+    uint8_t data[SEMPER_ADDR_LEN + 1u];
 
-    /* Write Register 0x01 */
-    // uint8_t command = 0x01u;
-    // uint8_t data[5] = {0x00, 0x00, 0x08, 0x08, 0x08};
+    value_to_byte_array(address, data, 0u, SEMPER_ADDR_LEN);
 
-    /* Write Any Register 0x71 */
-    uint8_t command = 0x71u;
-    uint8_t data[5] = {0x00, 0x00, 0x00, 0x04, 0x08};
+    data[SEMPER_WRARG_DATA_INDEX] = value;
 
-    memCfg = qspi_get_memory_config(0);
+    memCfg = qspi_get_memory_config(0u);
 
     status = Cy_SMIF_MemCmdWriteEnable(QSPIPort, memCfg, &QSPI_context);
 
-    status = Cy_SMIF_TransmitCommand(QSPIPort, command,
-                                     CY_SMIF_WIDTH_SINGLE,
-                                     data, sizeof(data),
-                                     CY_SMIF_WIDTH_SINGLE,
-                                     memCfg->slaveSelect,
-                                     CY_SMIF_TX_LAST_BYTE,
-                                     &QSPI_context);
+    if(CY_SMIF_SUCCESS == status)
+    {
+        status = Cy_SMIF_TransmitCommand(QSPIPort, SEMPER_WRARG_CMD,
+                                        CY_SMIF_WIDTH_SINGLE,
+                                        data, sizeof(data),
+                                        CY_SMIF_WIDTH_SINGLE,
+                                        memCfg->slaveSelect,
+                                        CY_SMIF_TX_LAST_BYTE,
+                                        &QSPI_context);
+    }
+
+    if(CY_SMIF_SUCCESS == status)
+    {
+        status = Cy_SMIF_MemIsReady(QSPIPort, memCfg, SEMPER_WR_NV_TIMEOUT,
+                                    &QSPI_context);
+    }
 
     return status;
 }
 
-static cy_en_smif_status_t PollTransferStatus(SMIF_Type const *base, cy_en_smif_txfr_status_t transferStatus,
+static void value_to_byte_array(uint32_t value, uint8_t *byteArray, uint32_t startPos, uint32_t size)
+{
+    do
+    {
+        size--;
+        byteArray[size + startPos] = (uint8_t)(value & PARAM_ID_LSB_MASK);
+        value >>= PARAM_ID_MSB_OFFSET; /* Shift to get the next byte */
+    } while (size > 0U);
+}
+
+static cy_en_smif_status_t poll_transfer_status(SMIF_Type const *base, cy_en_smif_txfr_status_t transferStatus,
                                               cy_stc_smif_context_t const *context)
 {
     cy_en_smif_status_t status = CY_SMIF_SUCCESS;
