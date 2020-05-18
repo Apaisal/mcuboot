@@ -65,7 +65,7 @@ SECURE_APP_START ?= 0x10000000
 ifeq ($(PLATFORM), PSOC_064_2M)
 	DEFINES_APP += -DRAM_START=0x080E0000
 	DEFINES_APP += -DRAM_SIZE=0xC000
-	CY_SEC_TOOLS_TARGET := cyb06xxa
+	CY_SEC_TOOLS_TARGET ?= cyb06xxa
 	ifeq ($(SMIF_UPGRADE), 0)
 		# Determine path to multi image policy file
 		IMAGE_POLICY ?= $(CY_SEC_TOOLS_PATH)/cysecuretools/targets/$(CY_SEC_TOOLS_TARGET)/policy/policy_multi_CM0_CM4.json
