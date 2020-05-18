@@ -72,10 +72,13 @@ This will inherit system's PATH so should find `python3.7` installed in regular 
 *Msys2* - to use systems PATH navigate to msys2 folder, open `msys2_shell.cmd`, uncomment set `MSYS2_PATH_TYPE=inherit`, restart MSYS2 shell.
 
 *Cygwin* When uning Cygwin in Windows OS the CURDIR environment variable redefinition needed:
+
     CURDIR=`cygpath --mixed -a .`
 
 *GCC* The path to GCC compiller can be required. Modus Toolbox compiller given as example:
+
     TOOLCHAIN_PATH='C:/Users/$(USER)/ModusToolbox/tools_2.1/gcc-7.2.1'
 
 *PSOC_064_2M* For PSOC_064_2M boards B0 kit type are default. For S0 type, use:
+
     CY_SEC_TOOLS_TARGET='cys06xxa'
