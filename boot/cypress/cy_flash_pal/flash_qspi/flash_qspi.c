@@ -334,10 +334,11 @@ const cy_stc_gpio_pin_config_t QSPI_SCK_config =
 };
 
 static bool qspi_is_semper_flash(void);
-static int32_t qspi_configure_semper_flash(void);
+static cy_en_smif_status_t qspi_configure_semper_flash(void);
 static cy_en_smif_status_t qspi_read_memory_id(uint8_t *id, uint16_t length);
 static cy_en_smif_status_t qspi_read_register(uint32_t address, uint8_t *value);
 static cy_en_smif_status_t qspi_write_register(uint32_t address, uint8_t value);
+static cy_en_smif_status_t qspi_enter_4byte_addr_mode(void);
 static void value_to_byte_array(uint32_t value, uint8_t *byteArray,
                                 uint32_t startPos, uint32_t size);
 static cy_en_smif_status_t poll_transfer_status(SMIF_Type const *base,
@@ -420,6 +421,8 @@ cy_stc_smif_context_t *qspi_get_context()
 
 #define SEMPER_WRARG_CMD        (0x71U) /* Write Any Register command */
 #define SEMPER_RDARG_CMD        (0x65U) /* Read Any Register command */
+#define SEMPER_EN4BA_CMD        (0xB7U) /* Enter 4 Byte Address Mode */
+#define SEMPER_ER256_CMD        (0xD8U) /* Erase 256-KB Sector */
 
 #define SEMPER_CFR2N_ADDR       (0x00000003UL) /* Non-volatile Configuration Register 2 address */
 #define SEMPER_CFR3N_ADDR       (0x00000004UL) /* Non-volatile Configuration Register 3 address */
@@ -432,6 +435,8 @@ cy_stc_smif_context_t *qspi_get_context()
 #define SEMPER_WR_NV_TIMEOUT    (500000U) /* Nonvolatile Register Write operation timeout */
 
 #define SEMPER_ADDR_LEN         (4U)
+
+#define SEMPER_ERASE_SIZE       (262144u) /* Erase size for Semper Flash is 256KB */
 
 #define PARAM_ID_MSB_OFFSET     (0x08U)  /* The offset of Parameter ID MSB */
 #define PARAM_ID_LSB_MASK       (0xFFUL) /* The mask of Parameter ID LSB */
@@ -448,16 +453,7 @@ cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config)
 
         if(qspi_is_semper_flash() == true)
         {
-            printf("Semper\n\r");
-
-            if(qspi_configure_semper_flash() == 0)
-            {
-                printf("OK\n\r");
-            }
-            else
-            {
-                printf("Fail\n\r");
-            }
+            st = qspi_configure_semper_flash();
         }
     }
     return st;
@@ -513,43 +509,43 @@ static bool qspi_is_semper_flash(void)
     return isSemper;
 }
 
-static int32_t qspi_configure_semper_flash(void)
+static cy_en_smif_status_t qspi_configure_semper_flash(void)
 {
-    int32_t rc = 0;
     cy_en_smif_status_t status;
     uint8_t regVal;
+    cy_stc_smif_mem_config_t *memCfg;
 
-    // /* Set Address Byte Length selection to 4 bytes for instructions */
-    // status = qspi_read_register(SEMPER_CFR2N_ADDR, &regVal);
-    // if((CY_SMIF_SUCCESS == status) &&
-       // ((regVal & SEMPER_CFR2N_ADRBYT) == 0))
-    // {
-        // regVal |= SEMPER_CFR2N_ADRBYT;
-        // status = qspi_write_register(SEMPER_CFR2N_ADDR, regVal);
+    status = qspi_enter_4byte_addr_mode();
 
-        // if(CY_SMIF_SUCCESS == status)
-        // {
-            // regVal = 0;
-            // status = qspi_read_register(SEMPER_CFR2N_ADDR, &regVal);
-            // if((CY_SMIF_SUCCESS == status) &&
-               // ((regVal & SEMPER_CFR2N_ADRBYT) == 0))
-            // {
-                // rc = -1;
-            // }
-        // }
-    // }
+    if(CY_SMIF_SUCCESS == status)
+    {
+        /* Set Address Byte Length selection to 4 bytes for instructions */
+        status = qspi_read_register(SEMPER_CFR2N_ADDR, &regVal);
+        if((CY_SMIF_SUCCESS == status) &&
+           ((regVal & SEMPER_CFR2N_ADRBYT) == 0))
+        {
+            regVal |= SEMPER_CFR2N_ADRBYT;
+            status = qspi_write_register(SEMPER_CFR2N_ADDR, regVal);
+        }
 
-    // printf(">%x\n\r", regVal);
+        /* Enable Uniform Sector Architecture selection */
+        status = qspi_read_register(SEMPER_CFR3N_ADDR, &regVal);
+        if((CY_SMIF_SUCCESS == status) &&
+           ((regVal & SEMPER_CFR3N_UNHYSA) == 0))
+        {
+            regVal |= SEMPER_CFR3N_UNHYSA;
+            status = qspi_write_register(SEMPER_CFR3N_ADDR, regVal);
+        }
 
-    regVal = 0x08u;
-    status = qspi_write_register(SEMPER_CFR3N_ADDR, regVal);
+        if(CY_SMIF_SUCCESS == status)
+        {
+            memCfg = qspi_get_memory_config(0u);
+            memCfg->deviceCfg->eraseSize = SEMPER_ERASE_SIZE;
+            memCfg->deviceCfg->eraseCmd->command = SEMPER_ER256_CMD;
+        }
+    }
 
-    regVal = 0;
-    status = qspi_read_register(SEMPER_CFR3N_ADDR, &regVal);
-
-    printf(">%x\n\r", regVal);
-
-    return rc;
+    return status;
 }
 
 /* Read 6 bytes of Manufacturer and Device ID */
@@ -659,6 +655,25 @@ static cy_en_smif_status_t qspi_write_register(uint32_t address, uint8_t value)
         status = Cy_SMIF_MemIsReady(QSPIPort, memCfg, SEMPER_WR_NV_TIMEOUT,
                                     &QSPI_context);
     }
+
+    return status;
+}
+
+static cy_en_smif_status_t qspi_enter_4byte_addr_mode(void)
+{
+    cy_en_smif_status_t status;
+    cy_stc_smif_mem_config_t *memCfg;
+
+    memCfg = qspi_get_memory_config(0u);
+
+    status = Cy_SMIF_TransmitCommand(QSPIPort, SEMPER_EN4BA_CMD,
+                                    CY_SMIF_WIDTH_SINGLE,
+                                    CY_SMIF_CMD_WITHOUT_PARAM,
+                                    CY_SMIF_CMD_WITHOUT_PARAM,
+                                    CY_SMIF_WIDTH_SINGLE,
+                                    memCfg->slaveSelect,
+                                    CY_SMIF_TX_LAST_BYTE,
+                                    &QSPI_context);
 
     return status;
 }

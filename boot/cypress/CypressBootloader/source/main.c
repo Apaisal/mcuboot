@@ -274,11 +274,6 @@ int Cy_Bl_InitSMIF(void)
     int rc = 0;
     uint32_t smif_id = 0;
 
-    //////////////////////////////////////////////////
-    // volatile uint32_t test = 0;
-    // while(test == 0);
-    //////////////////////////////////////////////////
-
         /* initialize SMIF if at least one secondary slot requires it */
     if(cy_bl_bnu_policy.bnu_img_policy[0].smif_id != 0U)
     {
