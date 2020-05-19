@@ -1,5 +1,7 @@
 ### "Secure" Blinking application to test milti-image in CyBootloader.
 
+For more information about all project options use ../Readme.md (One level up)
+
 **Description:**
 
 Implements simple Blinky LED `CM0p` application to demonstrate milti-image configuration of CypressBootloader.

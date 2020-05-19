@@ -2,6 +2,8 @@
 
 CypressBootloader is based on MCUBoot library and intended to be used with Cypress PSoC64 Secure Boot enabled chips. It is mandatory application on each PSoC64 device.
 
+For more information about all project options use ../Readme.md (One level up)
+
 **Description:**
 
 Features implemented:

@@ -1,5 +1,7 @@
 ### Blinking LED test application for MCUBoot Bootloader.
 
+For more information about all project options use ../Readme.md (One level up)
+
 **Description:**
 
 Implements simple Blinky LED CM4 application to demonstrate MCUBoot Application operation in terms of BOOT and UPGRADE process.
