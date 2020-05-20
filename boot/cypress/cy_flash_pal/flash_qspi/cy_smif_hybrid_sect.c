@@ -97,6 +97,7 @@
 #define SEMPER_WRARG_DATA_INDEX (4U) /* Input data index for WRARG command */
 
 #define SEMPER_WR_NV_TIMEOUT    (500000U) /* Nonvolatile Register Write operation timeout */
+#define SEMPER_ERASE_256KB_TIME (6000U)   /* 256 KB Sector Erase Time in ms */
 
 #define SEMPER_ADDR_LEN         (4U)
 
@@ -198,6 +199,7 @@ cy_en_smif_status_t qspi_configure_semper_flash(void)
             memCfg = qspi_get_memory_config(0u);
             memCfg->deviceCfg->eraseSize = SEMPER_ERASE_SIZE;
             memCfg->deviceCfg->eraseCmd->command = SEMPER_ER256_CMD;
+            memCfg->deviceCfg->eraseTime = SEMPER_ERASE_256KB_TIME;
         }
     }
 
