@@ -212,6 +212,12 @@ int flash_area_open(uint8_t id, const struct flash_area **fa)
         i++;
     }
 
+#ifdef CY_BOOT_USE_EXTERNAL_FLASH
+    if (((*fa)->fa_device_id & FLASH_DEVICE_EXTERNAL_FLAG) == FLASH_DEVICE_EXTERNAL_FLAG)
+    {
+        qspi_enable();
+    }
+#endif
 
     return ret;
 }
@@ -219,10 +225,15 @@ int flash_area_open(uint8_t id, const struct flash_area **fa)
 /*
 * Clear pointer to flash area fa
 */
-
 void flash_area_close(const struct flash_area *fa)
 {
     (void)fa; /* Nothing to do there */
+#ifdef CY_BOOT_USE_EXTERNAL_FLASH
+    if ((fa->fa_device_id & FLASH_DEVICE_EXTERNAL_FLAG) == FLASH_DEVICE_EXTERNAL_FLAG)
+    {
+        qspi_disable();
+    }
+#endif
 }
 
 /*
@@ -233,7 +244,7 @@ int flash_area_read(const struct flash_area *fa, uint32_t off, void *dst,
 {
     int rc = 0;
     size_t addr;
-    
+
     /* check if requested offset not less then flash area (fa) start */
     assert(off < fa->fa_off);
     assert(off + len < fa->fa_off);
@@ -280,7 +291,7 @@ int flash_area_write(const struct flash_area *fa, uint32_t off,
 
     assert(off < fa->fa_off);
     assert(off + len < fa->fa_off);
-    
+
     /* convert to absolute address inside a device */
     write_start_addr = fa->fa_off + off;
     write_end_addr = fa->fa_off + off + len;
@@ -294,7 +305,7 @@ int flash_area_write(const struct flash_area *fa, uint32_t off,
         uint32_t row_addr = 0;
 
         assert(!(len % CY_FLASH_SIZEOF_ROW));
-        /* Check if chunk size for write request is exactly equal to 
+        /* Check if chunk size for write request is exactly equal to
             one internal flash row size. This implementation is defined
             by design of MCUBoot. If this assert is deleted, function
             works with any length of bytes, aligned by row size. */
