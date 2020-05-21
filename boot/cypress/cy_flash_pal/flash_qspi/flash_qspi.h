@@ -57,6 +57,9 @@ uint32_t qspi_get_prog_size(void);
 uint32_t qspi_get_erase_size(void);
 uint32_t qspi_get_mem_size(void);
 
+void qspi_enable(void);
+void qspi_disable(void);
+
 SMIF_Type *qspi_get_device(void);
 cy_stc_smif_context_t *qspi_get_context(void);
 cy_stc_smif_mem_config_t *qspi_get_memory_config(int index);

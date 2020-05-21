@@ -330,6 +330,8 @@ const cy_stc_gpio_pin_config_t QSPI_SCK_config =
 	.vohSel = 0UL,
 };
 
+static uint32_t qspiReservations = 0u;
+
 void Isr_SMIF(void)
 {
     Cy_SMIF_Interrupt(QSPIPort, &QSPI_context);
@@ -359,22 +361,42 @@ cy_en_smif_status_t qspi_init_hardware()
     Cy_SysClk_ClkHfSetDivider(CY_SYSCLK_CLKHF_IN_CLKPATH2, CY_SMIF_SYSCLK_HFCLK_DIVIDER);
     Cy_SysClk_ClkHfEnable(CY_SYSCLK_CLKHF_IN_CLKPATH2);
 
-    /*
-     * Setup the interrupt for the SMIF block.  For the CM0 there
-     * is a two stage process to setup the interrupts.
-     */
-    Cy_SysInt_Init(&smifIntConfig, Isr_SMIF);
-
     st = Cy_SMIF_Init(QSPIPort, &QSPI_config, 1000, &QSPI_context);
     if (st != CY_SMIF_SUCCESS)
     {
         return st;
     }
-    NVIC_EnableIRQ(smifIntConfig.intrSrc); /* Finally, Enable the SMIF interrupt */
-
-    Cy_SMIF_Enable(QSPIPort, &QSPI_context);
 
     return CY_SMIF_SUCCESS;
+}
+
+void qspi_enable(void)
+{
+    if (0u == qspiReservations)
+    {
+        /*
+         * Setup the interrupt for the SMIF block.  For the CM0 there
+         * is a two stage process to setup the interrupts.
+         */
+        Cy_SysInt_Init(&smifIntConfig, Isr_SMIF);
+        NVIC_EnableIRQ(smifIntConfig.intrSrc); /* Enable the SMIF interrupt */
+        Cy_SMIF_Enable(QSPIPort, &QSPI_context);
+    }
+    qspiReservations++;
+}
+
+void qspi_disable(void)
+{
+    if (0u < qspiReservations)
+    {
+        qspiReservations--;
+
+        if (0u == qspiReservations)
+        {
+            Cy_SMIF_Disable(QSPIPort);
+            Cy_SysInt_DisconnectInterruptSource(smifIntConfig.intrSrc, smifIntConfig.cm0pSrc);
+        }
+    }
 }
 
 cy_stc_smif_mem_config_t *qspi_get_memory_config(int index)
@@ -400,6 +422,8 @@ cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config)
     st = qspi_init_hardware();
     if (st == CY_SMIF_SUCCESS)
     {
+        qspi_enable();
+
         smif_blk_config = blk_config;
         st = Cy_SMIF_MemInit(QSPIPort, smif_blk_config, &QSPI_context);
 
@@ -415,6 +439,8 @@ cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config)
                 st = qspi_configure_semper_flash();
             }
         }
+
+        qspi_disable();
     }
     return st;
 }
