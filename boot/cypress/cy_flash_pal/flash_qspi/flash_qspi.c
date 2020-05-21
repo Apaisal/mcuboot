@@ -395,6 +395,7 @@ cy_stc_smif_context_t *qspi_get_context()
 cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config)
 {
     cy_en_smif_status_t st;
+    uint8_t devIdBuff[EXT_MEMORY_ID_LENGTH];
 
     st = qspi_init_hardware();
     if (st == CY_SMIF_SUCCESS)
@@ -402,9 +403,17 @@ cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config)
         smif_blk_config = blk_config;
         st = Cy_SMIF_MemInit(QSPIPort, smif_blk_config, &QSPI_context);
 
-        if(qspi_is_semper_flash() == true)
+        if(st == CY_SMIF_SUCCESS)
         {
-            st = qspi_configure_semper_flash();
+            st = qspi_read_memory_id(devIdBuff, EXT_MEMORY_ID_LENGTH);
+        }
+
+        if(st == CY_SMIF_SUCCESS)
+        {
+            if(qspi_is_semper_flash(devIdBuff) == true)
+            {
+                st = qspi_configure_semper_flash();
+            }
         }
     }
     return st;

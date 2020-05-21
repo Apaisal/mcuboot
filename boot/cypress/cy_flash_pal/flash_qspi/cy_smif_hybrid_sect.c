@@ -70,8 +70,6 @@
                                           * the transfer status of the SMIF block
                                           */
 
-#define SEMPER_ID_LENGTH        (6U)
-
 #define SEMPER_ID_MANUF         (0x34)
 #define SEMPER_ID_DEV_MSB1      (0x2A)
 #define SEMPER_ID_DEV_MSB2      (0x2B)
@@ -106,7 +104,6 @@
 #define PARAM_ID_MSB_OFFSET     (0x08U)  /* The offset of Parameter ID MSB */
 #define PARAM_ID_LSB_MASK       (0xFFUL) /* The mask of Parameter ID LSB */
 
-static cy_en_smif_status_t qspi_read_memory_id(uint8_t *id, uint16_t length);
 static cy_en_smif_status_t qspi_read_register(uint32_t address, uint8_t *value);
 static cy_en_smif_status_t qspi_write_register(uint32_t address, uint8_t value);
 static cy_en_smif_status_t qspi_enter_4byte_addr_mode(void);
@@ -115,49 +112,46 @@ static void value_to_byte_array(uint32_t value, uint8_t *byteArray,
 static cy_en_smif_status_t poll_transfer_status(SMIF_Type const *base,
                                                 cy_en_smif_txfr_status_t transferStatus,
                                                 cy_stc_smif_context_t const *context);
-                                                
-bool qspi_is_semper_flash(void)
+
+/* Checks device and manufacturer ID. Expects ID buffer to be 6 byte length */
+bool qspi_is_semper_flash(uint8_t id[])
 {
     bool isSemper = false;
-    cy_en_smif_status_t status;
-    uint8_t buff[SEMPER_ID_LENGTH];
 
-    status = qspi_read_memory_id(buff, SEMPER_ID_LENGTH);
-
-    if(CY_SMIF_SUCCESS == status)
+    if(id != NULL)
     {
         isSemper = true;
 
         /* Check Manufacturer and Device ID if it is Semper flash */
-        if(buff[0] != SEMPER_ID_MANUF)
+        if(id[0] != SEMPER_ID_MANUF)
         {
             isSemper = false;
         }
 
-        if(isSemper && ((buff[1u] != SEMPER_ID_DEV_MSB1) &&
-                        (buff[1u] != SEMPER_ID_DEV_MSB2)))
+        if(isSemper && ((id[1u] != SEMPER_ID_DEV_MSB1) &&
+                        (id[1u] != SEMPER_ID_DEV_MSB2)))
         {
             isSemper = false;
         }
 
-        if(isSemper && ((buff[2u] != SEMPER_ID_DEV_LSB1) &&
-                        (buff[2u] != SEMPER_ID_DEV_LSB2) &&
-                        (buff[2u] != SEMPER_ID_DEV_LSB3)))
+        if(isSemper && ((id[2u] != SEMPER_ID_DEV_LSB1) &&
+                        (id[2u] != SEMPER_ID_DEV_LSB2) &&
+                        (id[2u] != SEMPER_ID_DEV_LSB3)))
         {
             isSemper = false;
         }
 
-        if(isSemper && (buff[3u] != SEMPER_ID_LEN))
+        if(isSemper && (id[3u] != SEMPER_ID_LEN))
         {
             isSemper = false;
         }
 
-        if(isSemper && (buff[4u] != SEMPER_ID_SECTARCH))
+        if(isSemper && (id[4u] != SEMPER_ID_SECTARCH))
         {
             isSemper = false;
         }
 
-        if(isSemper && (buff[5u] != SEMPER_ID_FAMILY))
+        if(isSemper && (id[5u] != SEMPER_ID_FAMILY))
         {
             isSemper = false;
         }
@@ -186,12 +180,15 @@ cy_en_smif_status_t qspi_configure_semper_flash(void)
         }
 
         /* Enable Uniform Sector Architecture selection */
-        status = qspi_read_register(SEMPER_CFR3N_ADDR, &regVal);
-        if((CY_SMIF_SUCCESS == status) &&
-           ((regVal & SEMPER_CFR3N_UNHYSA) == 0))
+        if(CY_SMIF_SUCCESS == status)
         {
-            regVal |= SEMPER_CFR3N_UNHYSA;
-            status = qspi_write_register(SEMPER_CFR3N_ADDR, regVal);
+            status = qspi_read_register(SEMPER_CFR3N_ADDR, &regVal);
+            if((CY_SMIF_SUCCESS == status) &&
+               ((regVal & SEMPER_CFR3N_UNHYSA) == 0))
+            {
+                regVal |= SEMPER_CFR3N_UNHYSA;
+                status = qspi_write_register(SEMPER_CFR3N_ADDR, regVal);
+            }
         }
 
         if(CY_SMIF_SUCCESS == status)
@@ -207,7 +204,7 @@ cy_en_smif_status_t qspi_configure_semper_flash(void)
 }
 
 /* Read 6 bytes of Manufacturer and Device ID */
-static cy_en_smif_status_t qspi_read_memory_id(uint8_t *id, uint16_t length)
+cy_en_smif_status_t qspi_read_memory_id(uint8_t *id, uint16_t length)
 {
     cy_en_smif_status_t status;
     cy_stc_smif_mem_config_t *memCfg;
