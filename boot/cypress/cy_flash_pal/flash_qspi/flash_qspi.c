@@ -405,12 +405,12 @@ cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config)
 
         if(st == CY_SMIF_SUCCESS)
         {
-            st = qspi_read_memory_id(devIdBuff, EXT_MEMORY_ID_LENGTH);
+            st = qspi_read_memory_id(devIdBuff, sizeof(devIdBuff));
         }
 
         if(st == CY_SMIF_SUCCESS)
         {
-            if(qspi_is_semper_flash(devIdBuff) == true)
+            if(qspi_is_semper_flash(devIdBuff, sizeof(devIdBuff)) == true)
             {
                 st = qspi_configure_semper_flash();
             }

@@ -114,7 +114,7 @@ static cy_en_smif_status_t poll_transfer_status(SMIF_Type const *base,
                                                 cy_stc_smif_context_t const *context);
 
 /* Checks device and manufacturer ID. Expects ID buffer to be 6 byte length */
-bool qspi_is_semper_flash(uint8_t id[])
+bool qspi_is_semper_flash(uint8_t id[], uint16_t length)
 {
     bool isSemper = false;
 
@@ -123,35 +123,35 @@ bool qspi_is_semper_flash(uint8_t id[])
         isSemper = true;
 
         /* Check Manufacturer and Device ID if it is Semper flash */
-        if(id[0] != SEMPER_ID_MANUF)
+        if(id[length - 6u] != SEMPER_ID_MANUF)
         {
             isSemper = false;
         }
 
-        if(isSemper && ((id[1u] != SEMPER_ID_DEV_MSB1) &&
-                        (id[1u] != SEMPER_ID_DEV_MSB2)))
+        if(isSemper && ((id[length - 5u] != SEMPER_ID_DEV_MSB1) &&
+                        (id[length - 5u] != SEMPER_ID_DEV_MSB2)))
         {
             isSemper = false;
         }
 
-        if(isSemper && ((id[2u] != SEMPER_ID_DEV_LSB1) &&
-                        (id[2u] != SEMPER_ID_DEV_LSB2) &&
-                        (id[2u] != SEMPER_ID_DEV_LSB3)))
+        if(isSemper && ((id[length - 4u] != SEMPER_ID_DEV_LSB1) &&
+                        (id[length - 4u] != SEMPER_ID_DEV_LSB2) &&
+                        (id[length - 4u] != SEMPER_ID_DEV_LSB3)))
         {
             isSemper = false;
         }
 
-        if(isSemper && (id[3u] != SEMPER_ID_LEN))
+        if(isSemper && (id[length - 3u] != SEMPER_ID_LEN))
         {
             isSemper = false;
         }
 
-        if(isSemper && (id[4u] != SEMPER_ID_SECTARCH))
+        if(isSemper && (id[length - 2u] != SEMPER_ID_SECTARCH))
         {
             isSemper = false;
         }
 
-        if(isSemper && (id[5u] != SEMPER_ID_FAMILY))
+        if(isSemper && (id[length - 1u] != SEMPER_ID_FAMILY))
         {
             isSemper = false;
         }

@@ -50,8 +50,8 @@
 
 #define EXT_MEMORY_ID_LENGTH    (6U)
 
-bool qspi_is_semper_flash(uint8_t *id);
+bool qspi_is_semper_flash(uint8_t id[], uint16_t length);
 cy_en_smif_status_t qspi_configure_semper_flash(void);
-cy_en_smif_status_t qspi_read_memory_id(uint8_t *id, uint16_t length);
+cy_en_smif_status_t qspi_read_memory_id(uint8_t id[], uint16_t length);
 
 #endif
