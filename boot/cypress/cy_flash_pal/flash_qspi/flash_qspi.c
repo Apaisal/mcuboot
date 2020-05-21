@@ -66,6 +66,7 @@
 #include "cy_pdl.h"
 #include <stdio.h>
 #include "flash_qspi.h"
+#include "cy_smif_hybrid_sect.h"
 
 #define CY_SMIF_SYSCLK_HFCLK_DIVIDER     CY_SYSCLK_CLKHF_DIVIDE_BY_4
 
@@ -394,12 +395,26 @@ cy_stc_smif_context_t *qspi_get_context()
 cy_en_smif_status_t qspi_init(cy_stc_smif_block_config_t *blk_config)
 {
     cy_en_smif_status_t st;
+    uint8_t devIdBuff[EXT_MEMORY_ID_LENGTH];
 
     st = qspi_init_hardware();
     if (st == CY_SMIF_SUCCESS)
     {
         smif_blk_config = blk_config;
         st = Cy_SMIF_MemInit(QSPIPort, smif_blk_config, &QSPI_context);
+
+        if(st == CY_SMIF_SUCCESS)
+        {
+            st = qspi_read_memory_id(devIdBuff, sizeof(devIdBuff));
+        }
+
+        if(st == CY_SMIF_SUCCESS)
+        {
+            if(qspi_is_semper_flash(devIdBuff, sizeof(devIdBuff)) == true)
+            {
+                st = qspi_configure_semper_flash();
+            }
+        }
     }
     return st;
 }
