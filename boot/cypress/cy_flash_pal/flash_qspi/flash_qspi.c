@@ -394,6 +394,7 @@ void qspi_disable(void)
         if (0u == qspiReservations)
         {
             Cy_SMIF_Disable(QSPIPort);
+            NVIC_DisableIRQ(smifIntConfig.intrSrc); /* Disable the SMIF interrupt */
             Cy_SysInt_DisconnectInterruptSource(smifIntConfig.intrSrc, smifIntConfig.cm0pSrc);
         }
     }
