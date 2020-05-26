@@ -301,7 +301,7 @@ int flash_area_write(const struct flash_area *fa, uint32_t off,
 #endif
     if (fa->fa_device_id == FLASH_DEVICE_INTERNAL_FLASH)
     {
-        int row_number = 0;
+        uint32_t row_number = 0;
         uint32_t row_addr = 0;
 
         assert(!(len % CY_FLASH_SIZEOF_ROW));
@@ -392,7 +392,7 @@ int flash_area_erase(const struct flash_area *fa, uint32_t off, uint32_t len)
 /*< Returns this `flash_area`s alignment */
 size_t flash_area_align(const struct flash_area *fa)
 {
-    uint8_t ret = -1;
+    int ret = -1;
     if (fa->fa_device_id == FLASH_DEVICE_INTERNAL_FLASH)
     {
         ret = CY_FLASH_ALIGN;
@@ -524,7 +524,7 @@ int flash_area_get_sectors(int idx, uint32_t *cnt, struct flash_sector *ret)
 {
     int rc = 0;
     uint32_t i = 0;
-    struct flash_area *fa;
+    struct flash_area *fa = NULL;
 
     while(NULL != boot_area_descs[i])
     {

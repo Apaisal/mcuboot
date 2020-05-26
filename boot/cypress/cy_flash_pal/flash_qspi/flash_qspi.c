@@ -98,7 +98,9 @@ struct qspi_ss_config
     en_hsiom_sel_t SS_Mux;
 };
 
-#if (defined(PSOC_064_2M) || defined(PSOC_064_1M))
+#if (defined(PSOC_064_2M) || \
+    defined(PSOC_064_1M) || \
+    defined(PSOC_062_2M))
     #define CY_BOOTLOADER_SMIF_SS_CFG_NUM 4
 #elif defined(PSOC_064_512K)
     #define CY_BOOTLOADER_SMIF_SS_CFG_NUM 3
