@@ -365,14 +365,12 @@ int flash_area_erase(const struct flash_area *fa, uint32_t off, uint32_t len)
         uint32_t row_addr = 0;
 
         row_number = (erase_end_addr - erase_start_addr) / CY_FLASH_SIZEOF_ROW;
-        row_addr = erase_start_addr;
 
-        while (row_number > 0){
-
-            rc = Cy_Flash_EraseRow(row_addr);
-            row_addr = erase_start_addr + row_number * (uint32_t) CY_FLASH_SIZEOF_ROW;
-
+        while (row_number != 0)
+        {
             row_number--;
+            row_addr = erase_start_addr + row_number * (uint32_t) CY_FLASH_SIZEOF_ROW;
+            rc = Cy_Flash_EraseRow(row_addr);
         }
     }
 #ifdef CY_BOOT_USE_EXTERNAL_FLASH
