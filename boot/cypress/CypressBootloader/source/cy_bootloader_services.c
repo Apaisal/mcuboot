@@ -163,7 +163,6 @@ void Cy_BLServ_Assert(int expr)
     if(0 == expr)
     {
         volatile perm_policy_t cm4ApPermission = debug_policy.m4_policy.permission;
-        volatile perm_policy_t sysApPermission = debug_policy.sys_policy.permission;
         volatile uint32_t windowTime = cy_bl_bnu_policy.bnu_img_policy[0].acq_win;
 
         BOOT_LOG_ERR("There is an error occurred during bootloader flow. MCU stopped.");
@@ -175,7 +174,6 @@ void Cy_BLServ_Assert(int expr)
         memset((void*)__HeapBase,    0, ((size_t)__HeapLimit - (size_t)__HeapBase));
 
         debug_policy.m4_policy.permission = cm4ApPermission;
-        debug_policy.sys_policy.permission = sysApPermission;
         cy_bl_bnu_policy.bnu_img_policy[0].acq_win = windowTime;
 
         __set_MSP((uint32_t)__HeapBase);
