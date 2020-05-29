@@ -82,7 +82,6 @@ mac_1M_Bootloader:
 
 mac_1M_BlinkyApp:
   extends: .build_1M
-
   tags:
     - FWS_MAC_BUILD
   script:
@@ -788,9 +787,9 @@ mac_512K_SecureBlinkyApp_smif:
       IMG_TYPE=UPGRADE
       BUILDCFG=Debug
 
-lin_1M_Bootloader:
-  extends: .build_1M
 
+lin_1M_Bootloader:
+  stage: Build_1M
   tags:
     - FWS_LIN_BUILD
   script:
@@ -812,8 +811,7 @@ lin_1M_Bootloader:
       # POST_BUILD=1
 
 lin_1M_BlinkyApp:
-  extends: .build_1M
-
+  stage: Build_1M
   tags:
     - FWS_LIN_BUILD
   script:
@@ -853,7 +851,7 @@ lin_1M_BlinkyApp:
       BUILDCFG=Debug
 
 lin_1M_Multi_BlinkyApp:
-  extends: .build_1M
+  stage: Build_1M
 
   tags:
     - FWS_LIN_BUILD
@@ -898,7 +896,7 @@ lin_1M_Multi_BlinkyApp:
       BUILDCFG=Debug
 
 lin_1M_SecureBlinkyApp:
-  extends: .build_1M
+  stage: Build_1M
 
   tags:
     - FWS_LIN_BUILD
@@ -935,7 +933,7 @@ lin_1M_SecureBlinkyApp:
       BUILDCFG=Debug
 
 lin_512K_Bootloader:
-  extends: .build_512K
+  stage: Build_512K
 
   tags:
     - FWS_LIN_BUILD
@@ -958,7 +956,7 @@ lin_512K_Bootloader:
       # POST_BUILD=1
 
 lin_512K_BlinkyApp:
-  extends: .build_512K
+  stage: Build_512K
 
   tags:
     - FWS_LIN_BUILD
@@ -999,7 +997,7 @@ lin_512K_BlinkyApp:
       BUILDCFG=Debug
 
 lin_512K_Multi_BlinkyApp:
-  extends: .build_512K
+  stage: Build_512K
 
   tags:
     - FWS_LIN_BUILD
@@ -1044,7 +1042,7 @@ lin_512K_Multi_BlinkyApp:
       BUILDCFG=Debug
 
 lin_512K_SecureBlinkyApp:
-  extends: .build_512K
+  stage: Build_512K
 
   tags:
     - FWS_LIN_BUILD
@@ -1520,7 +1518,7 @@ mac_2M_SecureBlinkyApp_smif:
       BUILDCFG=Debug
 
 lin_2M_Bootloader:
-  extends: .build_2M
+  stage: Build_2M
 
   tags:
     - FWS_LIN_BUILD
@@ -1543,7 +1541,7 @@ lin_2M_Bootloader:
       # POST_BUILD=1
 
 lin_2M_BlinkyApp:
-  extends: .build_2M
+  stage: Build_2M
 
   tags:
     - FWS_LIN_BUILD
@@ -1584,7 +1582,7 @@ lin_2M_BlinkyApp:
       BUILDCFG=Debug
 
 lin_2M_Multi_BlinkyApp:
-  extends: .build_2M
+  stage: Build_2M
 
   tags:
     - FWS_LIN_BUILD
@@ -1629,7 +1627,7 @@ lin_2M_Multi_BlinkyApp:
       BUILDCFG=Debug
 
 lin_2M_SecureBlinkyApp:
-  extends: .build_2M
+  stage: Build_2M
 
   tags:
     - FWS_LIN_BUILD
@@ -3111,6 +3109,7 @@ deploy_asset:
     - /^develop$/
     - /^cypress$/
     - /^integration/cy_bootloader$/
+    - /^bugfix/kosx-CI-linux-artifacts$/
   only:
     - schedules
 
